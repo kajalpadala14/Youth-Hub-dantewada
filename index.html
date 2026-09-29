@@ -641,20 +641,36 @@
         <section class="page-section" id="view_youth_master">
           <!-- Main Table Card: Registered Youth Records -->
           <div class="form-card">
-            <div class="form-header" style="background: #F8FAFC;">
-              <div>
-                <h3 style="font-size: 15px;"><i class="fas fa-users text-primary"></i> Registered Youth Master Records / पंजीकृत युवा सूची</h3>
-                <p>Live registered candidate profiles in Google Sheets database</p>
+            <div class="form-header table-card-header">
+              <div class="table-header-info">
+                <div class="table-header-icon-box bg-blue-subtle">
+                  <i class="fas fa-users"></i>
+                </div>
+                <div class="table-header-text">
+                  <h3 class="table-header-title">
+                    Registered Youth Master Records
+                    <span class="table-header-sub-hi">/ पंजीकृत युवा सूची</span>
+                  </h3>
+                  <p class="table-header-desc">Live registered candidate profiles in Google Sheets database</p>
+                </div>
               </div>
-              <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-                <span class="badge info" id="countTblYouthMaster">0 records</span>
-                <input type="text" class="form-control" id="searchTblYouthMaster" style="width: 200px; padding: 5px 10px; font-size: 12px;" placeholder="Search in records...">
-                <button type="button" class="btn btn-secondary" onclick="Forms.loadTabTable('youth_master')" style="padding: 5px 10px; font-size: 12px;">
-                  <i class="fas fa-sync-alt"></i> Refresh
-                </button>
-                <button type="button" class="btn btn-primary btn-open-drawer" onclick="Forms.openDrawer('formYouthMaster')">
-                  <i class="fas fa-user-plus"></i> + Add New Youth
-                </button>
+              <div class="table-header-toolbar">
+                <div class="table-search-box">
+                  <i class="fas fa-search table-search-icon"></i>
+                  <input type="text" class="table-search-input" id="searchTblYouthMaster" placeholder="Search youth...">
+                </div>
+                <span class="table-count-badge" id="countTblYouthMaster">0 records</span>
+                <div class="table-actions">
+                  <button type="button" class="btn-tb-secondary" onclick="Forms.loadTabTable('youth_master')" title="Refresh Data">
+                    <i class="fas fa-sync-alt"></i> <span>Refresh</span>
+                  </button>
+                  <button type="button" class="btn-tb-secondary btn-table-export-csv" onclick="Forms.exportTableCSV('youth_master')" title="Export to CSV">
+                    <i class="fas fa-file-csv text-emerald"></i> <span>Export CSV</span>
+                  </button>
+                  <button type="button" class="btn-tb-primary btn-open-drawer" onclick="Forms.openDrawer('formYouthMaster')">
+                    <i class="fas fa-user-plus"></i> <span>Add New Youth</span>
+                  </button>
+                </div>
               </div>
             </div>
             <div class="table-responsive">
@@ -809,20 +825,36 @@
         <section class="page-section" id="view_mobilization">
           <!-- Main Table Card: Mobilization Records -->
           <div class="form-card">
-            <div class="form-header" style="background: #F8FAFC;">
-              <div>
-                <h3 style="font-size: 15px;"><i class="fas fa-bullhorn text-primary"></i> Mobilization Submitted Records / मोबिलाइजेशन रिकॉर्ड्स</h3>
-                <p>Live outreach events recorded in Google Sheets database</p>
+            <div class="form-header table-card-header">
+              <div class="table-header-info">
+                <div class="table-header-icon-box bg-amber-subtle">
+                  <i class="fas fa-bullhorn"></i>
+                </div>
+                <div class="table-header-text">
+                  <h3 class="table-header-title">
+                    Mobilization Submitted Records
+                    <span class="table-header-sub-hi">/ मोबिलाइजेशन रिकॉर्ड्स</span>
+                  </h3>
+                  <p class="table-header-desc">Live outreach events recorded in Google Sheets database</p>
+                </div>
               </div>
-              <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-                <span class="badge info" id="countTblMobilization">0 records</span>
-                <input type="text" class="form-control" id="searchTblMobilization" style="width: 200px; padding: 5px 10px; font-size: 12px;" placeholder="Search in records...">
-                <button type="button" class="btn btn-secondary" onclick="Forms.loadTabTable('mobilization')" style="padding: 5px 10px; font-size: 12px;">
-                  <i class="fas fa-sync-alt"></i> Refresh
-                </button>
-                <button type="button" class="btn btn-primary btn-open-drawer" onclick="Forms.openDrawer('formMobilization')">
-                  <i class="fas fa-plus"></i> + Add Mobilization
-                </button>
+              <div class="table-header-toolbar">
+                <div class="table-search-box">
+                  <i class="fas fa-search table-search-icon"></i>
+                  <input type="text" class="table-search-input" id="searchTblMobilization" placeholder="Search mobilization...">
+                </div>
+                <span class="table-count-badge" id="countTblMobilization">0 records</span>
+                <div class="table-actions">
+                  <button type="button" class="btn-tb-secondary" onclick="Forms.loadTabTable('mobilization')" title="Refresh Data">
+                    <i class="fas fa-sync-alt"></i> <span>Refresh</span>
+                  </button>
+                  <button type="button" class="btn-tb-secondary btn-table-export-csv" onclick="Forms.exportTableCSV('mobilization')" title="Export to CSV">
+                    <i class="fas fa-file-csv text-emerald"></i> <span>Export CSV</span>
+                  </button>
+                  <button type="button" class="btn-tb-primary btn-open-drawer" onclick="Forms.openDrawer('formMobilization')">
+                    <i class="fas fa-plus"></i> <span>Add Mobilization</span>
+                  </button>
+                </div>
               </div>
             </div>
             <div class="table-responsive">
@@ -959,20 +991,36 @@
         <section class="page-section" id="view_mform">
           <!-- Main Table Card: M-Form Records -->
           <div class="form-card">
-            <div class="form-header" style="background: #F8FAFC;">
-              <div>
-                <h3 style="font-size: 15px;"><i class="fas fa-file-invoice text-emerald"></i> M-Form Submitted Records / एम-फॉर्म पंजीयन रिकॉर्ड्स</h3>
-                <p>Live submitted M-Forms with verification status</p>
+            <div class="form-header table-card-header">
+              <div class="table-header-info">
+                <div class="table-header-icon-box bg-emerald-subtle">
+                  <i class="fas fa-file-invoice"></i>
+                </div>
+                <div class="table-header-text">
+                  <h3 class="table-header-title">
+                    M-Form Submitted Records
+                    <span class="table-header-sub-hi">/ एम-फॉर्म पंजीयन रिकॉर्ड्स</span>
+                  </h3>
+                  <p class="table-header-desc">Live submitted M-Forms with verification status</p>
+                </div>
               </div>
-              <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-                <span class="badge info" id="countTblMForm">0 records</span>
-                <input type="text" class="form-control" id="searchTblMForm" style="width: 200px; padding: 5px 10px; font-size: 12px;" placeholder="Search in records...">
-                <button type="button" class="btn btn-secondary" onclick="Forms.loadTabTable('mform')" style="padding: 5px 10px; font-size: 12px;">
-                  <i class="fas fa-sync-alt"></i> Refresh
-                </button>
-                <button type="button" class="btn btn-primary btn-open-drawer" onclick="Forms.openDrawer('formMForm')">
-                  <i class="fas fa-plus"></i> + Add M-Form
-                </button>
+              <div class="table-header-toolbar">
+                <div class="table-search-box">
+                  <i class="fas fa-search table-search-icon"></i>
+                  <input type="text" class="table-search-input" id="searchTblMForm" placeholder="Search M-Forms...">
+                </div>
+                <span class="table-count-badge" id="countTblMForm">0 records</span>
+                <div class="table-actions">
+                  <button type="button" class="btn-tb-secondary" onclick="Forms.loadTabTable('mform')" title="Refresh Data">
+                    <i class="fas fa-sync-alt"></i> <span>Refresh</span>
+                  </button>
+                  <button type="button" class="btn-tb-secondary btn-table-export-csv" onclick="Forms.exportTableCSV('mform')" title="Export to CSV">
+                    <i class="fas fa-file-csv text-emerald"></i> <span>Export CSV</span>
+                  </button>
+                  <button type="button" class="btn-tb-primary btn-open-drawer" onclick="Forms.openDrawer('formMForm')">
+                    <i class="fas fa-plus"></i> <span>Add M-Form</span>
+                  </button>
+                </div>
               </div>
             </div>
             <div class="table-responsive">
@@ -1081,20 +1129,36 @@
         <section class="page-section" id="view_mybharat">
           <!-- Main Table Card: My Bharat Records -->
           <div class="form-card">
-            <div class="form-header" style="background: #F8FAFC;">
-              <div>
-                <h3 style="font-size: 15px;"><i class="fas fa-id-badge text-amber"></i> My Bharat Portal Records / माय भारत पंजीयन रिकॉर्ड्स</h3>
-                <p>Live candidate enrollments on My Bharat portal</p>
+            <div class="form-header table-card-header">
+              <div class="table-header-info">
+                <div class="table-header-icon-box bg-indigo-subtle">
+                  <i class="fas fa-id-badge"></i>
+                </div>
+                <div class="table-header-text">
+                  <h3 class="table-header-title">
+                    My Bharat Portal Records
+                    <span class="table-header-sub-hi">/ माय भारत पंजीयन रिकॉर्ड्स</span>
+                  </h3>
+                  <p class="table-header-desc">Live candidate enrollments on national My Bharat portal</p>
+                </div>
               </div>
-              <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-                <span class="badge info" id="countTblMyBharat">0 records</span>
-                <input type="text" class="form-control" id="searchTblMyBharat" style="width: 200px; padding: 5px 10px; font-size: 12px;" placeholder="Search in records...">
-                <button type="button" class="btn btn-secondary" onclick="Forms.loadTabTable('mybharat')" style="padding: 5px 10px; font-size: 12px;">
-                  <i class="fas fa-sync-alt"></i> Refresh
-                </button>
-                <button type="button" class="btn btn-primary btn-open-drawer" onclick="Forms.openDrawer('formMyBharat')">
-                  <i class="fas fa-plus"></i> + Add My Bharat Entry
-                </button>
+              <div class="table-header-toolbar">
+                <div class="table-search-box">
+                  <i class="fas fa-search table-search-icon"></i>
+                  <input type="text" class="table-search-input" id="searchTblMyBharat" placeholder="Search My Bharat...">
+                </div>
+                <span class="table-count-badge" id="countTblMyBharat">0 records</span>
+                <div class="table-actions">
+                  <button type="button" class="btn-tb-secondary" onclick="Forms.loadTabTable('mybharat')" title="Refresh Data">
+                    <i class="fas fa-sync-alt"></i> <span>Refresh</span>
+                  </button>
+                  <button type="button" class="btn-tb-secondary btn-table-export-csv" onclick="Forms.exportTableCSV('mybharat')" title="Export to CSV">
+                    <i class="fas fa-file-csv text-emerald"></i> <span>Export CSV</span>
+                  </button>
+                  <button type="button" class="btn-tb-primary btn-open-drawer" onclick="Forms.openDrawer('formMyBharat')">
+                    <i class="fas fa-plus"></i> <span>Add My Bharat Entry</span>
+                  </button>
+                </div>
               </div>
             </div>
             <div class="table-responsive">
@@ -1198,20 +1262,36 @@
         <section class="page-section" id="view_counselling">
           <!-- Main Table Card: Counselling Records -->
           <div class="form-card">
-            <div class="form-header" style="background: #F8FAFC;">
-              <div>
-                <h3 style="font-size: 15px;"><i class="fas fa-user-graduate text-purple"></i> Career Counselling Records / कैरियर मार्गदर्शन रिकॉर्ड्स</h3>
-                <p>Live candidate counselling guidance records</p>
+            <div class="form-header table-card-header">
+              <div class="table-header-info">
+                <div class="table-header-icon-box bg-purple-subtle">
+                  <i class="fas fa-user-graduate"></i>
+                </div>
+                <div class="table-header-text">
+                  <h3 class="table-header-title">
+                    Career Counselling Records
+                    <span class="table-header-sub-hi">/ कैरियर मार्गदर्शन रिकॉर्ड्स</span>
+                  </h3>
+                  <p class="table-header-desc">Live candidate counselling guidance records</p>
+                </div>
               </div>
-              <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-                <span class="badge info" id="countTblCounselling">0 records</span>
-                <input type="text" class="form-control" id="searchTblCounselling" style="width: 200px; padding: 5px 10px; font-size: 12px;" placeholder="Search in records...">
-                <button type="button" class="btn btn-secondary" onclick="Forms.loadTabTable('counselling')" style="padding: 5px 10px; font-size: 12px;">
-                  <i class="fas fa-sync-alt"></i> Refresh
-                </button>
-                <button type="button" class="btn btn-primary btn-open-drawer" onclick="Forms.openDrawer('formCounselling')">
-                  <i class="fas fa-plus"></i> + Add Counselling Record
-                </button>
+              <div class="table-header-toolbar">
+                <div class="table-search-box">
+                  <i class="fas fa-search table-search-icon"></i>
+                  <input type="text" class="table-search-input" id="searchTblCounselling" placeholder="Search counselling...">
+                </div>
+                <span class="table-count-badge" id="countTblCounselling">0 records</span>
+                <div class="table-actions">
+                  <button type="button" class="btn-tb-secondary" onclick="Forms.loadTabTable('counselling')" title="Refresh Data">
+                    <i class="fas fa-sync-alt"></i> <span>Refresh</span>
+                  </button>
+                  <button type="button" class="btn-tb-secondary btn-table-export-csv" onclick="Forms.exportTableCSV('counselling')" title="Export to CSV">
+                    <i class="fas fa-file-csv text-emerald"></i> <span>Export CSV</span>
+                  </button>
+                  <button type="button" class="btn-tb-primary btn-open-drawer" onclick="Forms.openDrawer('formCounselling')">
+                    <i class="fas fa-plus"></i> <span>Add Counselling Record</span>
+                  </button>
+                </div>
               </div>
             </div>
             <div class="table-responsive">
@@ -1314,20 +1394,36 @@
         <section class="page-section" id="view_skill_training">
           <!-- Main Table Card: Skill Training Records -->
           <div class="form-card">
-            <div class="form-header" style="background: #F8FAFC;">
-              <div>
-                <h3 style="font-size: 15px;"><i class="fas fa-tools text-teal"></i> Skill Training Enrolled Records / कौशल प्रशिक्षण रिकॉर्ड्स</h3>
-                <p>Live training progress, certifications, and placement tracking</p>
+            <div class="form-header table-card-header">
+              <div class="table-header-info">
+                <div class="table-header-icon-box bg-teal-subtle">
+                  <i class="fas fa-tools"></i>
+                </div>
+                <div class="table-header-text">
+                  <h3 class="table-header-title">
+                    Skill Training Enrolled Records
+                    <span class="table-header-sub-hi">/ कौशल प्रशिक्षण रिकॉर्ड्स</span>
+                  </h3>
+                  <p class="table-header-desc">Live training progress, certifications, and placement tracking</p>
+                </div>
               </div>
-              <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-                <span class="badge info" id="countTblSkillTraining">0 records</span>
-                <input type="text" class="form-control" id="searchTblSkillTraining" style="width: 200px; padding: 5px 10px; font-size: 12px;" placeholder="Search in records...">
-                <button type="button" class="btn btn-secondary" onclick="Forms.loadTabTable('skill_training')" style="padding: 5px 10px; font-size: 12px;">
-                  <i class="fas fa-sync-alt"></i> Refresh
-                </button>
-                <button type="button" class="btn btn-primary btn-open-drawer" onclick="Forms.openDrawer('formSkillTraining')">
-                  <i class="fas fa-plus"></i> + Add Trainee
-                </button>
+              <div class="table-header-toolbar">
+                <div class="table-search-box">
+                  <i class="fas fa-search table-search-icon"></i>
+                  <input type="text" class="table-search-input" id="searchTblSkillTraining" placeholder="Search trainees...">
+                </div>
+                <span class="table-count-badge" id="countTblSkillTraining">0 records</span>
+                <div class="table-actions">
+                  <button type="button" class="btn-tb-secondary" onclick="Forms.loadTabTable('skill_training')" title="Refresh Data">
+                    <i class="fas fa-sync-alt"></i> <span>Refresh</span>
+                  </button>
+                  <button type="button" class="btn-tb-secondary btn-table-export-csv" onclick="Forms.exportTableCSV('skill_training')" title="Export to CSV">
+                    <i class="fas fa-file-csv text-emerald"></i> <span>Export CSV</span>
+                  </button>
+                  <button type="button" class="btn-tb-primary btn-open-drawer" onclick="Forms.openDrawer('formSkillTraining')">
+                    <i class="fas fa-plus"></i> <span>Add Trainee</span>
+                  </button>
+                </div>
               </div>
             </div>
             <div class="table-responsive">
@@ -1456,20 +1552,36 @@
         <section class="page-section" id="view_employment">
           <!-- Section A: Main Table Card - Employment Registered Records -->
           <div class="form-card" style="margin-bottom: 2rem;">
-            <div class="form-header" style="background: #F8FAFC;">
-              <div>
-                <h3 style="font-size: 15px;"><i class="fas fa-clipboard-list text-primary"></i> Registered Job Seekers / रोजगार हेतु पंजीकृत युवा</h3>
-                <p>Candidates registered for jobs and placements</p>
+            <div class="form-header table-card-header">
+              <div class="table-header-info">
+                <div class="table-header-icon-box bg-blue-subtle">
+                  <i class="fas fa-clipboard-list"></i>
+                </div>
+                <div class="table-header-text">
+                  <h3 class="table-header-title">
+                    Registered Job Seekers
+                    <span class="table-header-sub-hi">/ रोजगार हेतु पंजीकृत युवा</span>
+                  </h3>
+                  <p class="table-header-desc">Candidates registered for jobs and career placements</p>
+                </div>
               </div>
-              <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-                <span class="badge info" id="countTblEmpRegistered">0 records</span>
-                <input type="text" class="form-control" id="searchTblEmpRegistered" style="width: 200px; padding: 5px 10px; font-size: 12px;" placeholder="Search registered...">
-                <button type="button" class="btn btn-secondary" onclick="Forms.loadTabTable('emp_registered')" style="padding: 5px 10px; font-size: 12px;">
-                  <i class="fas fa-sync-alt"></i> Refresh
-                </button>
-                <button type="button" class="btn btn-primary btn-open-drawer" onclick="Forms.openDrawer('formEmpRegistered')">
-                  <i class="fas fa-plus"></i> + Add Job Seeker
-                </button>
+              <div class="table-header-toolbar">
+                <div class="table-search-box">
+                  <i class="fas fa-search table-search-icon"></i>
+                  <input type="text" class="table-search-input" id="searchTblEmpRegistered" placeholder="Search job seekers...">
+                </div>
+                <span class="table-count-badge" id="countTblEmpRegistered">0 records</span>
+                <div class="table-actions">
+                  <button type="button" class="btn-tb-secondary" onclick="Forms.loadTabTable('emp_registered')" title="Refresh Data">
+                    <i class="fas fa-sync-alt"></i> <span>Refresh</span>
+                  </button>
+                  <button type="button" class="btn-tb-secondary btn-table-export-csv" onclick="Forms.exportTableCSV('emp_registered')" title="Export to CSV">
+                    <i class="fas fa-file-csv text-emerald"></i> <span>Export CSV</span>
+                  </button>
+                  <button type="button" class="btn-tb-primary btn-open-drawer" onclick="Forms.openDrawer('formEmpRegistered')">
+                    <i class="fas fa-plus"></i> <span>Add Job Seeker</span>
+                  </button>
+                </div>
               </div>
             </div>
             <div class="table-responsive">
@@ -1482,20 +1594,36 @@
 
           <!-- Section B: Main Table Card - Employment Linked Records -->
           <div class="form-card">
-            <div class="form-header" style="background: #F8FAFC;">
-              <div>
-                <h3 style="font-size: 15px;"><i class="fas fa-handshake text-emerald"></i> Verified Placements & Jobs / रोजगार लिंकेज (नियुक्ति) रिकॉर्ड्स</h3>
-                <p>Live job placement and appointment records</p>
+            <div class="form-header table-card-header">
+              <div class="table-header-info">
+                <div class="table-header-icon-box bg-emerald-subtle">
+                  <i class="fas fa-handshake"></i>
+                </div>
+                <div class="table-header-text">
+                  <h3 class="table-header-title">
+                    Verified Placements & Jobs
+                    <span class="table-header-sub-hi">/ रोजगार लिंकेज (नियुक्ति) रिकॉर्ड्स</span>
+                  </h3>
+                  <p class="table-header-desc">Live verified job placement and appointment records</p>
+                </div>
               </div>
-              <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-                <span class="badge info" id="countTblEmpLinked">0 records</span>
-                <input type="text" class="form-control" id="searchTblEmpLinked" style="width: 200px; padding: 5px 10px; font-size: 12px;" placeholder="Search placements...">
-                <button type="button" class="btn btn-secondary" onclick="Forms.loadTabTable('emp_linked')" style="padding: 5px 10px; font-size: 12px;">
-                  <i class="fas fa-sync-alt"></i> Refresh
-                </button>
-                <button type="button" class="btn btn-primary btn-open-drawer" onclick="Forms.openDrawer('formEmpLinked')">
-                  <i class="fas fa-check-circle"></i> + Add Placement
-                </button>
+              <div class="table-header-toolbar">
+                <div class="table-search-box">
+                  <i class="fas fa-search table-search-icon"></i>
+                  <input type="text" class="table-search-input" id="searchTblEmpLinked" placeholder="Search placements...">
+                </div>
+                <span class="table-count-badge" id="countTblEmpLinked">0 records</span>
+                <div class="table-actions">
+                  <button type="button" class="btn-tb-secondary" onclick="Forms.loadTabTable('emp_linked')" title="Refresh Data">
+                    <i class="fas fa-sync-alt"></i> <span>Refresh</span>
+                  </button>
+                  <button type="button" class="btn-tb-secondary btn-table-export-csv" onclick="Forms.exportTableCSV('emp_linked')" title="Export to CSV">
+                    <i class="fas fa-file-csv text-emerald"></i> <span>Export CSV</span>
+                  </button>
+                  <button type="button" class="btn-tb-primary btn-open-drawer" onclick="Forms.openDrawer('formEmpLinked')">
+                    <i class="fas fa-check-circle"></i> <span>Add Placement</span>
+                  </button>
+                </div>
               </div>
             </div>
             <div class="table-responsive">
@@ -1669,20 +1797,36 @@
         <section class="page-section" id="view_education">
           <!-- Main Table Card: Education Records -->
           <div class="form-card">
-            <div class="form-header" style="background: #F8FAFC;">
-              <div>
-                <h3 style="font-size: 15px;"><i class="fas fa-school text-indigo"></i> Higher Education Linkage Records / उच्च शिक्षा लिंकेज</h3>
-                <p>College admissions and educational guidance records</p>
+            <div class="form-header table-card-header">
+              <div class="table-header-info">
+                <div class="table-header-icon-box bg-indigo-subtle">
+                  <i class="fas fa-school"></i>
+                </div>
+                <div class="table-header-text">
+                  <h3 class="table-header-title">
+                    Higher Education Linkage Records
+                    <span class="table-header-sub-hi">/ उच्च शिक्षा लिंकेज</span>
+                  </h3>
+                  <p class="table-header-desc">College admissions and educational guidance records</p>
+                </div>
               </div>
-              <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-                <span class="badge info" id="countTblEducation">0 records</span>
-                <input type="text" class="form-control" id="searchTblEducation" style="width: 200px; padding: 5px 10px; font-size: 12px;" placeholder="Search in records...">
-                <button type="button" class="btn btn-secondary" onclick="Forms.loadTabTable('education')" style="padding: 5px 10px; font-size: 12px;">
-                  <i class="fas fa-sync-alt"></i> Refresh
-                </button>
-                <button type="button" class="btn btn-primary btn-open-drawer" onclick="Forms.openDrawer('formEducation')">
-                  <i class="fas fa-plus"></i> + Add Education Record
-                </button>
+              <div class="table-header-toolbar">
+                <div class="table-search-box">
+                  <i class="fas fa-search table-search-icon"></i>
+                  <input type="text" class="table-search-input" id="searchTblEducation" placeholder="Search education...">
+                </div>
+                <span class="table-count-badge" id="countTblEducation">0 records</span>
+                <div class="table-actions">
+                  <button type="button" class="btn-tb-secondary" onclick="Forms.loadTabTable('education')" title="Refresh Data">
+                    <i class="fas fa-sync-alt"></i> <span>Refresh</span>
+                  </button>
+                  <button type="button" class="btn-tb-secondary btn-table-export-csv" onclick="Forms.exportTableCSV('education')" title="Export to CSV">
+                    <i class="fas fa-file-csv text-emerald"></i> <span>Export CSV</span>
+                  </button>
+                  <button type="button" class="btn-tb-primary btn-open-drawer" onclick="Forms.openDrawer('formEducation')">
+                    <i class="fas fa-plus"></i> <span>Add Education Record</span>
+                  </button>
+                </div>
               </div>
             </div>
             <div class="table-responsive">
@@ -1778,20 +1922,36 @@
         <section class="page-section" id="view_entrepreneurship">
           <!-- Main Table Card: Entrepreneur Records -->
           <div class="form-card">
-            <div class="form-header" style="background: #F8FAFC;">
-              <div>
-                <h3 style="font-size: 15px;"><i class="fas fa-store-alt text-amber"></i> Entrepreneurship Pipeline Records / उद्यमिता एवं स्वरोजगार रिकॉर्ड्स</h3>
-                <p>Identified entrepreneurs and established micro-enterprises</p>
+            <div class="form-header table-card-header">
+              <div class="table-header-info">
+                <div class="table-header-icon-box bg-amber-subtle">
+                  <i class="fas fa-store-alt"></i>
+                </div>
+                <div class="table-header-text">
+                  <h3 class="table-header-title">
+                    Entrepreneurship Pipeline Records
+                    <span class="table-header-sub-hi">/ उद्यमिता एवं स्वरोजगार रिकॉर्ड्स</span>
+                  </h3>
+                  <p class="table-header-desc">Identified entrepreneurs and established micro-enterprises</p>
+                </div>
               </div>
-              <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-                <span class="badge info" id="countTblEntrepreneurs">0 records</span>
-                <input type="text" class="form-control" id="searchTblEntrepreneurs" style="width: 200px; padding: 5px 10px; font-size: 12px;" placeholder="Search in records...">
-                <button type="button" class="btn btn-secondary" onclick="Forms.loadTabTable('entrepreneurship')" style="padding: 5px 10px; font-size: 12px;">
-                  <i class="fas fa-sync-alt"></i> Refresh
-                </button>
-                <button type="button" class="btn btn-primary btn-open-drawer" onclick="Forms.openDrawer('formEntrepreneur')">
-                  <i class="fas fa-plus"></i> + Add Entrepreneur
-                </button>
+              <div class="table-header-toolbar">
+                <div class="table-search-box">
+                  <i class="fas fa-search table-search-icon"></i>
+                  <input type="text" class="table-search-input" id="searchTblEntrepreneurs" placeholder="Search entrepreneurs...">
+                </div>
+                <span class="table-count-badge" id="countTblEntrepreneurs">0 records</span>
+                <div class="table-actions">
+                  <button type="button" class="btn-tb-secondary" onclick="Forms.loadTabTable('entrepreneurship')" title="Refresh Data">
+                    <i class="fas fa-sync-alt"></i> <span>Refresh</span>
+                  </button>
+                  <button type="button" class="btn-tb-secondary btn-table-export-csv" onclick="Forms.exportTableCSV('entrepreneurship')" title="Export to CSV">
+                    <i class="fas fa-file-csv text-emerald"></i> <span>Export CSV</span>
+                  </button>
+                  <button type="button" class="btn-tb-primary btn-open-drawer" onclick="Forms.openDrawer('formEntrepreneur')">
+                    <i class="fas fa-plus"></i> <span>Add Entrepreneur</span>
+                  </button>
+                </div>
               </div>
             </div>
             <div class="table-responsive">
@@ -1958,20 +2118,36 @@
         <section class="page-section" id="view_navgurukul">
           <!-- Main Table Card: NavGurukul Records -->
           <div class="form-card">
-            <div class="form-header" style="background: #F8FAFC;">
-              <div>
-                <h3 style="font-size: 15px;"><i class="fas fa-code text-purple"></i> NavGurukul Software Fellows / नवगुरुकुल कोडिंग प्रशिक्षु</h3>
-                <p>Live candidate selection and fellowship admission records</p>
+            <div class="form-header table-card-header">
+              <div class="table-header-info">
+                <div class="table-header-icon-box bg-purple-subtle">
+                  <i class="fas fa-code"></i>
+                </div>
+                <div class="table-header-text">
+                  <h3 class="table-header-title">
+                    NavGurukul Software Fellows
+                    <span class="table-header-sub-hi">/ नवगुरुकुल कोडिंग प्रशिक्षु</span>
+                  </h3>
+                  <p class="table-header-desc">Live candidate selection and fellowship admission records</p>
+                </div>
               </div>
-              <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-                <span class="badge info" id="countTblNavGurukul">0 records</span>
-                <input type="text" class="form-control" id="searchTblNavGurukul" style="width: 200px; padding: 5px 10px; font-size: 12px;" placeholder="Search candidates...">
-                <button type="button" class="btn btn-secondary" onclick="Forms.loadTabTable('navgurukul')" style="padding: 5px 10px; font-size: 12px;">
-                  <i class="fas fa-sync-alt"></i> Refresh
-                </button>
-                <button type="button" class="btn btn-primary btn-open-drawer" onclick="Forms.openDrawer('formNavGurukul')">
-                  <i class="fas fa-plus"></i> + Add Fellow Candidate
-                </button>
+              <div class="table-header-toolbar">
+                <div class="table-search-box">
+                  <i class="fas fa-search table-search-icon"></i>
+                  <input type="text" class="table-search-input" id="searchTblNavGurukul" placeholder="Search candidates...">
+                </div>
+                <span class="table-count-badge" id="countTblNavGurukul">0 records</span>
+                <div class="table-actions">
+                  <button type="button" class="btn-tb-secondary" onclick="Forms.loadTabTable('navgurukul')" title="Refresh Data">
+                    <i class="fas fa-sync-alt"></i> <span>Refresh</span>
+                  </button>
+                  <button type="button" class="btn-tb-secondary btn-table-export-csv" onclick="Forms.exportTableCSV('navgurukul')" title="Export to CSV">
+                    <i class="fas fa-file-csv text-emerald"></i> <span>Export CSV</span>
+                  </button>
+                  <button type="button" class="btn-tb-primary btn-open-drawer" onclick="Forms.openDrawer('formNavGurukul')">
+                    <i class="fas fa-plus"></i> <span>Add Candidate</span>
+                  </button>
+                </div>
               </div>
             </div>
             <div class="table-responsive">
@@ -2072,20 +2248,36 @@
         <section class="page-section" id="view_trainings">
           <!-- Main Table Card: Trainings Records -->
           <div class="form-card">
-            <div class="form-header" style="background: #F8FAFC;">
-              <div>
-                <h3 style="font-size: 15px;"><i class="fas fa-chalkboard-teacher text-rose"></i> Trainings Conducted Records / आयोजित प्रशिक्षण कार्यक्रम</h3>
-                <p>Live institutional workshops and bootcamp events</p>
+            <div class="form-header table-card-header">
+              <div class="table-header-info">
+                <div class="table-header-icon-box bg-rose-subtle">
+                  <i class="fas fa-chalkboard-teacher"></i>
+                </div>
+                <div class="table-header-text">
+                  <h3 class="table-header-title">
+                    Trainings Conducted Records
+                    <span class="table-header-sub-hi">/ आयोजित प्रशिक्षण कार्यक्रम</span>
+                  </h3>
+                  <p class="table-header-desc">Live institutional workshops, bootcamps, and training programs</p>
+                </div>
               </div>
-              <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-                <span class="badge info" id="countTblTrainings">0 records</span>
-                <input type="text" class="form-control" id="searchTblTrainings" style="width: 200px; padding: 5px 10px; font-size: 12px;" placeholder="Search trainings...">
-                <button type="button" class="btn btn-secondary" onclick="Forms.loadTabTable('trainings')" style="padding: 5px 10px; font-size: 12px;">
-                  <i class="fas fa-sync-alt"></i> Refresh
-                </button>
-                <button type="button" class="btn btn-primary btn-open-drawer" onclick="Forms.openDrawer('formTrainingConducted')">
-                  <i class="fas fa-plus"></i> + Add Training Event
-                </button>
+              <div class="table-header-toolbar">
+                <div class="table-search-box">
+                  <i class="fas fa-search table-search-icon"></i>
+                  <input type="text" class="table-search-input" id="searchTblTrainings" placeholder="Search trainings...">
+                </div>
+                <span class="table-count-badge" id="countTblTrainings">0 records</span>
+                <div class="table-actions">
+                  <button type="button" class="btn-tb-secondary" onclick="Forms.loadTabTable('trainings')" title="Refresh Data">
+                    <i class="fas fa-sync-alt"></i> <span>Refresh</span>
+                  </button>
+                  <button type="button" class="btn-tb-secondary btn-table-export-csv" onclick="Forms.exportTableCSV('trainings')" title="Export to CSV">
+                    <i class="fas fa-file-csv text-emerald"></i> <span>Export CSV</span>
+                  </button>
+                  <button type="button" class="btn-tb-primary btn-open-drawer" onclick="Forms.openDrawer('formTrainingConducted')">
+                    <i class="fas fa-plus"></i> <span>Add Training Event</span>
+                  </button>
+                </div>
               </div>
             </div>
             <div class="table-responsive">
@@ -2225,20 +2417,36 @@
         <section class="page-section" id="view_activities">
           <!-- Main Table Card: Activities Records -->
           <div class="form-card">
-            <div class="form-header" style="background: #F8FAFC;">
-              <div>
-                <h3 style="font-size: 15px;"><i class="fas fa-calendar-alt text-primary"></i> Field Activities & Events / गतिविधियां व बैठकें</h3>
-                <p>Gram Panchayat visits, SHG meetings, and special camps</p>
+            <div class="form-header table-card-header">
+              <div class="table-header-info">
+                <div class="table-header-icon-box bg-blue-subtle">
+                  <i class="fas fa-calendar-alt"></i>
+                </div>
+                <div class="table-header-text">
+                  <h3 class="table-header-title">
+                    Field Activities & Events
+                    <span class="table-header-sub-hi">/ गतिविधियां व बैठकें</span>
+                  </h3>
+                  <p class="table-header-desc">Gram Panchayat visits, SHG meetings, and special camps</p>
+                </div>
               </div>
-              <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-                <span class="badge info" id="countTblActivities">0 records</span>
-                <input type="text" class="form-control" id="searchTblActivities" style="width: 200px; padding: 5px 10px; font-size: 12px;" placeholder="Search activities...">
-                <button type="button" class="btn btn-secondary" onclick="Forms.loadTabTable('activities')" style="padding: 5px 10px; font-size: 12px;">
-                  <i class="fas fa-sync-alt"></i> Refresh
-                </button>
-                <button type="button" class="btn btn-primary btn-open-drawer" onclick="Forms.openDrawer('formActivities')">
-                  <i class="fas fa-plus"></i> + Add Activity Event
-                </button>
+              <div class="table-header-toolbar">
+                <div class="table-search-box">
+                  <i class="fas fa-search table-search-icon"></i>
+                  <input type="text" class="table-search-input" id="searchTblActivities" placeholder="Search activities...">
+                </div>
+                <span class="table-count-badge" id="countTblActivities">0 records</span>
+                <div class="table-actions">
+                  <button type="button" class="btn-tb-secondary" onclick="Forms.loadTabTable('activities')" title="Refresh Data">
+                    <i class="fas fa-sync-alt"></i> <span>Refresh</span>
+                  </button>
+                  <button type="button" class="btn-tb-secondary btn-table-export-csv" onclick="Forms.exportTableCSV('activities')" title="Export to CSV">
+                    <i class="fas fa-file-csv text-emerald"></i> <span>Export CSV</span>
+                  </button>
+                  <button type="button" class="btn-tb-primary btn-open-drawer" onclick="Forms.openDrawer('formActivities')">
+                    <i class="fas fa-plus"></i> <span>Add Activity Event</span>
+                  </button>
+                </div>
               </div>
             </div>
             <div class="table-responsive">

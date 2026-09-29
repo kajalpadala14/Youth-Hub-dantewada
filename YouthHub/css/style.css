@@ -995,16 +995,18 @@ body.sidebar-collapsed .main-wrapper {
 }
 
 .form-header {
-  padding: 1.25rem 1.5rem;
-  background-color: #F8FAFC;
+  padding: 1.15rem 1.5rem;
+  background-color: #FFFFFF;
   border-bottom: 1px solid var(--border);
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
 }
 
 .form-header h3 {
-  font-size: 16px;
+  font-size: 15.5px;
   font-weight: 700;
   color: var(--govt-navy);
 }
@@ -1012,6 +1014,248 @@ body.sidebar-collapsed .main-wrapper {
 .form-header p {
   font-size: 12px;
   color: var(--text-muted);
+}
+
+/* ============================================================
+   MODERN GOVERNMENT ADMIN TABLE CARD HEADER & TOOLBAR
+============================================================ */
+.table-card-header {
+  padding: 1rem 1.4rem;
+  background-color: #FFFFFF;
+  border-bottom: 1px solid #E2E8F0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.table-header-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.table-header-icon-box {
+  width: 40px;
+  height: 40px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+  flex-shrink: 0;
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.table-header-icon-box.bg-blue-subtle {
+  background-color: #EFF6FF;
+  border-color: #DBEAFE;
+  color: #2563EB;
+}
+.table-header-icon-box.bg-amber-subtle {
+  background-color: #FFFBEB;
+  border-color: #FEF3C7;
+  color: #D97706;
+}
+.table-header-icon-box.bg-emerald-subtle {
+  background-color: #ECFDF5;
+  border-color: #D1FAE5;
+  color: #059669;
+}
+.table-header-icon-box.bg-indigo-subtle {
+  background-color: #EEF2FF;
+  border-color: #E0E7FF;
+  color: #4F46E5;
+}
+.table-header-icon-box.bg-purple-subtle {
+  background-color: #FAF5FF;
+  border-color: #F3E8FF;
+  color: #7C3AED;
+}
+.table-header-icon-box.bg-teal-subtle {
+  background-color: #F0FDFA;
+  border-color: #CCFBF1;
+  color: #0D9488;
+}
+.table-header-icon-box.bg-rose-subtle {
+  background-color: #FFF1F2;
+  border-color: #FFE4E6;
+  color: #E11D48;
+}
+
+.table-header-text {
+  min-width: 0;
+}
+
+.table-header-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0F172A;
+  margin: 0;
+  line-height: 1.35;
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.table-header-sub-hi {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: #64748B;
+}
+
+.table-header-desc {
+  font-size: 12px;
+  color: #64748B;
+  margin: 3px 0 0 0;
+  line-height: 1.35;
+}
+
+.table-header-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* Modern Search Box */
+.table-search-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.table-search-icon {
+  position: absolute;
+  left: 11px;
+  color: #94A3B8;
+  font-size: 12px;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.table-search-input {
+  height: 36px;
+  width: 200px;
+  padding: 0 12px 0 32px;
+  font-size: 12.5px;
+  border: 1px solid #CBD5E1;
+  border-radius: 7px;
+  background-color: #FFFFFF;
+  color: #1E293B;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.table-search-input::placeholder {
+  color: #94A3B8;
+  font-size: 12px;
+}
+
+.table-search-input:focus {
+  outline: none;
+  border-color: #2563EB;
+  background-color: #FFFFFF;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+  width: 230px;
+}
+
+/* Records Count Badge */
+.table-count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 34px;
+  padding: 0 11px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #0369A1;
+  background-color: #F0F9FF;
+  border: 1px solid #BAE6FD;
+  border-radius: 7px;
+  white-space: nowrap;
+}
+
+/* Actions Group */
+.table-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Table Toolbar Secondary Button */
+.btn-tb-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 12px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #334155;
+  background-color: #FFFFFF;
+  border: 1px solid #CBD5E1;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.btn-tb-secondary:hover {
+  background-color: #F8FAFC;
+  border-color: #94A3B8;
+  color: #0F172A;
+}
+
+.btn-tb-secondary:active {
+  background-color: #F1F5F9;
+  transform: translateY(1px);
+}
+
+/* Table Toolbar Primary Add Button */
+.btn-tb-primary,
+.btn-open-drawer {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 14px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #FFFFFF;
+  background: linear-gradient(135deg, #1E40AF 0%, #2563EB 100%);
+  border: 1px solid #1D4ED8;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  box-shadow: 0 2px 4px rgba(37, 99, 235, 0.22);
+}
+
+.btn-tb-primary:hover,
+.btn-open-drawer:hover {
+  background: linear-gradient(135deg, #1E3A8A 0%, #1D4ED8 100%);
+  box-shadow: 0 4px 8px rgba(37, 99, 235, 0.32);
+  transform: translateY(-1px);
+  color: #FFFFFF;
+}
+
+.btn-tb-primary:active,
+.btn-open-drawer:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(37, 99, 235, 0.2);
+}
+
+/* Subtle icon inside buttons */
+.btn-tb-secondary i,
+.btn-tb-primary i,
+.btn-open-drawer i {
+  font-size: 12px;
 }
 
 .form-body {

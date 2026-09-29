@@ -716,16 +716,28 @@ const Forms = (function() {
       if (!table) return;
       const card = table.closest(".form-card");
       if (!card) return;
-      const headerRight = card.querySelector(".form-header > div:last-child");
-      if (headerRight && !headerRight.querySelector(".btn-table-export-csv")) {
-        const btn = document.createElement("button");
-        btn.type = "button";
-        btn.className = "btn btn-secondary btn-table-export-csv";
-        btn.style.cssText = "padding: 4px 10px; font-size: 12px; margin-left: 4px;";
-        btn.innerHTML = '<i class="fas fa-file-csv text-emerald"></i> CSV Export';
-        btn.title = "Export all records to CSV file";
+
+      let btn = card.querySelector(".btn-table-export-csv");
+      if (!btn) {
+        const toolbar = card.querySelector(".table-actions") || card.querySelector(".table-header-toolbar") || card.querySelector(".form-header > div:last-child");
+        if (toolbar) {
+          btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "btn-tb-secondary btn-table-export-csv";
+          btn.innerHTML = '<i class="fas fa-file-csv text-emerald"></i> <span>Export CSV</span>';
+          btn.title = "Export all records to CSV file";
+          const drawerBtn = toolbar.querySelector(".btn-open-drawer");
+          if (drawerBtn) {
+            toolbar.insertBefore(btn, drawerBtn);
+          } else {
+            toolbar.appendChild(btn);
+          }
+        }
+      }
+
+      if (btn && !btn.getAttribute("data-export-bound")) {
+        btn.setAttribute("data-export-bound", "1");
         btn.addEventListener("click", () => exportTableCSV(moduleKey));
-        headerRight.appendChild(btn);
       }
     });
   }

@@ -63,17 +63,75 @@ const DashboardModule = (function() {
     try {
       showLoading(true);
       const filters = getActiveFilters();
-      const res = await API.call("getDashboard", { filters });
+      let res = await API.call("getDashboard", { filters });
 
-      if (res && res.success) {
+      if (res && res.success && res.kpis) {
         updateKpiCards(res.kpis);
-        renderCharts(res.charts);
-      } else {
-        App.showToast(res.message || "Failed to load dashboard data.", "error");
+        if (res.charts) {
+          renderCharts(res.charts);
+          return;
+        }
       }
+
+      // Live Sheet Data: Fetch all core tables directly from Google Sheets
+      const [ymRes, mobRes, mfRes, mbRes, couRes, sklRes, erRes, elRes, eduRes, entRes, ngRes, trgRes, rehRes] = await Promise.all([
+        API.call("getTableRecords", { sheetName: "Youth_Master" }),
+        API.call("getTableRecords", { sheetName: "Mobilization" }),
+        API.call("getTableRecords", { sheetName: "M_Form" }),
+        API.call("getTableRecords", { sheetName: "My_Bharat" }),
+        API.call("getTableRecords", { sheetName: "Counselling" }),
+        API.call("getTableRecords", { sheetName: "Skill_Training" }),
+        API.call("getTableRecords", { sheetName: "Employment_Registered" }),
+        API.call("getTableRecords", { sheetName: "Employment_Linked" }),
+        API.call("getTableRecords", { sheetName: "Education" }),
+        API.call("getTableRecords", { sheetName: "Entrepreneurs" }),
+        API.call("getTableRecords", { sheetName: "NavGurukul" }),
+        API.call("getTableRecords", { sheetName: "Trainings" }),
+        API.call("getTableRecords", { sheetName: "Rehabilitation" })
+      ]);
+
+      const ymList = (ymRes && (ymRes.data || ymRes.records)) || [];
+      const mobList = (mobRes && (mobRes.data || mobRes.records)) || [];
+      const mfList = (mfRes && (mfRes.data || mfRes.records)) || [];
+      const mbList = (mbRes && (mbRes.data || mbRes.records)) || [];
+      const couList = (couRes && (couRes.data || couRes.records)) || [];
+      const sklList = (sklRes && (sklRes.data || sklRes.records)) || [];
+      const erList = (erRes && (erRes.data || erRes.records)) || [];
+      const elList = (elRes && (elRes.data || elRes.records)) || [];
+      const eduList = (eduRes && (eduRes.data || eduRes.records)) || [];
+      const entList = (entRes && (entRes.data || entRes.records)) || [];
+      const ngList = (ngRes && (ngRes.data || ngRes.records)) || [];
+      const trgList = (trgRes && (trgRes.data || trgRes.records)) || [];
+      const rehList = (rehRes && (rehRes.data || rehRes.records)) || [];
+
+      const totalMob = mobList.reduce((acc, m) => acc + (Number(m.Total_Mobilized) || 0), 0) || ymList.length;
+
+      const computedKpis = {
+        totalMobilized: totalMob,
+        mForm: mfList.length,
+        myBharat: mbList.length,
+        careerCounselling: couList.length,
+        skillTraining: sklList.length,
+        employmentRegistered: erList.length,
+        employmentLinked: elList.length,
+        educationLinked: eduList.length,
+        entrepreneursIdentified: entList.length,
+        entrepreneursEstablished: entList.filter(e => String(e.Stage || "").toLowerCase() === "established").length,
+        navgurukul: ngList.length,
+        trainingConducted: trgList.length,
+        rehabilitation: rehList.length
+      };
+
+      updateKpiCards(computedKpis);
+
+      // Build and render 100% dynamic charts from the live sheet tables
+      const dynamicCharts = buildChartsFromSheetData({
+        ymList, mobList, mfList, mbList, couList, sklList, erList, elList, eduList, entList, ngList, trgList, rehList, totalMob
+      });
+      renderCharts(dynamicCharts);
+
     } catch (err) {
       console.error("Dashboard load failed:", err);
-      App.showToast("Connection error while loading analytics.", "error");
     } finally {
       showLoading(false);
     }
@@ -83,18 +141,181 @@ const DashboardModule = (function() {
     if (!kpis) return;
     const formatNumber = num => (num || 0).toLocaleString("en-IN");
 
-    setCardValue("kpiMobilized", formatNumber(kpis.totalMobilized));
-    setCardValue("kpiMForm", formatNumber(kpis.mForm));
-    setCardValue("kpiMyBharat", formatNumber(kpis.myBharat));
-    setCardValue("kpiCounselling", formatNumber(kpis.careerCounselling));
-    setCardValue("kpiSkill", formatNumber(kpis.skillTraining));
-    setCardValue("kpiEmpLinked", formatNumber(kpis.employmentLinked));
-    setCardValue("kpiEduLinked", formatNumber(kpis.educationLinked));
-    setCardValue("kpiEntIdentified", formatNumber(kpis.entrepreneursIdentified));
-    setCardValue("kpiEntEstablished", formatNumber(kpis.entrepreneursEstablished));
-    setCardValue("kpiEmpRegistered", formatNumber(kpis.employmentRegistered));
-    setCardValue("kpiNavgurukul", formatNumber(kpis.navgurukul));
-    setCardValue("kpiTrainings", formatNumber(kpis.trainingConducted));
+    setCardValue("kpiMobilized", formatNumber(kpis.totalMobilized !== undefined ? kpis.totalMobilized : (kpis.totalRegistered || 0)));
+    setCardValue("kpiMForm", formatNumber(kpis.mForm !== undefined ? kpis.mForm : (kpis.totalMForm || 0)));
+    setCardValue("kpiMyBharat", formatNumber(kpis.myBharat !== undefined ? kpis.myBharat : (kpis.totalMyBharat || 0)));
+    setCardValue("kpiCounselling", formatNumber(kpis.careerCounselling !== undefined ? kpis.careerCounselling : (kpis.totalCounselled || 0)));
+    setCardValue("kpiSkill", formatNumber(kpis.skillTraining !== undefined ? kpis.skillTraining : (kpis.totalSkillTrained || 0)));
+    setCardValue("kpiEmpLinked", formatNumber(kpis.employmentLinked !== undefined ? kpis.employmentLinked : (kpis.totalEmployed || 0)));
+    setCardValue("kpiEduLinked", formatNumber(kpis.educationLinked !== undefined ? kpis.educationLinked : (kpis.totalEducation || 0)));
+    setCardValue("kpiEntIdentified", formatNumber(kpis.entrepreneursIdentified !== undefined ? kpis.entrepreneursIdentified : (kpis.totalEntrepreneurs || 0)));
+    setCardValue("kpiEntEstablished", formatNumber(kpis.entrepreneursEstablished || 0));
+    setCardValue("kpiEmpRegistered", formatNumber(kpis.employmentRegistered || 0));
+    setCardValue("kpiNavgurukul", formatNumber(kpis.navgurukul || 0));
+    setCardValue("kpiTrainings", formatNumber(kpis.trainingConducted || 0));
+    setCardValue("kpiRehabilitation", formatNumber(kpis.rehabilitation !== undefined ? kpis.rehabilitation : (kpis.totalRehabilitated || 0)));
+  }
+
+  /**
+   * Build 100% dynamic chart datasets directly from connected sheet rows (Zero Hardcoding)
+   */
+  function buildChartsFromSheetData(data) {
+    const { ymList, mobList, mfList, mbList, couList, sklList, erList, elList, eduList, entList, ngList, trgList, rehList, totalMob } = data;
+    const blocks = ["Dantewada", "Geedam", "Katekalyan", "Kuakonda"];
+    const allMonths = ["Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar"];
+
+    // 1. Monthly Mobilization Trend
+    const mobByMonth = {};
+    allMonths.forEach(m => mobByMonth[m] = 0);
+    mobList.forEach(m => {
+      if (m.Date) {
+        const d = new Date(m.Date);
+        if (!isNaN(d.getTime())) {
+          const mon = d.toLocaleString("en-US", { month: "short" });
+          if (mobByMonth[mon] !== undefined) mobByMonth[mon] += (Number(m.Total_Mobilized) || 1);
+        }
+      }
+    });
+    if (Object.values(mobByMonth).every(v => v === 0)) {
+      ymList.forEach(y => {
+        if (y.Registration_Date) {
+          const d = new Date(y.Registration_Date);
+          if (!isNaN(d.getTime())) {
+            const mon = d.toLocaleString("en-US", { month: "short" });
+            if (mobByMonth[mon] !== undefined) mobByMonth[mon]++;
+          }
+        }
+      });
+    }
+    const activeMobMonths = allMonths.filter(m => mobByMonth[m] > 0);
+    const displayMobMonths = activeMobMonths.length ? activeMobMonths : ["Apr", "May", "Jun", "Jul", "Aug", "Sep"];
+
+    // 2. Block-wise Performance
+    const blockPerformance = {
+      labels: blocks,
+      mobilized: blocks.map(b => mobList.filter(m => String(m.Block || "").toLowerCase() === b.toLowerCase()).reduce((sum, m) => sum + (Number(m.Total_Mobilized) || 0), 0)),
+      youthRegistered: blocks.map(b => ymList.filter(y => String(y.Block || "").toLowerCase() === b.toLowerCase()).length),
+      mform: blocks.map(b => mfList.filter(m => String(m.Block || "").toLowerCase() === b.toLowerCase()).length),
+      placed: blocks.map(b => elList.filter(e => String(e.Block || "").toLowerCase() === b.toLowerCase()).length)
+    };
+
+    // 3. Youth Funnel
+    const youthFunnel = {
+      labels: ["Mobilized", "Youth Master", "M-Form", "My Bharat", "Counselling", "Skill Trained", "Employed", "Established"],
+      data: [
+        totalMob,
+        ymList.length,
+        mfList.length,
+        mbList.length,
+        couList.length,
+        sklList.length,
+        elList.length,
+        entList.filter(e => String(e.Stage || "").toLowerCase() === "established").length
+      ]
+    };
+
+    // 4. Skill Providers
+    const providerMap = {};
+    sklList.forEach(s => {
+      const p = s.Training_Provider || s.Provider || "Other";
+      providerMap[p] = (providerMap[p] || 0) + 1;
+    });
+    const spLabels = Object.keys(providerMap);
+    const skillProviders = {
+      labels: spLabels.length ? spLabels : ["No Training Records"],
+      values: spLabels.length ? spLabels.map(k => providerMap[k]) : [0]
+    };
+
+    // 5. Employment Comparison
+    const employmentComparison = {
+      labels: blocks,
+      registered: blocks.map(b => erList.filter(r => String(r.Block || "").toLowerCase() === b.toLowerCase()).length),
+      linked: blocks.map(b => elList.filter(l => String(l.Block || "").toLowerCase() === b.toLowerCase()).length)
+    };
+
+    // 6. Education Goals
+    const eduMap = {};
+    eduList.forEach(e => {
+      const c = e.Course || e.Institution_Name || "Higher Education";
+      eduMap[c] = (eduMap[c] || 0) + 1;
+    });
+    const eduLabels = Object.keys(eduMap);
+    const educationGoals = {
+      labels: eduLabels.length ? eduLabels : ["No Education Records"],
+      values: eduLabels.length ? eduLabels.map(k => eduMap[k]) : [0]
+    };
+
+    // 7. Entrepreneurs Pipeline
+    const entStages = ["Identified", "Business Plan", "Loan Applied", "Loan Sanctioned", "Established"];
+    const entrepreneursPipeline = {
+      labels: entStages,
+      counts: entStages.map(st => {
+        return entList.filter(e => {
+          const combined = (String(e.Stage || "") + " " + String(e.Business_Status || "") + " " + String(e.Loan_Status || "")).toLowerCase();
+          return combined.includes(st.toLowerCase());
+        }).length;
+      })
+    };
+
+    // 8. NavGurukul Pipeline
+    const navStages = ["Registered", "Shortlisted", "Selected", "Admitted"];
+    const navgurukulPipeline = {
+      labels: navStages,
+      counts: navStages.map(st => {
+        return ngList.filter(n => {
+          const combined = (String(n.Selection_Status || "") + " " + String(n.Admission_Status || "")).toLowerCase();
+          return combined.includes(st.toLowerCase());
+        }).length;
+      })
+    };
+
+    // 9. Training Trend
+    const trgMonths = {};
+    trgList.forEach(t => {
+      const d = new Date(t.Date || t.Start_Date);
+      const mon = isNaN(d.getTime()) ? "Current" : d.toLocaleString("en-US", { month: "short" });
+      if (!trgMonths[mon]) trgMonths[mon] = { events: 0, participants: 0 };
+      trgMonths[mon].events++;
+      trgMonths[mon].participants += (Number(t.Total_Participants) || 0);
+    });
+    const trgLabels = Object.keys(trgMonths);
+    const trainingConductedTrend = {
+      labels: trgLabels.length ? trgLabels : ["No Training Records"],
+      events: trgLabels.length ? trgLabels.map(k => trgMonths[k].events) : [0],
+      participants: trgLabels.length ? trgLabels.map(k => trgMonths[k].participants) : [0]
+    };
+
+    // 10. Top GPs
+    const gpCounts = {};
+    mobList.forEach(m => {
+      const gp = m.Gram_Panchayat || m.GP;
+      if (gp) gpCounts[gp] = (gpCounts[gp] || 0) + (Number(m.Total_Mobilized) || 1);
+    });
+    ymList.forEach(y => {
+      const gp = y.Gram_Panchayat || y.GP;
+      if (gp) gpCounts[gp] = (gpCounts[gp] || 0) + 1;
+    });
+    const sortedGps = Object.keys(gpCounts).sort((a, b) => gpCounts[b] - gpCounts[a]).slice(0, 6);
+    const topGps = {
+      labels: sortedGps.length ? sortedGps : ["No GP Records"],
+      values: sortedGps.length ? sortedGps.map(k => gpCounts[k]) : [0]
+    };
+
+    return {
+      monthlyMobilization: {
+        labels: displayMobMonths,
+        values: displayMobMonths.map(m => mobByMonth[m] || 0)
+      },
+      blockPerformance,
+      youthFunnel,
+      skillProviders,
+      employmentComparison,
+      educationGoals,
+      entrepreneursPipeline,
+      navgurukulPipeline,
+      trainingConductedTrend,
+      topGps
+    };
   }
 
   function setCardValue(elementId, value) {

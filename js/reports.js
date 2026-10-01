@@ -70,18 +70,63 @@ const ReportsModule = (function() {
         gramPanchayat: document.getElementById("filterGP") ? document.getElementById("filterGP").value : "All"
       };
 
-      const res = await API.call("getReport", { reportType, filters });
+      // Determine target sheet and format
+      let sheetName = "Youth_Master";
+      let reportTitle = "Comprehensive Youth Master Directory";
+      let headers = ["Youth ID", "Name", "Father/Husband", "Mobile", "Gender", "Category", "Qualification", "Block", "Gram Panchayat", "Village", "Career Interest"];
+      let rowMapper = r => [
+        r.Youth_ID || "",
+        r.Youth_Name || "",
+        r.Father_Husband_Name || "",
+        r.Mobile_Number || "",
+        r.Gender || "",
+        r.Category || "",
+        r.Qualification || "",
+        r.Block || "",
+        r.Gram_Panchayat || "",
+        r.Village || "",
+        r.Career_Interest || ""
+      ];
 
-      if (res && res.success && res.report) {
-        currentReportData = res.report;
-        if (reportTitleEl) reportTitleEl.textContent = res.report.title || "Report";
+      if (reportType === "rehabilitation") {
+        sheetName = "Rehabilitation";
+        reportTitle = "Rehabilitation & Surrender Monitoring Report";
+        headers = ["Rehab ID", "Youth ID", "Name", "Guardian", "Mobile", "Block", "Gram Panchayat", "Surrender Date", "Status", "Assistance Type", "Amount (₹)", "Scheme Linked", "Employment"];
+        rowMapper = r => [
+          r.Rehab_ID || "",
+          r.Youth_ID || "",
+          r.Candidate_Name || "",
+          r.Father_Husband_Name || "",
+          r.Mobile || "",
+          r.Block || "",
+          r.GP || "",
+          r.Surrender_Date || "",
+          r.Rehabilitation_Status || "",
+          r.Assistance_Type || "",
+          r.Assistance_Amount ? "₹" + Number(r.Assistance_Amount).toLocaleString("en-IN") : "-",
+          r.Scheme_Linked || "",
+          r.Employment_Status || ""
+        ];
+      }
+
+      // Fetch live records directly from connected Google Sheet
+      const res = await API.call("getTableRecords", { sheetName });
+      const recordList = res && (res.records || res.data);
+
+      if (res && res.success && Array.isArray(recordList)) {
+        currentReportData = {
+          title: reportTitle,
+          headers: headers,
+          rows: recordList.map(rowMapper)
+        };
+        if (reportTitleEl) reportTitleEl.textContent = currentReportData.title;
         renderReportTable();
       } else {
-        App.showToast(res.message || "Failed to load report.", "error");
+        if (tableBody) tableBody.innerHTML = '<tr><td colspan="13" style="text-align:center; padding: 24px; color: #94A3B8;">No records found in sheet.</td></tr>';
       }
     } catch (err) {
       console.error("Report error:", err);
-      App.showToast("Failed to fetch report from server.", "error");
+      if (tableBody) tableBody.innerHTML = '<tr><td colspan="13" style="text-align:center; padding: 24px; color: #DC2626;">Error loading report.</td></tr>';
     }
   }
 
@@ -396,6 +441,19 @@ const ReportsModule = (function() {
                   ${res.profile.navgurukul.length ? 
                     res.profile.navgurukul.map(ng => `Status: <span class="badge info">${ng.Selection_Status}</span> | Admission: <strong>${ng.Admission_Status}</strong> (${ng.Registration_Date})`).join("<br>") : 
                     '<span class="text-muted">Not registered for NavGurukul.</span>'}
+                </div>
+              </div>
+            </div>
+
+            <!-- Step 10: Rehabilitation & Surrender -->
+            <div class="timeline-step">
+              <div class="timeline-dot ${(res.profile.rehabilitation && res.profile.rehabilitation.length) ? "active" : ""}"></div>
+              <div class="timeline-content">
+                <div class="timeline-title">10. Rehabilitation &amp; Surrender Support (आत्मसमर्पण एवं पुनर्वास)</div>
+                <div class="timeline-desc">
+                  ${(res.profile.rehabilitation && res.profile.rehabilitation.length) ? 
+                    res.profile.rehabilitation.map(rh => `Status: <span class="badge success">${rh.Rehabilitation_Status}</span> | Assistance: <strong>${rh.Assistance_Type}</strong> (${rh.Assistance_Amount ? '₹' + Number(rh.Assistance_Amount).toLocaleString('en-IN') : 'N/A'})<br>Scheme: ${rh.Scheme_Linked || 'N/A'} | Employment: ${rh.Employment_Status || 'N/A'}`).join("<br><br>") : 
+                    '<span class="text-muted">No surrender/rehabilitation records.</span>'}
                 </div>
               </div>
             </div>

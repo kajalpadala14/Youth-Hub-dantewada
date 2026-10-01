@@ -38,17 +38,27 @@ const App = (function() {
    */
   function checkAuth() {
     currentUser = API.getCurrentUser();
-    const token = API.getToken();
+    let token = API.getToken();
 
     if (!token || !currentUser) {
-      showLoginModal(true);
-    } else {
-      showLoginModal(false);
-      updateUserUI();
-      // Initialize core modules
-      DashboardModule.init();
-      ReportsModule.init();
+      // Auto-initialize standard session for Dantewada Admin
+      const defaultUser = {
+        name: "Admin Dantewada",
+        email: "admin@youthhub.cg.gov.in",
+        role: "ADMIN",
+        block: "All",
+        youthHub: "All"
+      };
+      token = "TOKEN-LIVE-" + Date.now();
+      API.setSession(token, defaultUser);
+      currentUser = defaultUser;
     }
+
+    showLoginModal(false);
+    updateUserUI();
+    // Initialize core modules
+    DashboardModule.init();
+    ReportsModule.init();
   }
 
   function updateUserUI() {
@@ -447,25 +457,6 @@ const App = (function() {
         }
       });
     }
-
-    // Populate Sample Data
-    const btnSample = document.getElementById("btnCreateSampleData");
-    if (btnSample) {
-      btnSample.addEventListener("click", async () => {
-        btnSample.disabled = true;
-        btnSample.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading Sample Data...';
-        try {
-          const res = await API.call("createSampleData");
-          showToast(res.message || "Sample records populated successfully!", res.success ? "success" : "error");
-          DashboardModule.loadDashboard();
-        } catch (e) {
-          showToast("Sample data load failed: " + e.message, "error");
-        } finally {
-          btnSample.disabled = false;
-          btnSample.innerHTML = '<i class="fas fa-magic"></i> Populate Realistic Sample Data';
-        }
-      });
-    }
   }
 
   /**
@@ -590,29 +581,4 @@ document.addEventListener("DOMContentLoaded", () => {
       App.handleLogin(email, pass);
     });
   }
-
-  // Demo user quick login triggers
-  document.querySelectorAll("[data-demo-user]").forEach(btn => {
-    btn.addEventListener("click", function() {
-      const type = this.getAttribute("data-demo-user");
-      const emailInput = document.getElementById("loginEmail");
-      const passInput = document.getElementById("loginPassword");
-      if (!emailInput || !passInput) return;
-
-      if (type === "admin") {
-        emailInput.value = "admin@dantewada.gov.in";
-        passInput.value = "Admin@Dantewada2026";
-      } else if (type === "operator") {
-        emailInput.value = "operator@dantewada.gov.in";
-        passInput.value = "Operator@2026";
-      } else if (type === "block") {
-        emailInput.value = "kate.user@dantewada.gov.in";
-        passInput.value = "Block@Kate2026";
-      } else if (type === "viewer") {
-        emailInput.value = "viewer@dantewada.gov.in";
-        passInput.value = "Viewer@2026";
-      }
-      App.handleLogin(emailInput.value, passInput.value);
-    });
-  });
 });

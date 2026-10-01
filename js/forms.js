@@ -15,13 +15,18 @@ const Forms = (function() {
       columns: [
         { key: "Youth_ID", label: "Youth ID", isLink: true },
         { key: "Youth_Name", label: "Name" },
-        { key: "Father_Mother_Name", label: "Parent / Guardian" },
+        { key: "Father_Husband_Name", label: "Father / Husband" },
         { key: "Mobile_Number", label: "Mobile" },
+        { key: "Aadhaar_Number", label: "Aadhaar" },
+        { key: "Age", label: "Age" },
         { key: "Gender", label: "Gender" },
         { key: "Category", label: "Category" },
         { key: "Qualification", label: "Qualification" },
+        { key: "Occupation", label: "Occupation" },
+        { key: "District", label: "District" },
         { key: "Block", label: "Block" },
         { key: "Gram_Panchayat", label: "Gram Panchayat" },
+        { key: "Village", label: "Village" },
         { key: "Career_Interest", label: "Career Interest" },
         { key: "Registration_Date", label: "Reg Date" }
       ]
@@ -36,6 +41,8 @@ const Forms = (function() {
         { key: "Activity_ID", label: "Activity ID" },
         { key: "Date", label: "Date" },
         { key: "Activity_Name", label: "Camp / Event Name" },
+        { key: "Mobilization_Source", label: "Source" },
+        { key: "Mobilizer_Name", label: "Mobilizer" },
         { key: "Block", label: "Block" },
         { key: "Gram_Panchayat", label: "Gram Panchayat" },
         { key: "Male", label: "Male" },
@@ -56,10 +63,11 @@ const Forms = (function() {
         { key: "Youth_ID", label: "Youth ID", isLink: true },
         { key: "Youth_Name", label: "Candidate Name" },
         { key: "Mobile", label: "Mobile" },
-        { key: "Date", label: "Date" },
+        { key: "Date", label: "M-Form Date" },
         { key: "Block", label: "Block" },
         { key: "GP", label: "Gram Panchayat" },
         { key: "MForm_Status", label: "Status", isStatusBadge: true },
+        { key: "Follow_Up_Status", label: "Follow-up" },
         { key: "MForm_Reg_No", label: "Reg Number" },
         { key: "Remarks", label: "Remarks" }
       ]
@@ -93,13 +101,15 @@ const Forms = (function() {
         { key: "Counselling_ID", label: "Counselling ID" },
         { key: "Youth_ID", label: "Youth ID", isLink: true },
         { key: "Youth_Name", label: "Youth Name" },
-        { key: "Date", label: "Date" },
+        { key: "Date", label: "Counselling Date" },
         { key: "Block", label: "Block" },
-        { key: "Counselling_Type", label: "Type", isBadge: "info" },
         { key: "Counsellor_Name", label: "Counsellor" },
+        { key: "Career_Interest", label: "Career Interest" },
         { key: "Counselling_Outcome", label: "Outcome" },
-        { key: "Recommended_Action", label: "Action" },
-        { key: "Follow_Up_Required", label: "Follow-up" }
+        { key: "Follow_Up_Date", label: "Follow-up Date" },
+        { key: "Follow_Up_Status", label: "Follow-up Status" },
+        { key: "Pending_Issue", label: "Pending Issue" },
+        { key: "Remarks", label: "Remarks" }
       ]
     },
     skill_training: {
@@ -112,12 +122,15 @@ const Forms = (function() {
         { key: "Training_Record_ID", label: "Record ID" },
         { key: "Youth_ID", label: "Youth ID", isLink: true },
         { key: "Youth_Name", label: "Candidate" },
-        { key: "Training_Name", label: "Trade / Course" },
-        { key: "Training_Provider", label: "Provider" },
+        { key: "Training_Name", label: "Training Name" },
+        { key: "Skill_Trade", label: "Skill / Trade" },
+        { key: "Training_Provider", label: "Institute" },
         { key: "Start_Date", label: "Start Date" },
+        { key: "End_Date", label: "End Date" },
         { key: "Training_Status", label: "Status", isStatusBadge: true },
         { key: "Certificate_Status", label: "Certificate" },
-        { key: "Employment_After_Training", label: "Job Placed" }
+        { key: "Employment_After_Training", label: "Job Placed" },
+        { key: "Follow_Up_Date", label: "Follow-up Date" }
       ]
     },
     emp_registered: {
@@ -147,11 +160,13 @@ const Forms = (function() {
         { key: "Emp_Link_ID", label: "Link ID" },
         { key: "Youth_ID", label: "Youth ID", isLink: true },
         { key: "Youth_Name", label: "Youth Name" },
-        { key: "Employer_Name", label: "Employer" },
-        { key: "Job_Role", label: "Role" },
-        { key: "Placement_Date", label: "Date" },
-        { key: "Salary", label: "Salary (₹)", isMoney: true },
-        { key: "Status", label: "Status", isStatusBadge: true }
+        { key: "Employer_Name", label: "Employer / Org" },
+        { key: "Job_Role", label: "Job Role" },
+        { key: "Placement_Date", label: "Employment Date" },
+        { key: "Salary", label: "Monthly Income (₹)", isMoney: true },
+        { key: "Status", label: "Status", isStatusBadge: true },
+        { key: "Follow_Up_Date", label: "Follow-up Date" },
+        { key: "Follow_Up_Status", label: "Follow-up Status" }
       ]
     },
     education: {
@@ -181,13 +196,26 @@ const Forms = (function() {
         { key: "Entrepreneur_ID", label: "ID" },
         { key: "Youth_ID", label: "Youth ID", isLink: true },
         { key: "Name", label: "Name" },
+        { key: "Father_Name", label: "Father Name" },
         { key: "Mobile", label: "Mobile" },
         { key: "Block", label: "Block" },
-        { key: "Business_Idea", label: "Business Idea / Name" },
-        { key: "Stage", label: "Stage", isStatusBadge: true },
-        { key: "Loan_Scheme", label: "Loan Scheme" },
-        { key: "Loan_Amount", label: "Loan Amount (₹)", isMoney: true },
-        { key: "Status", label: "Status" }
+        { key: "Village", label: "Village" },
+        { key: "Business_Type", label: "Business Type / Activity" },
+        { key: "Business_Idea", label: "Unit Name" },
+        { key: "Business_Status", label: "Business Status", isStatusBadge: true },
+        { key: "Loan_Scheme", label: "Scheme" },
+        { key: "Loan_Status", label: "Loan Status" },
+        { key: "Loan_Amount", label: "Loan (₹)", isMoney: true },
+        { key: "Udyam_Registration", label: "Udyam Reg." },
+        { key: "Bank_Documents", label: "Bank Docs" },
+        { key: "Pan_Card", label: "PAN Card" },
+        { key: "Voter_Card", label: "Voter Card" },
+        { key: "Quotation", label: "Quotation" },
+        { key: "Updates", label: "Updates" },
+        { key: "Bank_Name", label: "Bank" },
+        { key: "Account_Number", label: "Account No." },
+        { key: "IFSC_Code", label: "IFSC" },
+        { key: "Follow_Up_Date", label: "Follow-up Date" }
       ]
     },
     navgurukul: {
@@ -242,13 +270,79 @@ const Forms = (function() {
         { key: "Participants", label: "Participants" },
         { key: "Outcome", label: "Outcome" }
       ]
+    },
+    rehabilitation: {
+      sheetName: "Rehabilitation",
+      tableId: "tblRehabilitation",
+      searchId: "searchTblRehabilitation",
+      countId: "countTblRehabilitation",
+      idField: "Rehab_ID",
+      columns: [
+        { key: "Rehab_ID", label: "Rehab ID" },
+        { key: "Youth_ID", label: "Youth ID", isLink: true },
+        { key: "Candidate_Name", label: "Name" },
+        { key: "Father_Husband_Name", label: "Guardian" },
+        { key: "Mobile", label: "Mobile" },
+        { key: "Block", label: "Block" },
+        { key: "Surrender_Date", label: "Surrender Date" },
+        { key: "Rehabilitation_Status", label: "Rehab Status", isStatusBadge: true },
+        { key: "Assistance_Type", label: "Assistance Type" },
+        { key: "Assistance_Amount", label: "Amount (₹)", isMoney: true },
+        { key: "Scheme_Linked", label: "Scheme Linked" },
+        { key: "Employment_Status", label: "Employment" },
+        { key: "Current_Status", label: "Current Status", isBadge: "info" },
+        { key: "Follow_Up_Date", label: "Follow-up Date" },
+        { key: "Pending_Issue", label: "Pending Issue" }
+      ]
+    },
+    iim_raipur: {
+      sheetName: "IIM_Raipur",
+      tableId: "tblIIMRaipur",
+      searchId: "searchTblIIMRaipur",
+      countId: "countTblIIMRaipur",
+      idField: "IIM_ID",
+      columns: [
+        { key: "IIM_ID", label: "ID" },
+        { key: "Candidate_Name", label: "Candidate Name" },
+        { key: "Father_Husband_Name", label: "Father / Husband" },
+        { key: "Mobile_Number", label: "Mobile" },
+        { key: "Block", label: "Block" },
+        { key: "Village", label: "Village" },
+        { key: "Stream_Subject", label: "Stream / Qual." },
+        { key: "Raipur_Stay_3Months", label: "3Mo Raipur Stay" },
+        { key: "Selection_Status", label: "Selection Status", isStatusBadge: true },
+        { key: "Batch", label: "Batch" },
+        { key: "Activity_Name", label: "Activity / Unit" },
+        { key: "Financial_Assistance_Amount", label: "Assistance (₹)", isMoney: true },
+        { key: "Installment_2nd", label: "2nd Installment" },
+        { key: "Remarks", label: "Remarks" }
+      ]
+    },
+    shasan_sahyog: {
+      sheetName: "Shasan_Sahyog",
+      tableId: "tblShasanSahyog",
+      searchId: "searchTblShasanSahyog",
+      countId: "countTblShasanSahyog",
+      idField: "Demand_ID",
+      columns: [
+        { key: "Demand_ID", label: "Demand ID" },
+        { key: "Name", label: "Name" },
+        { key: "Father_Husband_Name", label: "Father / Husband" },
+        { key: "DOB", label: "DOB" },
+        { key: "Mobile_Number", label: "Mobile" },
+        { key: "Block", label: "Block" },
+        { key: "Address", label: "Address / Village" },
+        { key: "Assistance_Required", label: "शासन से सहयोग (Demand)" },
+        { key: "Status", label: "Status", isStatusBadge: true },
+        { key: "Remarks", label: "Remarks" }
+      ]
     }
   };
 
   // Cache table records for client search
   const tableDataCache = {};
 
-  const SERVICE_FORM_PREFIXES = ["mf", "mb", "cou", "skl", "er", "el", "edu", "ent", "ng"];
+  const SERVICE_FORM_PREFIXES = ["mf", "mb", "cou", "skl", "er", "el", "edu", "ent", "ng", "reh", "iim", "ss"];
 
   function init() {
     initializeDateDefaults();
@@ -271,7 +365,7 @@ const Forms = (function() {
   function initializeDateDefaults() {
     const today = new Date().toISOString().split("T")[0];
     document.querySelectorAll('input[type="date"]').forEach(inp => {
-      if (!inp.value || inp.value === "2026-09-29") {
+      if (!inp.value) {
         inp.value = today;
       }
     });
@@ -529,8 +623,20 @@ const Forms = (function() {
       setFormVal(`${p}Village`, youth.Village);
     }
 
+    if (document.getElementById(`${p}Parent`)) setFormVal(`${p}Parent`, youth.Father_Husband_Name || youth.Father_Mother_Name || "");
+    if (document.getElementById(`${p}FatherName`)) setFormVal(`${p}FatherName`, youth.Father_Husband_Name || youth.Father_Mother_Name || "");
     if (document.getElementById(`${p}Qualification`)) setFormVal(`${p}Qualification`, youth.Qualification);
     if (document.getElementById(`${p}CareerInterest`)) setFormVal(`${p}CareerInterest`, youth.Career_Interest);
+
+    if (p === "iim") {
+      const form = document.getElementById("formIIMRaipur");
+      if (form) {
+        if (youth.Age && form.querySelector("[name='Age']")) form.querySelector("[name='Age']").value = youth.Age;
+        if (youth.Category && form.querySelector("[name='Category']")) form.querySelector("[name='Category']").value = youth.Category;
+        if (youth.Aadhaar_Number && form.querySelector("[name='Aadhaar_Number']")) form.querySelector("[name='Aadhaar_Number']").value = youth.Aadhaar_Number;
+        if (youth.Address && form.querySelector("[name='Address']")) form.querySelector("[name='Address']").value = youth.Address;
+      }
+    }
 
     // Show verified mini candidate badge
     renderYouthVerifiedCard(p, youth);
@@ -603,9 +709,10 @@ const Forms = (function() {
 
     try {
       const res = await API.call("getTableRecords", { sheetName: config.sheetName });
-      if (res && res.success && res.records) {
-        tableDataCache[moduleKey] = res.records;
-        renderTabTable(moduleKey, res.records);
+      const recordList = res && (res.records || res.data);
+      if (res && res.success && Array.isArray(recordList)) {
+        tableDataCache[moduleKey] = recordList;
+        renderTabTable(moduleKey, recordList);
       } else {
         if (tbody) tbody.innerHTML = `<tr><td colspan="${config.columns.length + 1}" style="text-align: center; padding: 20px; color: #94A3B8;">No records found.</td></tr>`;
       }
@@ -982,6 +1089,15 @@ const Forms = (function() {
 
     // 13. Activities Form
     bindSubmit("formActivities", "addActivity", "activities");
+
+    // 14. Rehabilitation Form (आत्मसमर्पण एवं पुनर्वास)
+    bindSubmit("formRehabilitation", "addRehabilitation", "rehabilitation");
+
+    // 15. IIM Raipur Form (आईआईएम रायपुर उद्यमिता)
+    bindSubmit("formIIMRaipur", "addIIMRaipur", "iim_raipur");
+
+    // 16. Govt Assistance / Shasan Sahyog (शासन से सहयोग)
+    bindSubmit("formShasanSahyog", "addShasanSahyog", "shasan_sahyog");
   }
 
   function bindSubmit(formId, apiAction, moduleKey, preValidate) {
@@ -1030,11 +1146,11 @@ const Forms = (function() {
           let contextValues = {};
           if (isAddAnother) {
             const contextKeys = [
-              "Date", "Registration_Date", "Start_Date", "Placement_Date", "Admission_Date", "Identification_Date",
+              "Date", "Registration_Date", "Start_Date", "Placement_Date", "Admission_Date", "Identification_Date", "Surrender_Date",
               "Block", "Gram_Panchayat", "GP", "Village", "Venue", "Activity_Name", "Activity_Type",
               "Counsellor_Name", "Counselling_Type", "Training_Provider", "Training_Name", "Training_Type",
               "Employer_Name", "Job_Role", "Location", "Employment_Type",
-              "Institution_Name", "Course", "Business_Category", "Bank_Name", "Loan_Scheme"
+              "Institution_Name", "Course", "Business_Category", "Bank_Name", "Loan_Scheme", "Assistance_Type"
             ];
             contextKeys.forEach(k => {
               const el = form.querySelector(`[name="${k}"]`);

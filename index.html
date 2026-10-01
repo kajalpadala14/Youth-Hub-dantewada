@@ -193,6 +193,30 @@
           </div>
         </a>
 
+        <a class="nav-item" data-view="rehabilitation" data-tooltip="Rehabilitation / आत्मसमर्पण एवं पुनर्वास">
+          <span class="nav-icon"><i class="fas fa-hand-holding-heart"></i></span>
+          <div class="nav-label">
+            <span class="nav-label-en">Rehabilitation</span>
+            <span class="nav-label-hi">आत्मसमर्पण एवं पुनर्वास</span>
+          </div>
+        </a>
+
+        <a class="nav-item" data-view="iim_raipur" data-tooltip="IIM Raipur / आईआईएम रायपुर उद्यमिता">
+          <span class="nav-icon"><i class="fas fa-graduation-cap"></i></span>
+          <div class="nav-label">
+            <span class="nav-label-en">IIM Raipur</span>
+            <span class="nav-label-hi">आईआईएम रायपुर उद्यमिता</span>
+          </div>
+        </a>
+
+        <a class="nav-item" data-view="shasan_sahyog" data-tooltip="Govt Assistance / शासन से सहयोग">
+          <span class="nav-icon"><i class="fas fa-seedling"></i></span>
+          <div class="nav-label">
+            <span class="nav-label-en">Govt Assistance</span>
+            <span class="nav-label-hi">शासन से सहयोग (मांग)</span>
+          </div>
+        </a>
+
         <!-- SECTION 3: ANALYTICS -->
         <div class="nav-section-title">
           <span>ANALYTICS / विश्लेषण</span>
@@ -220,6 +244,10 @@
             <a class="nav-sub-item" data-view="reports" data-report-type="gp_wise" data-tooltip="GP-wise Report / पंचायतवार रिपोर्ट">
               <i class="fas fa-location-dot sub-icon"></i>
               <span class="sub-label">GP-wise Report / पंचायतवार</span>
+            </a>
+            <a class="nav-sub-item" data-view="reports" data-report-type="rehabilitation" data-tooltip="Rehabilitation Report / पुनर्वास रिपोर्ट">
+              <i class="fas fa-hand-holding-heart sub-icon"></i>
+              <span class="sub-label">Rehabilitation / पुनर्वास रिपोर्ट</span>
             </a>
             <a class="nav-sub-item" data-view="reports" data-report-type="monthly" data-tooltip="Monthly Report / माहवार रिपोर्ट">
               <i class="fas fa-calendar-days sub-icon"></i>
@@ -527,6 +555,16 @@
                 <div class="kpi-value" id="kpiTrainings">0</div>
                 <div class="kpi-label">Training Conducted</div>
                 <div class="kpi-sub">आयोजित प्रशिक्षण कार्यक्रम</div>
+              </div>
+            </div>
+
+            <!-- 13. Rehabilitation -->
+            <div class="kpi-card purple" onclick="App.switchView('rehabilitation')">
+              <div class="kpi-icon"><i class="fas fa-hand-holding-heart"></i></div>
+              <div class="kpi-details">
+                <div class="kpi-value" id="kpiRehabilitation">0</div>
+                <div class="kpi-label">Rehabilitation</div>
+                <div class="kpi-sub">आत्मसमर्पण एवं पुनर्वास</div>
               </div>
             </div>
           </div>
@@ -2000,8 +2038,29 @@
                     </div>
 
                     <div class="form-group">
+                      <label class="form-label">Father / Husband Name</label>
+                      <input type="text" name="Father_Name" id="entFatherName" class="form-control" placeholder="पिता/पति का नाम">
+                    </div>
+
+                    <div class="form-group">
                       <label class="form-label">Mobile</label>
                       <input type="tel" name="Mobile" id="entMobile" class="form-control">
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">Block</label>
+                      <select name="Block" id="entBlock" class="form-control">
+                        <option value="">-- Select Block --</option>
+                        <option value="Dantewada">Dantewada (दंतेवाड़ा)</option>
+                        <option value="Geedam">Geedam (गीदम)</option>
+                        <option value="Kuakonda">Kuakonda (कुआकोंडा)</option>
+                        <option value="Katekalyan">Katekalyan (कटेकल्याण)</option>
+                      </select>
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">Village / ग्राम</label>
+                      <input type="text" name="Village" id="entVillage" class="form-control" placeholder="ग्राम">
                     </div>
 
                     <div class="form-group">
@@ -2093,6 +2152,66 @@
                         <option value="CMMY">CMMY</option>
                         <option value="Self Financed">Self Financed</option>
                       </select>
+                    </div>
+
+                    <!-- Loan Processing & Document Verification Checklist -->
+                    <div class="form-group col-span-3" style="background: #F8FAFC; border: 1px solid #CBD5E1; padding: 14px; border-radius: 8px; margin-top: 6px;">
+                      <h4 style="font-size: 13px; font-weight: 700; color: #1E293B; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+                        <i class="fas fa-clipboard-check text-blue"></i> Loan Process Checklist / ऋण दस्तावेज सत्यापन सूची
+                      </h4>
+                      <div class="form-grid" style="grid-template-columns: repeat(3, 1fr); gap: 10px;">
+                        <div class="form-group">
+                          <label class="form-label">Udhyam Registration</label>
+                          <select name="Udyam_Registration" class="form-control">
+                            <option value="Available">Available (पंजीकृत)</option>
+                            <option value="In Progress">In Progress (प्रक्रियाधीन)</option>
+                            <option value="Pending">Pending (लंबित)</option>
+                          </select>
+                        </div>
+                        <div class="form-group">
+                          <label class="form-label">Bank Documents</label>
+                          <select name="Bank_Documents" class="form-control">
+                            <option value="Submitted">Submitted (पासबुक/खाता विवरण)</option>
+                            <option value="Pending">Pending (प्रतीक्षारत)</option>
+                            <option value="Incomplete">Incomplete (अधूरा)</option>
+                          </select>
+                        </div>
+                        <div class="form-group">
+                          <label class="form-label">PAN Card</label>
+                          <select name="Pan_Card" class="form-control">
+                            <option value="Available">Available (उपलब्ध)</option>
+                            <option value="Pending">Pending (लंबित)</option>
+                            <option value="Applied">Applied (आवेदन किया गया)</option>
+                          </select>
+                        </div>
+                        <div class="form-group">
+                          <label class="form-label">Aadhar Card</label>
+                          <select name="Aadhar_Card" class="form-control">
+                            <option value="Verified">Verified (सत्यापित)</option>
+                            <option value="Pending">Pending (लंबित)</option>
+                          </select>
+                        </div>
+                        <div class="form-group">
+                          <label class="form-label">Voter Card</label>
+                          <select name="Voter_Card" class="form-control">
+                            <option value="Available">Available (उपलब्ध)</option>
+                            <option value="Pending">Pending (लंबित)</option>
+                          </select>
+                        </div>
+                        <div class="form-group">
+                          <label class="form-label">Quotation / कोटेशन</label>
+                          <select name="Quotation" class="form-control">
+                            <option value="Submitted">Submitted (प्राप्त)</option>
+                            <option value="Pending">Pending (प्रतीक्षारत)</option>
+                            <option value="Not Required">Not Required</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="form-group col-span-3">
+                      <label class="form-label">Loan Updates / ऋण प्रक्रिया ताज़ा स्थिति</label>
+                      <input type="text" name="Updates" class="form-control" placeholder="e.g. बैंक शाखा में आवेदन प्रस्तुत / सैंक्शन जारी / कोटेशन सत्यापित">
                     </div>
 
                     <div class="form-group col-span-3">
@@ -2560,6 +2679,674 @@
         </section>
 
         <!-- ==========================================
+             VIEW 13B: REHABILITATION & SURRENDER MONITORING
+        =========================================== -->
+        <section class="page-section" id="view_rehabilitation">
+          <!-- Main Table Card: Rehabilitation Records -->
+          <div class="form-card">
+            <div class="form-header table-card-header">
+              <div class="table-header-info">
+                <div class="table-header-icon-box bg-purple-subtle">
+                  <i class="fas fa-hand-holding-heart text-purple"></i>
+                </div>
+                <div class="table-header-text">
+                  <h3 class="table-header-title">
+                    Rehabilitation &amp; Surrender Monitoring Records
+                    <span class="table-header-sub-hi">/ आत्मसमर्पण एवं पुनर्वास रिकॉर्ड्स</span>
+                  </h3>
+                  <p class="table-header-desc">Monitoring assistance packages, livelihood linkage, and welfare tracking for surrendered youth</p>
+                </div>
+              </div>
+              <div class="table-header-toolbar">
+                <div class="table-search-box">
+                  <i class="fas fa-search table-search-icon"></i>
+                  <input type="text" class="table-search-input" id="searchTblRehabilitation" placeholder="Search rehabilitation...">
+                </div>
+                <span class="table-count-badge" id="countTblRehabilitation">0 records</span>
+                <div class="table-actions">
+                  <button type="button" class="btn-tb-secondary" onclick="Forms.loadTabTable('rehabilitation')" title="Refresh Data">
+                    <i class="fas fa-sync-alt"></i> <span>Refresh</span>
+                  </button>
+                  <button type="button" class="btn-tb-secondary btn-table-export-csv" onclick="Forms.exportTableCSV('rehabilitation')" title="Export to CSV">
+                    <i class="fas fa-file-csv text-emerald"></i> <span>Export CSV</span>
+                  </button>
+                  <button type="button" class="btn-tb-primary btn-open-drawer" onclick="Forms.openDrawer('formRehabilitation')">
+                    <i class="fas fa-plus"></i> <span>Add Rehabilitation</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table class="data-table" id="tblRehabilitation">
+                <thead></thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Slide-Over Drawer: Add Rehabilitation Form -->
+          <div class="slide-over-drawer" id="drawer_formRehabilitation">
+            <div class="slide-over-header">
+              <div>
+                <h3><i class="fas fa-hand-holding-heart"></i> Rehabilitation Data Entry / आत्मसमर्पण एवं पुनर्वास</h3>
+                <p>Track surrendered youth financial packages, livelihood linkages &amp; rehabilitation status</p>
+              </div>
+              <div style="display: flex; gap: 8px; align-items: center;">
+                <button type="button" class="btn btn-secondary btn-search-youth" data-prefix="reh" style="font-size: 11px; padding: 4px 8px; background: rgba(255,255,255,0.15); color: #fff; border-color: rgba(255,255,255,0.3);">
+                  <i class="fas fa-search"></i> Find Youth
+                </button>
+                <button type="button" class="btn-drawer-close" onclick="Forms.closeDrawer()" title="Close">&times;</button>
+              </div>
+            </div>
+            <div class="slide-over-body">
+              <form id="formRehabilitation">
+                <div class="form-body">
+                  <div class="form-grid">
+                    <div class="form-group">
+                      <label class="form-label">Rehab ID <span class="required">*</span></label>
+                      <input type="text" class="form-control" value="Auto-generated (e.g. REH-2026-00001)" readonly>
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">Youth ID (Optional link to Master)</label>
+                      <input type="text" name="Youth_ID" id="rehYouthId" class="form-control" placeholder="YH-2026-XXXXX">
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">Candidate Name <span class="required">*</span></label>
+                      <input type="text" name="Candidate_Name" id="rehYouthName" class="form-control" placeholder="Full Name" required>
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">Father / Husband Name</label>
+                      <input type="text" name="Father_Husband_Name" id="rehParent" class="form-control" placeholder="Guardian Name">
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">Mobile Number <span class="required">*</span></label>
+                      <input type="tel" name="Mobile" id="rehMobile" class="form-control" placeholder="10-digit mobile" maxlength="10" required>
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">Block <span class="required">*</span></label>
+                      <select name="Block" id="rehBlock" class="form-control" data-block-select data-gp-target="rehGP" required>
+                        <option value="">Select Block</option>
+                        <option value="Dantewada">Dantewada</option>
+                        <option value="Geedam">Geedam</option>
+                        <option value="Katekalyan">Katekalyan</option>
+                        <option value="Kuakonda">Kuakonda</option>
+                      </select>
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">Gram Panchayat</label>
+                      <select name="GP" id="rehGP" class="form-control">
+                        <option value="">Select Gram Panchayat</option>
+                      </select>
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">Village</label>
+                      <input type="text" name="Village" id="rehVillage" class="form-control" placeholder="Village Name">
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">Surrender Date <span class="required">*</span></label>
+                      <input type="date" name="Surrender_Date" class="form-control" required>
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">Rehabilitation Status <span class="required">*</span></label>
+                      <select name="Rehabilitation_Status" class="form-control" required>
+                        <option value="Registered">Registered / पंजीकृत</option>
+                        <option value="Package In-Process">Package In-Process / प्रक्रियाधीन</option>
+                        <option value="Package Sanctioned">Package Sanctioned / स्वीकृत</option>
+                        <option value="Livelihood Linked">Livelihood Linked / आजीविका लिंकेज</option>
+                        <option value="Self-Reliant">Self-Reliant / आत्मनिर्भर</option>
+                        <option value="Other">Other / अन्य</option>
+                      </select>
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">Assistance Type</label>
+                      <select name="Assistance_Type" class="form-control">
+                        <option value="Financial Grant">Financial Grant / आर्थिक सहायता</option>
+                        <option value="Skill Training">Skill Training / कौशल प्रशिक्षण</option>
+                        <option value="Livelihood Support">Livelihood Support / आजीविका सहायता</option>
+                        <option value="Housing Assistance">Housing Assistance / आवास सहायता</option>
+                        <option value="Self-Employment Scheme">Self-Employment Scheme / स्वरोजगार योजना</option>
+                        <option value="Multiple Support">Multiple Support / बहुआयामी सहायता</option>
+                      </select>
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">Assistance Amount (₹)</label>
+                      <input type="number" name="Assistance_Amount" class="form-control" placeholder="e.g. 50000" min="0">
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">Scheme Linked</label>
+                      <input type="text" name="Scheme_Linked" class="form-control" placeholder="e.g. PMEGP / NRLM / CSR / Dist. Admin">
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">Employment Status</label>
+                      <select name="Employment_Status" class="form-control">
+                        <option value="Self-Employed">Self-Employed / स्वरोजगार</option>
+                        <option value="Placed in Job">Placed in Job / नौकरी</option>
+                        <option value="Agriculture &amp; Allied">Agriculture &amp; Allied / कृषि एवं संबद्ध</option>
+                        <option value="In Training">In Training / प्रशिक्षणरत</option>
+                        <option value="Unemployed">Seeking Opportunity / अवसर तलाश</option>
+                      </select>
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">Current Status</label>
+                      <select name="Current_Status" class="form-control">
+                        <option value="Active">Active / सक्रिय</option>
+                        <option value="Stable">Stable / स्थिर</option>
+                        <option value="Needs Follow-up">Needs Follow-up / फॉलो-अप आवश्यक</option>
+                        <option value="Closed">Closed / पूर्ण</option>
+                      </select>
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">Follow-up Date</label>
+                      <input type="date" name="Follow_Up_Date" class="form-control">
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">Follow-up Status</label>
+                      <select name="Follow_Up_Status" class="form-control">
+                        <option value="Completed">Completed / पूर्ण</option>
+                        <option value="Due">Due / देय</option>
+                        <option value="Pending">Pending / लंबित</option>
+                        <option value="Not Required">Not Required / आवश्यक नहीं</option>
+                      </select>
+                    </div>
+
+                    <div class="form-group col-span-2">
+                      <label class="form-label">Pending Issue / Grievance (if any)</label>
+                      <input type="text" name="Pending_Issue" class="form-control" placeholder="Any pending compensation or problem">
+                    </div>
+
+                    <div class="form-group col-span-2">
+                      <label class="form-label">Remarks</label>
+                      <textarea name="Remarks" class="form-control" rows="2" placeholder="Additional details, background or officer notes"></textarea>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="slide-over-footer form-footer">
+                  <button type="button" class="btn btn-secondary" onclick="Forms.closeDrawer()">Cancel</button>
+                  <button type="button" class="btn btn-secondary btn-save-add-another" data-form="formRehabilitation">Save &amp; Add Another</button>
+                  <button type="reset" class="btn btn-secondary">Clear</button>
+                  <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Save Rehabilitation Entry</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+             VIEW 15: IIM RAIPUR ENTREPRENEURSHIP
+        =========================================== -->
+        <section class="page-section" id="view_iim_raipur">
+          <!-- Main Table Card: IIM Raipur Records -->
+          <div class="form-card">
+            <div class="form-header table-card-header">
+              <div class="table-header-info">
+                <div class="table-header-icon-box bg-blue-subtle">
+                  <i class="fas fa-graduation-cap text-blue"></i>
+                </div>
+                <div class="table-header-text">
+                  <h3 class="table-header-title">
+                    IIM Raipur Entrepreneurship Candidates
+                    <span class="table-header-sub-hi">/ आईआईएम रायपुर उद्यमिता कार्यक्रम</span>
+                  </h3>
+                  <p class="table-header-desc">3-Month Residential Course | Screening, Selection &amp; Financial Support Records</p>
+                </div>
+              </div>
+              <div class="table-header-toolbar">
+                <div class="table-search-box">
+                  <i class="fas fa-search table-search-icon"></i>
+                  <input type="text" class="table-search-input" id="searchTblIIMRaipur" placeholder="Search candidate, mobile, batch...">
+                </div>
+                <span class="table-count-badge" id="countTblIIMRaipur">0 records</span>
+                <div class="table-actions">
+                  <button type="button" class="btn-tb-secondary" onclick="Forms.loadTabTable('iim_raipur')" title="Refresh Data">
+                    <i class="fas fa-sync-alt"></i> <span>Refresh</span>
+                  </button>
+                  <button type="button" class="btn-tb-secondary btn-table-export-csv" onclick="Forms.exportTableCSV('iim_raipur')" title="Export to CSV">
+                    <i class="fas fa-file-csv text-emerald"></i> <span>Export CSV</span>
+                  </button>
+                  <button type="button" class="btn-tb-primary btn-open-drawer" onclick="Forms.openDrawer('formIIMRaipur')">
+                    <i class="fas fa-plus"></i> <span>Add Candidate / आवेदन</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table class="data-table" id="tblIIMRaipur">
+                <thead></thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Slide-Over Drawer: IIM Raipur Form -->
+          <div class="slide-over-drawer" id="drawer_formIIMRaipur">
+            <div class="slide-over-header">
+              <div>
+                <h3><i class="fas fa-graduation-cap"></i> IIM Raipur 3-Month Course Application / चयन फॉर्म</h3>
+                <p>विस्तृत स्क्रीनिंग, रायपुर प्रवास सहमति एवं उद्यमिता विचार</p>
+              </div>
+              <div style="display: flex; gap: 8px; align-items: center;">
+                <button type="button" class="btn btn-secondary btn-search-youth" data-prefix="iim" style="font-size: 11px; padding: 4px 8px; background: rgba(255,255,255,0.15); color: #fff; border-color: rgba(255,255,255,0.3);">
+                  <i class="fas fa-search"></i> Search Youth
+                </button>
+                <button type="button" class="btn-drawer-close" onclick="Forms.closeDrawer()" title="Close">&times;</button>
+              </div>
+            </div>
+            <div class="slide-over-body">
+              <form id="formIIMRaipur">
+                <div class="form-body">
+                  <div class="form-grid">
+                    <!-- SECTION A: PERSONAL INFO -->
+                    <div class="form-group col-span-3" style="background: #F1F5F9; padding: 10px 14px; border-radius: 6px; font-weight: 700; color: #1E293B; margin-top: 5px;">
+                      1. व्यक्तिगत जानकारी (Personal Information)
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">पूरा नाम (Full Name) <span class="required">*</span></label>
+                      <input type="text" name="Candidate_Name" id="iimYouthName" class="form-control" required placeholder="Full Name">
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">पिता / पति का नाम (Father / Husband Name)</label>
+                      <input type="text" name="Father_Husband_Name" id="iimParent" class="form-control" placeholder="Father / Husband Name">
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">उम्र (Age)</label>
+                      <input type="number" name="Age" class="form-control" placeholder="e.g. 24" min="15" max="50">
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">वर्ग (Category)</label>
+                      <select name="Category" class="form-control">
+                        <option value="ST">ST (अनुसूचित जनजाति)</option>
+                        <option value="SC">SC (अनुसूचित जाति)</option>
+                        <option value="OBC">OBC (अन्य पिछड़ा वर्ग)</option>
+                        <option value="General">General (सामान्य)</option>
+                      </select>
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">मोबाइल नंबर (Mobile Number) <span class="required">*</span></label>
+                      <input type="tel" name="Mobile_Number" id="iimMobile" class="form-control" required placeholder="10-digit mobile" maxlength="10">
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">आधार नंबर (Aadhar Number)</label>
+                      <input type="text" name="Aadhaar_Number" class="form-control" placeholder="12-digit Aadhaar" maxlength="12">
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">ब्लॉक (Block)</label>
+                      <select name="Block" id="iimBlock" class="form-control">
+                        <option value="Dantewada">Dantewada (दंतेवाड़ा)</option>
+                        <option value="Geedam">Geedam (गीदम)</option>
+                        <option value="Kuakonda">Kuakonda (कुआकोंडा)</option>
+                        <option value="Katekalyan">Katekalyan (कटेकल्याण)</option>
+                      </select>
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">ग्राम (Village)</label>
+                      <input type="text" name="Village" id="iimVillage" class="form-control" placeholder="ग्राम का नाम">
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">जिला (District)</label>
+                      <input type="text" name="District" class="form-control" value="दंतेवाड़ा" readonly>
+                    </div>
+
+                    <div class="form-group col-span-3">
+                      <label class="form-label">पूरा पता — ग्राम, ब्लॉक, जिला (Full Address)</label>
+                      <input type="text" name="Address" class="form-control" placeholder="ग्राम, पोस्ट, ब्लॉक, जिला">
+                    </div>
+
+                    <!-- SECTION B: EDUCATION & EXPERIENCE -->
+                    <div class="form-group col-span-3" style="background: #F1F5F9; padding: 10px 14px; border-radius: 6px; font-weight: 700; color: #1E293B; margin-top: 10px;">
+                      2. शैक्षणिक योग्यता एवं अनुभव (Education &amp; Experience)
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">हालिया परीक्षा में प्रतिशत (Latest exam %)</label>
+                      <input type="text" name="Latest_Exam_Percentage" class="form-control" placeholder="e.g. 68%">
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">किस विषय/स्ट्रीम से पढ़े हैं? (Stream)</label>
+                      <input type="text" name="Stream_Subject" id="iimQualification" class="form-control" placeholder="e.g. 12th Arts / B.Com / ITI">
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">क्या व्यावसायिक/तकनीकी कोर्स किया है?</label>
+                      <select name="Vocational_Course" class="form-control">
+                        <option value="No">No / नहीं</option>
+                        <option value="Yes">Yes / हाँ</option>
+                      </select>
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">सर्टिफिकेट या डिप्लोमा (यदि कोई हो)</label>
+                      <input type="text" name="Certificate_Diploma" class="form-control" placeholder="कोर्स/डिप्लोमा नाम">
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">वर्तमान में आप क्या करते हैं? (Occupation)</label>
+                      <input type="text" name="Current_Occupation" class="form-control" placeholder="e.g. बेरोजगार / खेती / छोटा व्यापार">
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">इंटर्नशिप या व्यवसाय का पूर्व अनुभव?</label>
+                      <select name="Work_Experience" class="form-control">
+                        <option value="No">No / कोई अनुभव नहीं</option>
+                        <option value="Yes (6 months)">Yes (6 months)</option>
+                        <option value="Yes (1 year+)">Yes (1 year+)</option>
+                      </select>
+                    </div>
+
+                    <!-- SECTION C: COURSE ELIGIBILITY & COMMITMENT -->
+                    <div class="form-group col-span-3" style="background: #F1F5F9; padding: 10px 14px; border-radius: 6px; font-weight: 700; color: #1E293B; margin-top: 10px;">
+                      3. रायपुर प्रवास एवं पारिवारिक सहमति (Raipur Stay Commitment)
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">क्या 3 महीने रायपुर में रह सकते हैं?</label>
+                      <select name="Raipur_Stay_3Months" class="form-control">
+                        <option value="Yes">हाँ, रह सकता/सकती हूँ (Yes)</option>
+                        <option value="No">नहीं (No)</option>
+                      </select>
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">घर की जिम्मेदारी कौन संभालेगा?</label>
+                      <input type="text" name="Home_Responsibility_Manager" class="form-control" placeholder="उदा. माता-पिता / भाई / पति">
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">बीच में वापस बुलाने वाली कोई बाध्यता?</label>
+                      <select name="Family_Recall_Risk" class="form-control">
+                        <option value="No">नहीं, कोई बाध्यता नहीं (No)</option>
+                        <option value="Yes">हाँ, संभव है (Yes)</option>
+                      </select>
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">परिवार ने कोर्स के लिए सहमति दी है?</label>
+                      <select name="Family_Consent" class="form-control">
+                        <option value="Yes">हाँ, पूर्ण सहमति है (Yes)</option>
+                        <option value="No">नहीं (No)</option>
+                      </select>
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">क्या कभी कोई कोर्स बीच में छोड़ा है?</label>
+                      <select name="Dropout_History" class="form-control">
+                        <option value="No">नहीं, कभी नहीं (No)</option>
+                        <option value="Yes">हाँ (Yes)</option>
+                      </select>
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">कोर्स के बारे में कैसे जाना?</label>
+                      <input type="text" name="Source_Info" class="form-control" placeholder="उदा. यूथ हब / मित्र / सोशल मीडिया">
+                    </div>
+
+                    <!-- SECTION D: BUSINESS IDEA & VISION -->
+                    <div class="form-group col-span-3" style="background: #F1F5F9; padding: 10px 14px; border-radius: 6px; font-weight: 700; color: #1E293B; margin-top: 10px;">
+                      4. व्यवसाय विचार एवं दृष्टि (Business Idea &amp; Vision)
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">किस प्रकार का व्यवसाय शुरू करना चाहते हैं?</label>
+                      <input type="text" name="Business_Type_Desired" class="form-control" placeholder="उदा. किराना / सिलाई / डेयरी / सर्विस">
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">क्या बिज़नेस आइडिया पहले से है?</label>
+                      <select name="Existing_Business_Idea" class="form-control">
+                        <option value="Yes">हाँ, योजना तैयार है (Yes)</option>
+                        <option value="Exploring">विचार चल रहा है (Exploring)</option>
+                        <option value="No">नहीं (No)</option>
+                      </select>
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">3 महीने बाद आप क्या करने की योजना बना रहे हैं?</label>
+                      <input type="text" name="Plan_After_Course" class="form-control" placeholder="उदा. स्वयं का उद्यम स्थापित करना">
+                    </div>
+
+                    <div class="form-group col-span-3">
+                      <label class="form-label">क्षेत्र की सबसे बड़ी समस्या जिसे व्यवसाय से हल करेंगे?</label>
+                      <input type="text" name="Local_Problem_To_Solve" class="form-control" placeholder="स्थानीय समस्या का विवरण">
+                    </div>
+
+                    <div class="form-group col-span-3">
+                      <label class="form-label">आप यह कोर्स क्यों करना चाहते हैं? (कम से कम 3 वाक्य)</label>
+                      <textarea name="Why_This_Course" class="form-control" rows="3" placeholder="कोर्स करने का उद्देश्य एवं प्रेरणा लिखें..."></textarea>
+                    </div>
+
+                    <div class="form-group col-span-3">
+                      <label class="form-label">एंट्रेंपेन्योरशिप के बारे में विचार (Entrepreneurship Mindset)</label>
+                      <textarea name="Entrepreneurship_Thoughts" class="form-control" rows="2" placeholder="जोखिम लेने, नई सोच और समस्याओं को व्यापार में बदलने पर आपके विचार..."></textarea>
+                    </div>
+
+                    <!-- SECTION E: SELECTION & FUNDING TRACKING (Image 5) -->
+                    <div class="form-group col-span-3" style="background: #EFF6FF; padding: 10px 14px; border-radius: 6px; font-weight: 700; color: #1E40AF; margin-top: 10px;">
+                      5. बैच, चयन स्थिति एवं वित्तीय सहयोग (Batch &amp; Financial Support)
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">Selection Status</label>
+                      <select name="Selection_Status" class="form-control">
+                        <option value="Applied">1. Applied / पंजीकृत</option>
+                        <option value="Screened">2. Screened / मूल्यांकित</option>
+                        <option value="Selected">3. Selected / चयनित</option>
+                        <option value="Enrolled">4. Enrolled / प्रवेशित</option>
+                        <option value="Completed">5. Completed / पूर्ण</option>
+                      </select>
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">Batch (शैक्षणिक वर्ष)</label>
+                      <select name="Batch" class="form-control">
+                        <option value="IIM 2026">IIM 2026 (Current)</option>
+                        <option value="IIM 2025">IIM 2025</option>
+                        <option value="IIM 2027">IIM 2027</option>
+                      </select>
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">Activity / व्यवसाय नाम</label>
+                      <input type="text" name="Activity_Name" class="form-control" placeholder="उदा. KIRANA SHOP, SILAI DUKAN">
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">Financial Assistance Amount (₹)</label>
+                      <input type="number" name="Financial_Assistance_Amount" class="form-control" placeholder="उदा. 50000">
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">2nd Installment Status / टिप्पणी</label>
+                      <input type="text" name="Installment_2nd" class="form-control" placeholder="उदा. 30000 / Pending / Released">
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">सत्यता की घोषणा (Declaration)</label>
+                      <select name="Declaration" class="form-control">
+                        <option value="Agreed & Confirmed">पुष्टि करता/करती हूँ (Agreed &amp; Confirmed)</option>
+                      </select>
+                    </div>
+
+                    <div class="form-group col-span-3">
+                      <label class="form-label">Remarks</label>
+                      <input type="text" name="Remarks" class="form-control" placeholder="अतिरिक्त टिप्पणी">
+                    </div>
+                  </div>
+                </div>
+
+                <div class="slide-over-footer form-footer">
+                  <button type="button" class="btn btn-secondary" onclick="Forms.closeDrawer()">Cancel</button>
+                  <button type="reset" class="btn btn-secondary">Clear</button>
+                  <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Save IIM Candidate Record</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+             VIEW 16: GOVT ASSISTANCE / SHASAN SE SAHYOG
+        =========================================== -->
+        <section class="page-section" id="view_shasan_sahyog">
+          <!-- Main Table Card: Shasan Sahyog Records -->
+          <div class="form-card">
+            <div class="form-header table-card-header">
+              <div class="table-header-info">
+                <div class="table-header-icon-box bg-emerald-subtle">
+                  <i class="fas fa-seedling text-emerald"></i>
+                </div>
+                <div class="table-header-text">
+                  <h3 class="table-header-title">
+                    Govt Livelihood Assistance Demands
+                    <span class="table-header-sub-hi">/ शासन से सहयोग (मांग एवं सहायता)</span>
+                  </h3>
+                  <p class="table-header-desc">बोरवेल, तार फेंसिंग, बीज, कृषि व आजीविका साधन मांग ट्रैकिंग</p>
+                </div>
+              </div>
+              <div class="table-header-toolbar">
+                <div class="table-search-box">
+                  <i class="fas fa-search table-search-icon"></i>
+                  <input type="text" class="table-search-input" id="searchTblShasanSahyog" placeholder="Search applicant, block, village, demand...">
+                </div>
+                <span class="table-count-badge" id="countTblShasanSahyog">0 records</span>
+                <div class="table-actions">
+                  <button type="button" class="btn-tb-secondary" onclick="Forms.loadTabTable('shasan_sahyog')" title="Refresh Data">
+                    <i class="fas fa-sync-alt"></i> <span>Refresh</span>
+                  </button>
+                  <button type="button" class="btn-tb-secondary btn-table-export-csv" onclick="Forms.exportTableCSV('shasan_sahyog')" title="Export to CSV">
+                    <i class="fas fa-file-csv text-emerald"></i> <span>Export CSV</span>
+                  </button>
+                  <button type="button" class="btn-tb-primary btn-open-drawer" onclick="Forms.openDrawer('formShasanSahyog')">
+                    <i class="fas fa-plus"></i> <span>Add Demand / मांग दर्ज करें</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table class="data-table" id="tblShasanSahyog">
+                <thead></thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Slide-Over Drawer: Shasan Sahyog Form -->
+          <div class="slide-over-drawer" id="drawer_formShasanSahyog">
+            <div class="slide-over-header">
+              <div>
+                <h3><i class="fas fa-seedling"></i> शासन से सहयोग मांग प्रपत्र</h3>
+                <p>बोरवेल, तार फेंसिंग, सब्जी बीज, कृषि उपकरण सहयोग पंजीकरण</p>
+              </div>
+              <div style="display: flex; gap: 8px; align-items: center;">
+                <button type="button" class="btn btn-secondary btn-search-youth" data-prefix="ss" style="font-size: 11px; padding: 4px 8px; background: rgba(255,255,255,0.15); color: #fff; border-color: rgba(255,255,255,0.3);">
+                  <i class="fas fa-search"></i> Search Youth
+                </button>
+                <button type="button" class="btn-drawer-close" onclick="Forms.closeDrawer()" title="Close">&times;</button>
+              </div>
+            </div>
+            <div class="slide-over-body">
+              <form id="formShasanSahyog">
+                <div class="form-body">
+                  <div class="form-grid">
+                    <div class="form-group">
+                      <label class="form-label">नाम (Applicant Name) <span class="required">*</span></label>
+                      <input type="text" name="Name" id="ssYouthName" class="form-control" required placeholder="आवेदक का नाम">
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">पिता / पति का नाम</label>
+                      <input type="text" name="Father_Husband_Name" id="ssParent" class="form-control" placeholder="पिता/पति का नाम">
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">जन्म दिनांक (DOB)</label>
+                      <input type="date" name="DOB" class="form-control">
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">मोबाइल नंबर <span class="required">*</span></label>
+                      <input type="tel" name="Mobile_Number" id="ssMobile" class="form-control" required placeholder="10-digit mobile" maxlength="10">
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">ब्लॉक (Block) <span class="required">*</span></label>
+                      <select name="Block" id="ssBlock" class="form-control" required>
+                        <option value="Kuakonda">Kuakonda (कुआकोंडा)</option>
+                        <option value="Dantewada">Dantewada (दंतेवाड़ा)</option>
+                        <option value="Geedam">Geedam (गीदम)</option>
+                        <option value="Katekalyan">Katekalyan (कटेकल्याण)</option>
+                      </select>
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">पता / ग्राम (Village/Address)</label>
+                      <input type="text" name="Address" id="ssVillage" class="form-control" placeholder="उदा. टीकनपाल / नहाड़ी">
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">जिला (District)</label>
+                      <input type="text" name="District" class="form-control" value="दंतेवाड़ा" readonly>
+                    </div>
+
+                    <div class="form-group col-span-2">
+                      <label class="form-label">शासन से सहयोग (Demand / Assistance Required) <span class="required">*</span></label>
+                      <input type="text" name="Assistance_Required" class="form-control" required placeholder="उदा. बोर और तार फेंसिंग की सुविधा चाहिए / सब्जी खेती करना चाहते हैं बीज चाहिए">
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">मांग स्थिति (Status)</label>
+                      <select name="Status" class="form-control">
+                        <option value="माग दर्ज">मांग दर्ज (Demand Registered)</option>
+                        <option value="सत्यापित">सत्यापित (Verified)</option>
+                        <option value="प्रक्रियाधीन">प्रक्रियाधीन (In-Process)</option>
+                        <option value="स्वीकृत">स्वीकृत (Approved)</option>
+                        <option value="वितरित / पूर्ण">वितरित / पूर्ण (Delivered/Closed)</option>
+                      </select>
+                    </div>
+
+                    <div class="form-group col-span-2">
+                      <label class="form-label">रिमार्क (Remarks)</label>
+                      <input type="text" name="Remarks" class="form-control" placeholder="क्षेत्रीय अधिकारी/सर्वेक्षक टिप्पणी">
+                    </div>
+                  </div>
+                </div>
+
+                <div class="slide-over-footer form-footer">
+                  <button type="button" class="btn btn-secondary" onclick="Forms.closeDrawer()">Cancel</button>
+                  <button type="reset" class="btn btn-secondary">Clear</button>
+                  <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Save Demand Entry</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
              VIEW 14: REPORTS & EXPORTS
         =========================================== -->
         <section class="page-section" id="view_reports">
@@ -2584,6 +3371,7 @@
                 <option value="navgurukul">NavGurukul Fellowship Status</option>
                 <option value="training_activity">Trainings Conducted Report</option>
                 <option value="mobilization">Mobilization Events Report</option>
+                <option value="rehabilitation">Rehabilitation &amp; Surrender Report</option>
               </select>
 
               <input type="text" id="reportTableSearch" class="form-control" style="width: 220px; padding: 5px 10px;" placeholder="Search in report table...">
@@ -2793,25 +3581,6 @@
             <i class="fas fa-sign-in-alt"></i> Login to System
           </button>
         </form>
-
-        <!-- Quick 1-Click Demo Accounts for instant evaluation -->
-        <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px dashed #CBD5E1; text-align: center;">
-          <p style="font-size: 11px; font-weight: 600; color: #64748B; margin-bottom: 8px;">QUICK DEMO ROLES (1-CLICK LOGIN):</p>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
-            <button type="button" class="btn btn-secondary" data-demo-user="admin" style="font-size: 11px; padding: 6px 8px;">
-              <i class="fas fa-user-cog"></i> District Admin
-            </button>
-            <button type="button" class="btn btn-secondary" data-demo-user="operator" style="font-size: 11px; padding: 6px 8px;">
-              <i class="fas fa-user-edit"></i> Data Operator
-            </button>
-            <button type="button" class="btn btn-secondary" data-demo-user="block" style="font-size: 11px; padding: 6px 8px;">
-              <i class="fas fa-map-marker-alt"></i> Katekalyan Block
-            </button>
-            <button type="button" class="btn btn-secondary" data-demo-user="viewer" style="font-size: 11px; padding: 6px 8px;">
-              <i class="fas fa-eye"></i> Collector / Viewer
-            </button>
-          </div>
-        </div>
       </div>
     </div>
   </div>
@@ -2823,6 +3592,7 @@
   <div class="toast-container" id="toastContainer"></div>
 
   <!-- Application Scripts -->
+  <script src="js/env.js"></script>
   <script src="js/api.js"></script>
   <script src="js/dashboard.js"></script>
   <script src="js/forms.js"></script>

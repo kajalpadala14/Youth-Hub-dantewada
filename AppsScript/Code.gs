@@ -345,6 +345,11 @@ function handleAction(action, payload) {
     return calculateDashboardKPIs(ss, payload.filters);
   }
 
+  // Bulk Insert for any sheet
+  if (action === "bulkInsert") {
+    return bulkInsertRecords(ss, payload.sheetName, payload.records);
+  }
+
   // Dynamic Add Form Handlers
   const actionToSheetMap = {
     addYouth: "Youth_Master",
@@ -528,6 +533,73 @@ function insertRecord(ss, sheetName, payload) {
     success: true,
     message: `${sheetName.replace(/_/g, " ")} record saved successfully.`,
     id: config ? payload[config.idField] : null
+  };
+}
+
+function bulkInsertRecords(ss, sheetName, records) {
+  if (!records || !Array.isArray(records) || records.length === 0) {
+    return { success: false, message: "No records provided for bulk insert." };
+  }
+
+  let sheet = ss.getSheetByName(sheetName);
+  if (!sheet) {
+    setupDatabase();
+    sheet = ss.getSheetByName(sheetName);
+  }
+  if (!sheet) {
+    return { success: false, message: `Sheet '${sheetName}' does not exist.` };
+  }
+
+  const headers = SHEETS_SCHEMA[sheetName];
+  if (!headers) {
+    return { success: false, message: `Unknown schema for sheet '${sheetName}'.` };
+  }
+
+  const config = ID_PREFIXES[sheetName];
+  let lastRow = Math.max(1, sheet.getLastRow());
+
+  const rowsToAppend = [];
+  for (let i = 0; i < records.length; i++) {
+    const record = records[i];
+
+    // Aliases & normalization
+    if (sheetName === "Youth_Master") {
+      if (!record.Father_Husband_Name && record.Father_Mother_Name) {
+        record.Father_Husband_Name = record.Father_Mother_Name;
+      }
+      if (!record.DOB && record.DOB_Age) {
+        const dobVal = String(record.DOB_Age).trim();
+        if (dobVal.includes("-") || dobVal.includes("/")) {
+          record.DOB = dobVal;
+        } else {
+          record.Age = dobVal;
+        }
+      }
+    }
+
+    // Auto-generate ID if missing
+    if (config && (!record[config.idField] || String(record[config.idField]).trim() === "")) {
+      const nextNum = lastRow + i;
+      record[config.idField] = config.prefix + ("0000" + nextNum).slice(-4);
+    }
+
+    const rowData = headers.map(header => {
+      let val = record[header];
+      if (val === undefined || val === null) return "";
+      return val;
+    });
+
+    rowsToAppend.push(rowData);
+  }
+
+  if (rowsToAppend.length > 0) {
+    sheet.getRange(lastRow + 1, 1, rowsToAppend.length, headers.length).setValues(rowsToAppend);
+  }
+
+  return {
+    success: true,
+    count: rowsToAppend.length,
+    message: `Successfully added ${rowsToAppend.length} records to ${sheetName.replace(/_/g, " ")}.`
   };
 }
 

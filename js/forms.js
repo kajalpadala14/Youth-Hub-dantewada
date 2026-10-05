@@ -356,6 +356,8 @@ const Forms = (function() {
     setupSaveAndAddAnotherButtons();
     setupTableSearchInputs();
     setupTableExportButtons();
+    setupBulkUploadButtons();
+    setupBulkUploadModal();
     setupQuickEditModal();
   }
 
@@ -1049,6 +1051,894 @@ const Forms = (function() {
     }
   }
 
+  // =========================================================================
+  // BULK EXCEL UPLOAD SYSTEM
+  // =========================================================================
+  let activeBulkModuleKey = "youth_master";
+
+  const BULK_TEMPLATE_CONFIGS = {
+    youth_master: {
+      sheetName: "Youth_Master",
+      title: "Youth Master / नवीन युवा पंजीयन",
+      apiAction: "addYouth",
+      headers: [
+        "Youth_Name", "Father_Husband_Name", "Mobile_Number", "Gender", "DOB", "Age",
+        "Category", "Aadhaar_Number", "Qualification", "Occupation", "District", "Block",
+        "Gram_Panchayat", "Village", "Address", "Career_Interest", "Registration_Date",
+        "Follow_Up_Status", "Remarks"
+      ],
+      sample: {
+        Youth_Name: "Ramesh Kumar",
+        Father_Husband_Name: "Suresh Kumar",
+        Mobile_Number: "9406123456",
+        Gender: "Male",
+        DOB: "2002-05-15",
+        Age: 24,
+        Category: "ST",
+        Aadhaar_Number: "123456789012",
+        Qualification: "12th Pass",
+        Occupation: "Unemployed",
+        District: "Dantewada",
+        Block: "Dantewada",
+        Gram_Panchayat: "Chitalanka",
+        Village: "Chitalanka",
+        Address: "Ward No 4",
+        Career_Interest: "Electrician",
+        Registration_Date: "2026-10-05",
+        Follow_Up_Status: "Pending",
+        Remarks: "Interested in skill training"
+      }
+    },
+    mobilization: {
+      sheetName: "Mobilization",
+      title: "Mobilization / मोबिलाइजेशन शिविर",
+      apiAction: "addMobilization",
+      headers: [
+        "Date", "Financial_Year", "Month", "Block", "Gram_Panchayat", "Village",
+        "Activity_Name", "Mobilization_Source", "Mobilizer_Name", "Male", "Female",
+        "Other", "Total_Mobilized", "Remarks"
+      ],
+      sample: {
+        Date: "2026-10-05",
+        Financial_Year: "2026-27",
+        Month: "October",
+        Block: "Dantewada",
+        Gram_Panchayat: "Chitalanka",
+        Village: "Chitalanka",
+        Activity_Name: "Rojgar Mela Mobilization",
+        Mobilization_Source: "Gram Sabha",
+        Mobilizer_Name: "Sunil Yadav",
+        Male: 15,
+        Female: 12,
+        Other: 0,
+        Total_Mobilized: 27,
+        Remarks: "High youth turnout"
+      }
+    },
+    mform: {
+      sheetName: "M_Form",
+      title: "M-Form / एम-फॉर्म पंजीयन",
+      apiAction: "addMForm",
+      headers: [
+        "Youth_ID", "Youth_Name", "Mobile", "Date", "Block", "GP", "Village",
+        "MForm_Status", "MForm_Reg_No", "Follow_Up_Status", "Remarks"
+      ],
+      sample: {
+        Youth_ID: "YH-2026-0001",
+        Youth_Name: "Ramesh Kumar",
+        Mobile: "9406123456",
+        Date: "2026-10-05",
+        Block: "Dantewada",
+        GP: "Chitalanka",
+        Village: "Chitalanka",
+        MForm_Status: "Registered",
+        MForm_Reg_No: "MF-9901",
+        Follow_Up_Status: "Active",
+        Remarks: "Documents verified"
+      }
+    },
+    mybharat: {
+      sheetName: "My_Bharat",
+      title: "My Bharat / माय भारत पोर्टल",
+      apiAction: "addMyBharat",
+      headers: [
+        "Youth_ID", "Youth_Name", "Mobile", "Registration_Date", "Block", "GP",
+        "MyBharat_Reg_No", "Status", "Remarks"
+      ],
+      sample: {
+        Youth_ID: "YH-2026-0001",
+        Youth_Name: "Ramesh Kumar",
+        Mobile: "9406123456",
+        Registration_Date: "2026-10-05",
+        Block: "Dantewada",
+        GP: "Chitalanka",
+        MyBharat_Reg_No: "MB-2026-110",
+        Status: "Registered",
+        Remarks: "Portal registration done"
+      }
+    },
+    counselling: {
+      sheetName: "Counselling",
+      title: "Counselling / परामर्श / काउंसलिंग",
+      apiAction: "addCounselling",
+      headers: [
+        "Youth_ID", "Youth_Name", "Date", "Block", "Counselling_Type",
+        "Career_Interest", "Counsellor_Name", "Counselling_Outcome",
+        "Follow_Up_Required", "Follow_Up_Date", "Follow_Up_Status",
+        "Pending_Issue", "Recommended_Action", "Remarks"
+      ],
+      sample: {
+        Youth_ID: "YH-2026-0001",
+        Youth_Name: "Ramesh Kumar",
+        Date: "2026-10-05",
+        Block: "Dantewada",
+        Counselling_Type: "Individual",
+        Career_Interest: "Electrician",
+        Counsellor_Name: "Rahul Verma",
+        Counselling_Outcome: "Shortlisted for ITI",
+        Follow_Up_Required: "Yes",
+        Follow_Up_Date: "2026-10-20",
+        Follow_Up_Status: "Pending",
+        Pending_Issue: "None",
+        Recommended_Action: "Send to ITI center",
+        Remarks: "Session completed"
+      }
+    },
+    skill_training: {
+      sheetName: "Skill_Training",
+      title: "Skill Training / कौशल प्रशिक्षण",
+      apiAction: "addSkillTraining",
+      headers: [
+        "Youth_ID", "Youth_Name", "Training_Name", "Skill_Trade", "Training_Provider",
+        "Course", "Start_Date", "End_Date", "Training_Status", "Completion_Status",
+        "Certificate_Status", "Employment_After_Training", "Follow_Up_Date",
+        "Follow_Up_Status", "Remarks"
+      ],
+      sample: {
+        Youth_ID: "YH-2026-0001",
+        Youth_Name: "Ramesh Kumar",
+        Training_Name: "Livelihood College Dantewada",
+        Skill_Trade: "Electrician",
+        Training_Provider: "Livelihood College",
+        Course: "Domestic Electrical",
+        Start_Date: "2026-10-10",
+        End_Date: "2026-12-10",
+        Training_Status: "In Progress",
+        Completion_Status: "Pending",
+        Certificate_Status: "Pending",
+        Employment_After_Training: "Pending",
+        Follow_Up_Date: "2026-11-01",
+        Follow_Up_Status: "Regular attendance",
+        Remarks: "Batch 1"
+      }
+    },
+    emp_registered: {
+      sheetName: "Employment_Registered",
+      title: "Employment Registration / रोजगार पंजीयन",
+      apiAction: "addEmploymentRegistered",
+      headers: [
+        "Youth_ID", "Youth_Name", "Registration_Date", "Block", "Qualification",
+        "Preferred_Job", "Registration_Status", "Remarks"
+      ],
+      sample: {
+        Youth_ID: "YH-2026-0001",
+        Youth_Name: "Ramesh Kumar",
+        Registration_Date: "2026-10-05",
+        Block: "Dantewada",
+        Qualification: "12th Pass",
+        Preferred_Job: "Electrician / Field Tech",
+        Registration_Status: "Registered",
+        Remarks: "Registered for local jobs"
+      }
+    },
+    emp_linked: {
+      sheetName: "Employment_Linked",
+      title: "Employment Linked / रोजगार लिंकेज",
+      apiAction: "addEmploymentLinked",
+      headers: [
+        "Youth_ID", "Youth_Name", "Employer_Name", "Job_Role", "Placement_Date",
+        "Salary", "Employment_Type", "Location", "Status", "Follow_Up_Date",
+        "Follow_Up_Status", "Remarks"
+      ],
+      sample: {
+        Youth_ID: "YH-2026-0001",
+        Youth_Name: "Ramesh Kumar",
+        Employer_Name: "NMDC Contractor Services",
+        Job_Role: "Field Assistant",
+        Placement_Date: "2026-10-05",
+        Salary: 14500,
+        Employment_Type: "Full Time",
+        Location: "Kirandul",
+        Status: "Placed",
+        Follow_Up_Date: "2026-11-05",
+        Follow_Up_Status: "Working",
+        Remarks: "Offer letter issued"
+      }
+    },
+    education: {
+      sheetName: "Education",
+      title: "Higher Education / उच्च शिक्षा",
+      apiAction: "addEducation",
+      headers: [
+        "Youth_ID", "Youth_Name", "Current_Qualification", "Education_Goal",
+        "Institution_Name", "Course", "Admission_Date", "Block", "GP", "Status", "Remarks"
+      ],
+      sample: {
+        Youth_ID: "YH-2026-0001",
+        Youth_Name: "Ramesh Kumar",
+        Current_Qualification: "12th Pass",
+        Education_Goal: "Graduation",
+        Institution_Name: "Govt PG College Dantewada",
+        Course: "BA 1st Year",
+        Admission_Date: "2026-10-05",
+        Block: "Dantewada",
+        GP: "Chitalanka",
+        Status: "Enrolled",
+        Remarks: "Fee concession applied"
+      }
+    },
+    entrepreneurship: {
+      sheetName: "Entrepreneurs",
+      title: "Entrepreneurs / उद्यमिता विकास",
+      apiAction: "addEntrepreneur",
+      headers: [
+        "Stage", "Youth_ID", "Name", "Father_Name", "Mobile", "Block", "Village",
+        "Business_Type", "Business_Idea", "Business_Category", "Identification_Date",
+        "Business_Plan_Status", "DPR_Status", "Business_Status", "Establishment_Date",
+        "Loan_Required", "Loan_Applied", "Loan_Approved", "Loan_Amount", "Loan_Scheme",
+        "Bank_Name", "Account_Number", "IFSC_Code", "Remarks"
+      ],
+      sample: {
+        Stage: "Stage 1",
+        Youth_ID: "YH-2026-0001",
+        Name: "Ramesh Kumar",
+        Father_Name: "Suresh Kumar",
+        Mobile: "9406123456",
+        Block: "Dantewada",
+        Village: "Chitalanka",
+        Business_Type: "Dairy Farming",
+        Business_Idea: "Dairy Farm Unit",
+        Business_Category: "Animal Husbandry",
+        Identification_Date: "2026-10-05",
+        Business_Plan_Status: "Prepared",
+        DPR_Status: "Approved",
+        Business_Status: "Established",
+        Establishment_Date: "2026-10-05",
+        Loan_Required: "Yes",
+        Loan_Applied: "Yes",
+        Loan_Approved: "Yes",
+        Loan_Amount: 100000,
+        Loan_Scheme: "PMEGP",
+        Bank_Name: "State Bank of India",
+        Account_Number: "34871239841",
+        IFSC_Code: "SBIN0000356",
+        Remarks: "Loan disbursed"
+      }
+    },
+    navgurukul: {
+      sheetName: "NavGurukul",
+      title: "NavGurukul / नवगुरुकुल कोडिंग",
+      apiAction: "addNavGurukul",
+      headers: [
+        "Youth_ID", "Candidate_Name", "Mobile", "Block", "GP", "Qualification",
+        "Registration_Date", "Selection_Status", "Admission_Status", "Joining_Date", "Remarks"
+      ],
+      sample: {
+        Youth_ID: "YH-2026-0001",
+        Candidate_Name: "Anita Sori",
+        Mobile: "9406123456",
+        Block: "Geedam",
+        GP: "Kasoli",
+        Qualification: "12th Pass",
+        Registration_Date: "2026-10-05",
+        Selection_Status: "Shortlisted",
+        Admission_Status: "Admitted",
+        Joining_Date: "2026-10-15",
+        Remarks: "Selected for software batch"
+      }
+    },
+    trainings: {
+      sheetName: "Trainings",
+      title: "Trainings Conducted / आयोजित प्रशिक्षण",
+      apiAction: "addTraining",
+      headers: [
+        "Training_Name", "Training_Type", "Date", "Start_Date", "End_Date",
+        "Block", "GP", "Venue", "Training_Provider", "Trainer_Name",
+        "Male_Participants", "Female_Participants", "Total_Participants",
+        "Training_Topic", "Outcome", "Remarks"
+      ],
+      sample: {
+        Training_Name: "Youth Leadership Workshop",
+        Training_Type: "Soft Skills",
+        Date: "2026-10-05",
+        Start_Date: "2026-10-05",
+        End_Date: "2026-10-07",
+        Block: "Dantewada",
+        GP: "Chitalanka",
+        Venue: "Youth Hub Dantewada",
+        Training_Provider: "District Administration",
+        Trainer_Name: "Pooja Sharma",
+        Male_Participants: 20,
+        Female_Participants: 15,
+        Total_Participants: 35,
+        Training_Topic: "Personality Development",
+        Outcome: "Certificates Distributed",
+        Remarks: "3-day workshop concluded"
+      }
+    },
+    activities: {
+      sheetName: "Activities",
+      title: "Youth Hub Activities / गतिविधियां",
+      apiAction: "addActivity",
+      headers: [
+        "Date", "Activity_Type", "Activity_Name", "Block", "GP", "Village",
+        "Participants", "Description", "Outcome"
+      ],
+      sample: {
+        Date: "2026-10-05",
+        Activity_Type: "Awareness Camp",
+        Activity_Name: "Career Guidance Fair",
+        Block: "Dantewada",
+        GP: "Chitalanka",
+        Village: "Chitalanka",
+        Participants: 85,
+        Description: "Career awareness camp for 12th pass students",
+        Outcome: "60 youth registered on portal"
+      }
+    },
+    rehabilitation: {
+      sheetName: "Rehabilitation",
+      title: "Rehabilitation / आत्मसमर्पण एवं पुनर्वास",
+      apiAction: "addRehabilitation",
+      headers: [
+        "Youth_ID", "Candidate_Name", "Father_Husband_Name", "Mobile", "Block", "GP",
+        "Village", "Surrender_Date", "Rehabilitation_Status", "Assistance_Type",
+        "Assistance_Amount", "Scheme_Linked", "Employment_Status", "Current_Status",
+        "Follow_Up_Date", "Follow_Up_Status", "Pending_Issue", "Remarks"
+      ],
+      sample: {
+        Youth_ID: "YH-2026-0001",
+        Candidate_Name: "Laxman Mandavi",
+        Father_Husband_Name: "Budhram Mandavi",
+        Mobile: "9406123456",
+        Block: "Katekalyan",
+        GP: "Bodenar",
+        Village: "Bodenar",
+        Surrender_Date: "2026-08-10",
+        Rehabilitation_Status: "Approved",
+        Assistance_Type: "Financial Assistance",
+        Assistance_Amount: 50000,
+        Scheme_Linked: "Punarwas Niti",
+        Employment_Status: "Self-Employed",
+        Current_Status: "Active",
+        Follow_Up_Date: "2026-10-25",
+        Follow_Up_Status: "Satisfactory",
+        Pending_Issue: "None",
+        Remarks: "Rehabilitation package granted"
+      }
+    },
+    iim_raipur: {
+      sheetName: "IIM_Raipur",
+      title: "IIM Raipur / आईआईएम रायपुर उद्यमिता",
+      apiAction: "addIIMRaipur",
+      headers: [
+        "Candidate_Name", "Father_Husband_Name", "Age", "Category", "Address",
+        "Village", "Block", "District", "Mobile_Number", "Aadhaar_Number",
+        "Latest_Exam_Percentage", "Stream_Subject", "Vocational_Course",
+        "Current_Occupation", "Selection_Status", "Batch", "Activity_Name",
+        "Financial_Assistance_Amount", "Installment_2nd", "Remarks"
+      ],
+      sample: {
+        Candidate_Name: "Prakash Markam",
+        Father_Husband_Name: "Ganga Markam",
+        Age: 23,
+        Category: "ST",
+        Address: "Main Road Kuakonda",
+        Village: "Kuakonda",
+        Block: "Kuakonda",
+        District: "Dantewada",
+        Mobile_Number: "9406123456",
+        Aadhaar_Number: "123456789012",
+        Latest_Exam_Percentage: "74%",
+        Stream_Subject: "Commerce",
+        Vocational_Course: "Computer DCA",
+        Current_Occupation: "Unemployed",
+        Selection_Status: "Selected",
+        Batch: "Batch 2",
+        Activity_Name: "Food Processing Unit",
+        Financial_Assistance_Amount: 75000,
+        Installment_2nd: "Released",
+        Remarks: "Trained in entrepreneurship"
+      }
+    },
+    shasan_sahyog: {
+      sheetName: "Shasan_Sahyog",
+      title: "Shasan Sahyog / शासन से सहयोग",
+      apiAction: "addShasanSahyog",
+      headers: [
+        "Name", "Father_Husband_Name", "DOB", "Address", "Village", "Block",
+        "District", "Mobile_Number", "Assistance_Required", "Status", "Remarks"
+      ],
+      sample: {
+        Name: "Sunita Kashyap",
+        Father_Husband_Name: "Kailash Kashyap",
+        DOB: "1998-07-20",
+        Address: "Ward 2 Geedam",
+        Village: "Geedam",
+        Block: "Geedam",
+        District: "Dantewada",
+        Mobile_Number: "9406123456",
+        Assistance_Required: "Self-Help Group Sewing Machine Loan",
+        Status: "Approved",
+        Remarks: "Application forwarded to Dept"
+      }
+    }
+  };
+
+  const COLUMN_ALIASES = {
+    youth_id: ["youthid", "id", "candidateid", "studentid", "युवाआईडी"],
+    youth_name: ["youthname", "name", "candidatename", "fullname", "युवाकानाम", "युवानाम", "नाम", "अभ्यर्थीकानाम"],
+    name: ["name", "youthname", "candidatename", "fullname", "नाम", "आवेदककानाम"],
+    candidate_name: ["candidatename", "name", "youthname", "fullname", "नाम", "अभ्यर्थीकानाम"],
+    father_husband_name: ["fatherhusbandname", "fathername", "husbandname", "parentname", "guardianname", "guardian", "पिताकानाम", "पतिपिताकानाम", "पालककानाम"],
+    father_name: ["fathername", "fatherhusbandname", "parentname", "guardianname", "पिताकानाम"],
+    mobile_number: ["mobilenumber", "mobile", "phone", "contact", "phonenumber", "मोबाइलनंबर", "मोबाइल", "फोननंबर"],
+    mobile: ["mobile", "mobilenumber", "phone", "contact", "मोबाइलनंबर", "मोबाइल"],
+    gender: ["gender", "sex", "लिंग"],
+    dob: ["dob", "dateofbirth", "birthdate", "जन्मतिथि"],
+    age: ["age", "उम्र", "आयु"],
+    category: ["category", "caste", "वर्ग", "जाति"],
+    aadhaar_number: ["aadhaarnumber", "aadhaar", "aadhar", "aadharno", "आधारनंबर", "आधार"],
+    qualification: ["qualification", "currentqualification", "education", "शैक्षणिकयोग्यता", "योग्यता"],
+    current_qualification: ["currentqualification", "qualification", "education", "योग्यता"],
+    occupation: ["occupation", "job", "profession", "व्यवसाय"],
+    district: ["district", "districtname", "जिला"],
+    block: ["block", "blockname", "विकासखंड", "ब्लॉक"],
+    gram_panchayat: ["grampanchayat", "gp", "panchayat", "ग्रामपंचायत"],
+    gp: ["gp", "grampanchayat", "panchayat", "ग्रामपंचायत"],
+    village: ["village", "villagename", "para", "गांव", "ग्राम"],
+    address: ["address", "fulladdress", "पता"],
+    career_interest: ["careerinterest", "interest", "sector", "रुचि"],
+    date: ["date", "eventdate", "campdate", "दिनांक"],
+    registration_date: ["registrationdate", "regdate", "date", "पंजीयनदिनांक", "दिनांक"],
+    remarks: ["remarks", "remark", "note", "notes", "टिप्पणी"]
+  };
+
+  function formatExcelValue(val, key) {
+    if (val === undefined || val === null) return "";
+    const isDateField = /date|dob/i.test(key);
+    if (isDateField) {
+      if (val instanceof Date) {
+        if (!isNaN(val.getTime())) {
+          return val.toISOString().split("T")[0];
+        }
+      }
+      if (typeof val === "number") {
+        const d = new Date(Math.round((val - 25569) * 86400 * 1000));
+        if (!isNaN(d.getTime())) {
+          return d.toISOString().split("T")[0];
+        }
+      }
+      const s = String(val).trim();
+      if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+      const dmy = s.match(/^(\d{1,2})[\/\.-](\d{1,2})[\/\.-](\d{4})$/);
+      if (dmy) {
+        return `${dmy[3]}-${("0" + dmy[2]).slice(-2)}-${("0" + dmy[1]).slice(-2)}`;
+      }
+      return s;
+    }
+
+    if (typeof val === "number") {
+      return String(val);
+    }
+    return String(val).trim();
+  }
+
+  function normalizeExcelRow(rawRow, targetHeaders) {
+    const rawKeys = Object.keys(rawRow);
+    const normalized = {};
+
+    targetHeaders.forEach(targetKey => {
+      const cleanTarget = targetKey.toLowerCase().replace(/[^a-z0-9]/g, "");
+      const aliases = COLUMN_ALIASES[targetKey.toLowerCase()] || [];
+
+      let matchedRawKey = rawKeys.find(k => {
+        const cleanRaw = k.toLowerCase().replace(/[^a-z0-9]/g, "");
+        if (cleanRaw === cleanTarget) return true;
+        if (aliases.includes(cleanRaw)) return true;
+        return false;
+      });
+
+      if (matchedRawKey !== undefined) {
+        normalized[targetKey] = formatExcelValue(rawRow[matchedRawKey], targetKey);
+      } else {
+        normalized[targetKey] = "";
+      }
+    });
+
+    return normalized;
+  }
+
+  function setupBulkUploadButtons() {
+    // 1. Add Bulk Upload button to all 16 tables
+    Object.keys(TAB_TABLE_CONFIGS).forEach(moduleKey => {
+      const config = TAB_TABLE_CONFIGS[moduleKey];
+      const table = document.getElementById(config.tableId);
+      if (!table) return;
+      const card = table.closest(".form-card");
+      if (!card) return;
+
+      let btn = card.querySelector(".btn-table-bulk-upload");
+      if (!btn) {
+        const toolbar = card.querySelector(".table-actions") || card.querySelector(".table-header-toolbar") || card.querySelector(".form-header > div:last-child");
+        if (toolbar) {
+          btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "btn-tb-bulk btn-table-bulk-upload";
+          btn.innerHTML = '<i class="fas fa-file-excel"></i> <span>Bulk Upload</span>';
+          btn.title = "Bulk Upload from Excel (.xlsx, .xls, .csv)";
+          
+          const drawerBtn = toolbar.querySelector(".btn-open-drawer");
+          if (drawerBtn) {
+            toolbar.insertBefore(btn, drawerBtn);
+          } else {
+            toolbar.appendChild(btn);
+          }
+        }
+      }
+
+      if (btn && !btn.getAttribute("data-bulk-bound")) {
+        btn.setAttribute("data-bulk-bound", "1");
+        btn.addEventListener("click", () => openBulkUploadModal(moduleKey));
+      }
+    });
+
+    // 2. Add Bulk Upload button in all slide-over drawers
+    const DRAWER_FORM_MAP = {
+      formYouthMaster: "youth_master",
+      formMobilization: "mobilization",
+      formMForm: "mform",
+      formMyBharat: "mybharat",
+      formCounselling: "counselling",
+      formSkillTraining: "skill_training",
+      formEmpRegistered: "emp_registered",
+      formEmpLinked: "emp_linked",
+      formEducation: "education",
+      formEntrepreneur: "entrepreneurship",
+      formNavGurukul: "navgurukul",
+      formTrainingConducted: "trainings",
+      formActivities: "activities",
+      formRehabilitation: "rehabilitation",
+      formIIMRaipur: "iim_raipur",
+      formShasanSahyog: "shasan_sahyog"
+    };
+
+    Object.keys(DRAWER_FORM_MAP).forEach(formId => {
+      const moduleKey = DRAWER_FORM_MAP[formId];
+      const form = document.getElementById(formId);
+      if (!form) return;
+      const drawer = form.closest(".slide-over-drawer") || document.getElementById("drawer_" + formId);
+      if (!drawer) return;
+
+      const header = drawer.querySelector(".slide-over-header");
+      if (header && !header.querySelector(".btn-drawer-bulk-upload")) {
+        const bulkBtn = document.createElement("button");
+        bulkBtn.type = "button";
+        bulkBtn.className = "btn btn-secondary btn-sm btn-drawer-bulk-upload";
+        bulkBtn.style.cssText = "font-size: 11.5px; padding: 4px 10px; background: rgba(255,255,255,0.18); color: #fff; border: 1px solid rgba(255,255,255,0.3); border-radius: 6px; margin-right: 6px; cursor: pointer;";
+        bulkBtn.innerHTML = '<i class="fas fa-file-excel" style="color: #6EE7B7 !important;"></i> Bulk Upload';
+        bulkBtn.title = "Upload records in bulk via Excel";
+        bulkBtn.addEventListener("click", () => {
+          closeDrawer();
+          openBulkUploadModal(moduleKey);
+        });
+
+        const closeBtn = header.querySelector(".btn-drawer-close");
+        if (closeBtn) {
+          closeBtn.parentNode.insertBefore(bulkBtn, closeBtn);
+        } else {
+          header.appendChild(bulkBtn);
+        }
+      }
+    });
+  }
+
+  function setupBulkUploadModal() {
+    const modal = document.getElementById("bulkUploadModal");
+    const dropzone = document.getElementById("bulkUploadDropzone");
+    const fileInput = document.getElementById("bulkUploadFileInput");
+    const downloadBtn = document.getElementById("btnDownloadSampleTemplate");
+
+    if (downloadBtn) {
+      downloadBtn.addEventListener("click", () => {
+        downloadSampleTemplate(activeBulkModuleKey);
+      });
+    }
+
+    if (dropzone && fileInput) {
+      dropzone.addEventListener("click", () => fileInput.click());
+
+      dropzone.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        dropzone.classList.add("dragover");
+      });
+
+      dropzone.addEventListener("dragleave", () => {
+        dropzone.classList.remove("dragover");
+      });
+
+      dropzone.addEventListener("drop", (e) => {
+        e.preventDefault();
+        dropzone.classList.remove("dragover");
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+          processAndUploadExcelFile(e.dataTransfer.files[0], activeBulkModuleKey);
+        }
+      });
+
+      fileInput.addEventListener("change", function() {
+        if (this.files && this.files.length > 0) {
+          processAndUploadExcelFile(this.files[0], activeBulkModuleKey);
+          this.value = "";
+        }
+      });
+    }
+  }
+
+  function openBulkUploadModal(moduleKey) {
+    activeBulkModuleKey = moduleKey || "youth_master";
+    const config = BULK_TEMPLATE_CONFIGS[activeBulkModuleKey] || BULK_TEMPLATE_CONFIGS.youth_master;
+
+    const modal = document.getElementById("bulkUploadModal");
+    const title = document.getElementById("bulkUploadModalTitle");
+    const subtitle = document.getElementById("bulkUploadModalSubtitle");
+    const statusBox = document.getElementById("bulkUploadStatusBox");
+    const previewBox = document.getElementById("bulkUploadPreviewBox");
+    const modInput = document.getElementById("bulkUploadModuleKey");
+    const fileInput = document.getElementById("bulkUploadFileInput");
+
+    if (modInput) modInput.value = activeBulkModuleKey;
+    if (title) title.innerHTML = `<i class="fas fa-file-excel text-emerald"></i> Bulk Upload: ${config.title}`;
+    if (subtitle) subtitle.textContent = `Upload records in bulk directly to Google Sheet '${config.sheetName}'`;
+
+    if (statusBox) {
+      statusBox.style.display = "none";
+      statusBox.innerHTML = "";
+    }
+    if (previewBox) previewBox.style.display = "none";
+    if (fileInput) fileInput.value = "";
+
+    if (modal) modal.classList.add("active");
+  }
+
+  function downloadSampleTemplate(moduleKey) {
+    const config = BULK_TEMPLATE_CONFIGS[moduleKey] || BULK_TEMPLATE_CONFIGS.youth_master;
+    if (typeof XLSX === "undefined") {
+      App.showToast("Excel library is loading, please try again in a moment.", "warning");
+      return;
+    }
+
+    try {
+      const wb = XLSX.utils.book_new();
+      const headers = config.headers;
+      const sampleRow = headers.map(h => config.sample[h] !== undefined ? config.sample[h] : "");
+
+      const wsData = [headers, sampleRow];
+      const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+      ws["!cols"] = headers.map(h => ({ wch: Math.max(h.length + 4, 15) }));
+
+      XLSX.utils.book_append_sheet(wb, ws, config.sheetName);
+      XLSX.writeFile(wb, `${config.sheetName}_Bulk_Upload_Template.xlsx`);
+
+      App.showToast(`Template downloaded: ${config.sheetName}_Bulk_Upload_Template.xlsx`, "success");
+    } catch (e) {
+      console.error("Error generating template:", e);
+      App.showToast("Failed to generate Excel template: " + e.message, "error");
+    }
+  }
+
+  async function processAndUploadExcelFile(file, moduleKey) {
+    const config = BULK_TEMPLATE_CONFIGS[moduleKey] || BULK_TEMPLATE_CONFIGS.youth_master;
+    const statusBox = document.getElementById("bulkUploadStatusBox");
+    const previewBox = document.getElementById("bulkUploadPreviewBox");
+    const parsedCountBadge = document.getElementById("bulkUploadParsedCount");
+    const previewTable = document.getElementById("tblBulkPreview");
+
+    if (!file) return;
+
+    if (!/\.(xlsx|xls|csv)$/i.test(file.name)) {
+      if (statusBox) {
+        statusBox.style.display = "block";
+        statusBox.innerHTML = `
+          <div style="background: #FEE2E2; color: #DC2626; padding: 12px 16px; border-radius: 8px; font-size: 13px;">
+            <i class="fas fa-exclamation-triangle"></i> Invalid file type! Please select an Excel (.xlsx, .xls) or CSV file.
+          </div>
+        `;
+      }
+      return;
+    }
+
+    if (typeof XLSX === "undefined") {
+      App.showToast("Excel parser is not ready yet. Please check connection.", "error");
+      return;
+    }
+
+    // Step A: Show loading status
+    if (statusBox) {
+      statusBox.style.display = "block";
+      statusBox.innerHTML = `
+        <div style="background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 8px; padding: 14px 18px; color: #1E40AF;">
+          <div style="font-weight: 600; font-size: 13px; display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+            <i class="fas fa-spinner fa-spin"></i> Reading & analyzing Excel file: <strong>${file.name}</strong>...
+          </div>
+          <div style="font-size: 12px; color: #3B82F6;">Validating columns and preparing records for Google Sheets...</div>
+          <div class="bulk-progress-bar-bg"><div class="bulk-progress-bar-fill" style="width: 30%;"></div></div>
+        </div>
+      `;
+    }
+
+    try {
+      const data = await file.arrayBuffer();
+      const workbook = XLSX.read(data, { type: "array", cellDates: true });
+      const firstSheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[firstSheetName];
+      const rawRows = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+
+      if (!rawRows || rawRows.length === 0) {
+        if (statusBox) {
+          statusBox.innerHTML = `
+            <div style="background: #FEF3C7; color: #B45309; padding: 12px 16px; border-radius: 8px; font-size: 13px;">
+              <i class="fas fa-info-circle"></i> Excel sheet appears to be empty! No data rows found to upload.
+            </div>
+          `;
+        }
+        return;
+      }
+
+      // Step B: Normalize rows
+      const targetHeaders = config.headers;
+      const validRecords = [];
+
+      const currentUser = API.getCurrentUser();
+      const userBlock = (currentUser && currentUser.block && currentUser.block !== "All") ? currentUser.block : null;
+
+      rawRows.forEach(rawRow => {
+        const norm = normalizeExcelRow(rawRow, targetHeaders);
+        const hasContent = Object.values(norm).some(v => String(v).trim().length > 0);
+        if (hasContent) {
+          if (userBlock && norm.Block !== undefined) {
+            norm.Block = userBlock;
+          }
+          validRecords.push(norm);
+        }
+      });
+
+      if (validRecords.length === 0) {
+        if (statusBox) {
+          statusBox.innerHTML = `
+            <div style="background: #FEE2E2; color: #DC2626; padding: 12px 16px; border-radius: 8px; font-size: 13px;">
+              <i class="fas fa-times-circle"></i> No valid data found in the uploaded file.
+            </div>
+          `;
+        }
+        return;
+      }
+
+      // Step C: Update status to uploading directly to Sheet
+      if (statusBox) {
+        statusBox.innerHTML = `
+          <div style="background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 8px; padding: 14px 18px; color: #1E40AF;">
+            <div style="font-weight: 600; font-size: 13px; display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+              <i class="fas fa-cloud-upload-alt fa-bounce"></i> Adding <strong>${validRecords.length} records</strong> to Google Sheet ('${config.sheetName}')...
+            </div>
+            <div style="font-size: 12px; color: #3B82F6;">Please wait while records are committed directly to Google Sheets database...</div>
+            <div class="bulk-progress-bar-bg"><div class="bulk-progress-bar-fill" style="width: 70%;"></div></div>
+          </div>
+        `;
+      }
+
+      // Step D: Send records to Backend (immediate addition)
+      let uploadSuccess = false;
+      let insertedCount = 0;
+      let responseMsg = "";
+
+      // 1. Try bulkInsert API action
+      const bulkRes = await API.call("bulkInsert", {
+        sheetName: config.sheetName,
+        records: validRecords
+      });
+
+      if (bulkRes && bulkRes.success) {
+        uploadSuccess = true;
+        insertedCount = bulkRes.count || validRecords.length;
+        responseMsg = bulkRes.message || `${insertedCount} records added successfully.`;
+      } else {
+        console.warn("bulkInsert endpoint returned:", bulkRes, "- Trying sequential fallback...");
+        let successCount = 0;
+        const apiAction = config.apiAction;
+
+        for (let i = 0; i < validRecords.length; i++) {
+          const rec = validRecords[i];
+          try {
+            const singleRes = await API.call(apiAction, rec);
+            if (singleRes && singleRes.success) {
+              successCount++;
+            }
+          } catch (e) {
+            console.error("Error inserting record", rec, e);
+          }
+          if (statusBox) {
+            const pct = Math.round(((i + 1) / validRecords.length) * 100);
+            const fill = statusBox.querySelector(".bulk-progress-bar-fill");
+            if (fill) fill.style.width = pct + "%";
+          }
+        }
+
+        if (successCount > 0) {
+          uploadSuccess = true;
+          insertedCount = successCount;
+          responseMsg = `${insertedCount} of ${validRecords.length} records added successfully.`;
+        } else {
+          throw new Error(bulkRes && bulkRes.message ? bulkRes.message : "Failed to insert records into sheet.");
+        }
+      }
+
+      // Step E: Render Success & Preview
+      if (uploadSuccess) {
+        if (statusBox) {
+          statusBox.innerHTML = `
+            <div style="background: #ECFDF5; border: 1px solid #A7F3D0; border-radius: 8px; padding: 14px 18px; color: #065F46;">
+              <div style="font-weight: 700; font-size: 14px; display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                <i class="fas fa-check-circle" style="font-size: 20px; color: #059669;"></i> सफ़ल! ${insertedCount} रिकॉर्ड्स '${config.sheetName}' शीट में जोड़ दिए गए हैं!
+              </div>
+              <div style="font-size: 12px; color: #047857;">
+                ${responseMsg} सभी रिकॉर्ड्स डेटाबेस में लाइव सुरक्षित हो चुके हैं।
+              </div>
+            </div>
+          `;
+        }
+
+        // Render preview table
+        if (previewBox && previewTable) {
+          previewBox.style.display = "block";
+          if (parsedCountBadge) parsedCountBadge.textContent = `${insertedCount} records added`;
+
+          const thead = previewTable.querySelector("thead");
+          const tbody = previewTable.querySelector("tbody");
+          const previewCols = targetHeaders.slice(0, 6);
+
+          if (thead) {
+            thead.innerHTML = "<tr>" + previewCols.map(c => `<th>${c}</th>`).join("") + "</tr>";
+          }
+
+          if (tbody) {
+            const previewRows = validRecords.slice(0, 5);
+            tbody.innerHTML = previewRows.map(row => {
+              return "<tr>" + previewCols.map(c => `<td>${row[c] || "-"}</td>`).join("") + "</tr>";
+            }).join("");
+          }
+        }
+
+        // Immediate reload of the active table & dashboard
+        loadTabTable(moduleKey);
+        DashboardModule.loadDashboard();
+        App.showToast(`✅ ${insertedCount} records added to ${config.sheetName} sheet!`, "success");
+      }
+    } catch (err) {
+      console.error("Bulk upload error:", err);
+      if (statusBox) {
+        statusBox.innerHTML = `
+          <div style="background: #FEE2E2; color: #DC2626; border: 1px solid #FECACA; padding: 14px 18px; border-radius: 8px; font-size: 13px;">
+            <div style="font-weight: 700; margin-bottom: 4px;">
+              <i class="fas fa-times-circle"></i> Upload Failed / अपलोड असफल
+            </div>
+            <div>${err.message || "Failed to process file and save to Google Sheets."}</div>
+          </div>
+        `;
+      }
+    }
+  }
+
   /**
    * Automatically inject "Save & Add Another" button in all form footers
    */
@@ -1342,6 +2232,8 @@ const Forms = (function() {
     openEditModal,
     confirmDeleteRecord,
     openDrawer,
-    closeDrawer
+    closeDrawer,
+    openBulkUploadModal,
+    downloadSampleTemplate
   };
 })();

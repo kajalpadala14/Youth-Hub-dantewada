@@ -454,34 +454,32 @@ const GalleryModule = (function() {
       console.warn("Could not fetch remote sheet gallery images:", e);
     }
 
-    // Combine custom items + live sheet items + default milestones
-    // Avoid duplicate IDs
-    const idMap = new Set();
-    allGalleryItems = [];
-
-    // Prioritize user's custom additions
-    customItems.forEach(i => {
-      if (!idMap.has(i.id)) {
-        idMap.add(i.id);
-        allGalleryItems.push(i);
-      }
-    });
-
-    // Then live records from sheet
-    liveItems.forEach(i => {
-      if (!idMap.has(i.id)) {
-        idMap.add(i.id);
-        allGalleryItems.push(i);
-      }
-    });
-
-    // Then pre-populated rich Dantewada field milestones
-    DEFAULT_MILESTONES.forEach(i => {
-      if (!idMap.has(i.id)) {
-        idMap.add(i.id);
-        allGalleryItems.push(i);
-      }
-    });
+    // If live items exist in sheet or custom items exist, use only those!
+    // Only fall back to DEFAULT_MILESTONES if sheet has 0 photos and user has 0 custom uploads
+    if (liveItems.length > 0 || customItems.length > 0) {
+      // Prioritize live records from sheet
+      liveItems.forEach(i => {
+        if (!idMap.has(i.id)) {
+          idMap.add(i.id);
+          allGalleryItems.push(i);
+        }
+      });
+      // Plus any user custom additions
+      customItems.forEach(i => {
+        if (!idMap.has(i.id)) {
+          idMap.add(i.id);
+          allGalleryItems.push(i);
+        }
+      });
+    } else {
+      // Sheet has no photo records yet - show pre-populated field milestones
+      DEFAULT_MILESTONES.forEach(i => {
+        if (!idMap.has(i.id)) {
+          idMap.add(i.id);
+          allGalleryItems.push(i);
+        }
+      });
+    }
 
     // Enforce operator block restrictions if applicable
     const currentUser = API.getCurrentUser();

@@ -579,6 +579,9 @@ const App = (function() {
   /**
    * Login Handler
    */
+    /**
+   * Login Handler - supports hardcoded default roles, custom dynamic users, and Apps Script backend
+   */
   async function handleLogin(email, password) {
     const loginBtn = document.getElementById("btnLoginSubmit");
     const errorEl = document.getElementById("loginErrorMsg");
@@ -590,13 +593,16 @@ const App = (function() {
     }
 
     try {
-      const emailLower = email.toLowerCase();
+      const emailLower = (email || "").trim().toLowerCase();
+      const passClean = (password || "").trim();
+
+      // 1. Direct match with built-in default role profiles
       const matchedRole = Object.values(ROLE_PROFILES).find(p => p.email.toLowerCase() === emailLower);
       if (matchedRole) {
         const validPass = matchedRole.role === "ADMIN" ? "Admin@EO2026" 
                         : matchedRole.block === "Dantewada" ? "Dantewada@2026" 
                         : "Geedam@2026";
-        if (password === validPass) {
+        if (passClean === validPass) {
           const token = "TOKEN-LIVE-" + Date.now();
           API.setSession(token, matchedRole);
           currentUser = matchedRole;
@@ -609,8 +615,36 @@ const App = (function() {
         }
       }
 
+      // 2. Check local custom users added in this session or stored locally
+      const customUsers = getLocalCustomUsers();
+      const matchedCustom = customUsers.find(u => u.Email.toLowerCase() === emailLower && u.Password_Hash === passClean);
+      if (matchedCustom) {
+        const userObj = {
+          id: matchedCustom.User_ID,
+          userId: matchedCustom.User_ID,
+          name: matchedCustom.Name,
+          email: matchedCustom.Email,
+          role: matchedCustom.Role,
+          block: matchedCustom.Block,
+          youthHub: matchedCustom.Youth_Hub || (matchedCustom.Block !== "All" ? `Youth Hub ${matchedCustom.Block}` : "All"),
+          badgeTitle: `${matchedCustom.Role === 'ADMIN' ? '👑' : '👤'} ${matchedCustom.Name} (${matchedCustom.Role})`,
+          badgeClass: matchedCustom.Role === 'ADMIN' ? 'badge-admin' : 'badge-hub-dantewada',
+          initials: (matchedCustom.Name || "U").substring(0, 2).toUpperCase()
+        };
+        const token = "TOKEN-CUSTOM-" + Date.now();
+        API.setSession(token, userObj);
+        currentUser = userObj;
+        showLoginModal(false);
+        updateUserUI();
+        DashboardModule.init();
+        ReportsModule.init();
+        showToast(`Welcome back, ${userObj.name} (${userObj.role})!`, "success");
+        return;
+      }
+
+      // 3. Fallback to Google Apps Script backend login API
       const res = await API.call("login", { email, password });
-      if (res && res.success) {
+      if (res && res.success && res.user) {
         API.setSession(res.token, res.user);
         currentUser = res.user;
         showLoginModal(false);
@@ -620,7 +654,7 @@ const App = (function() {
         showToast(`Welcome back, ${res.user.name}!`, "success");
       } else {
         if (errorEl) {
-          errorEl.textContent = res.message || "Authentication failed.";
+          errorEl.textContent = (res && res.message) ? res.message : "Authentication failed. Invalid email or password.";
           errorEl.style.display = "block";
         }
       }
@@ -647,33 +681,521 @@ const App = (function() {
   }
 
   /**
-   * Load Admin Users View
+   * =========================================================================
+   * USER MANAGEMENT & ROLE-BASED ACCESS CONTROL (RBAC) CONTROLLER
+   * =========================================================================
+   */
+  const STORAGE_KEY_CUSTOM_USERS = "YH_DANTEWADA_CUSTOM_USERS";
+  let cachedUsersList = [];
+
+  function getLocalCustomUsers() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY_CUSTOM_USERS);
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function saveLocalCustomUsers(users) {
+    try {
+      localStorage.setItem(STORAGE_KEY_CUSTOM_USERS, JSON.stringify(users));
+    } catch (e) {
+      console.warn("Could not save custom users to localStorage", e);
+    }
+  }
+
+  function getDefaultBuiltInUsers() {
+    return [
+      {
+        User_ID: "USR-001",
+        Name: "जिला रोजगार अधिकारी (District Employment Officer)",
+        Email: "eo.dantewada@gmail.com",
+        Password_Hash: "Admin@EO2026",
+        Role: "ADMIN",
+        Block: "All",
+        Youth_Hub: "All",
+        Status: "Active",
+        Created_At: "2026-01-01"
+      },
+      {
+        User_ID: "USR-002",
+        Name: "Youth Hub Operator - Dantewada",
+        Email: "youthhub.dantewada@gmail.com",
+        Password_Hash: "Dantewada@2026",
+        Role: "HUB_OPERATOR",
+        Block: "Dantewada",
+        Youth_Hub: "Youth Hub Dantewada",
+        Status: "Active",
+        Created_At: "2026-01-01"
+      },
+      {
+        User_ID: "USR-003",
+        Name: "Youth Hub Operator - Geedam",
+        Email: "youthhub.geedam@gmail.com",
+        Password_Hash: "Geedam@2026",
+        Role: "HUB_OPERATOR",
+        Block: "Geedam",
+        Youth_Hub: "Youth Hub Geedam",
+        Status: "Active",
+        Created_At: "2026-01-01"
+      }
+    ];
+  }
+
+  /**
+   * Load Admin Users View Table & KPI metrics
    */
   async function loadUsersTable() {
     const tbody = document.querySelector("#usersTable tbody");
     if (!tbody) return;
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px;"><i class="fas fa-spinner fa-spin"></i> Loading users...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 24px; color: #64748B;"><i class="fas fa-spinner fa-spin"></i> Loading users and role assignments...</td></tr>';
 
     try {
-      const res = await API.call("listUsers");
-      if (res && res.success && res.users) {
-        tbody.innerHTML = res.users.map(u => `
-          <tr>
-            <td><strong>${u.User_ID}</strong></td>
-            <td>${u.Name}</td>
-            <td>${u.Email}</td>
-            <td><span class="badge info">${u.Role}</span></td>
-            <td>${u.Block}</td>
-            <td><span class="badge ${u.Status === 'Active' ? 'success' : 'neutral'}">${u.Status}</span></td>
-            <td>${u.Created_At || '-'}</td>
-          </tr>
-        `).join("");
-      } else {
-        tbody.innerHTML = `<tr><td colspan="7" class="text-danger" style="text-align: center;">${res.message || "Failed to load users."}</td></tr>`;
+      let remoteUsers = [];
+      try {
+        const res = await API.call("listUsers");
+        if (res && res.success && Array.isArray(res.users)) {
+          remoteUsers = res.users;
+        }
+      } catch (err) {
+        console.warn("Could not fetch remote users, using local cache:", err);
       }
+
+      // Merge built-in defaults + remote users + local custom users
+      const defaults = getDefaultBuiltInUsers();
+      const customLocals = getLocalCustomUsers();
+
+      const userMap = new Map();
+      defaults.forEach(u => userMap.set(u.Email.toLowerCase(), u));
+      remoteUsers.forEach(u => userMap.set(u.Email.toLowerCase(), { ...userMap.get(u.Email.toLowerCase()), ...u }));
+      customLocals.forEach(u => userMap.set(u.Email.toLowerCase(), { ...userMap.get(u.Email.toLowerCase()), ...u }));
+
+      cachedUsersList = Array.from(userMap.values());
+      updateUserKPIs(cachedUsersList);
+      renderUsersTable(cachedUsersList);
     } catch (e) {
-      tbody.innerHTML = '<tr><td colspan="7" class="text-danger" style="text-align: center;">Error fetching user list.</td></tr>';
+      tbody.innerHTML = `<tr><td colspan="8" class="text-danger" style="text-align: center; padding: 20px;">Error loading users: ${e.message}</td></tr>`;
     }
+  }
+
+  function updateUserKPIs(users) {
+    const totalEl = document.getElementById("kpiTotalUsers");
+    const adminEl = document.getElementById("kpiAdminUsers");
+    const hubEl = document.getElementById("kpiHubOperators");
+    const dataEl = document.getElementById("kpiDataOperators");
+
+    if (totalEl) totalEl.textContent = users.length;
+    if (adminEl) adminEl.textContent = users.filter(u => u.Role === "ADMIN").length;
+    if (hubEl) hubEl.textContent = users.filter(u => u.Role === "HUB_OPERATOR").length;
+    if (dataEl) dataEl.textContent = users.filter(u => u.Role === "DATA_OPERATOR" || u.Role === "FIELD_MOBILIZER").length;
+  }
+
+  function renderUsersTable(usersToRender) {
+    const tbody = document.querySelector("#usersTable tbody");
+    if (!tbody) return;
+
+    if (!usersToRender || usersToRender.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 30px; color: #94A3B8;">No user records found matching the filter criteria.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = usersToRender.map(u => {
+      const isCurrent = currentUser && (currentUser.email.toLowerCase() === u.Email.toLowerCase() || currentUser.userId === u.User_ID || currentUser.id === u.User_ID);
+      
+      // Role badge styling
+      let roleBadgeClass = "badge info";
+      let roleIcon = "fa-user";
+      if (u.Role === "ADMIN") {
+        roleBadgeClass = "badge-role-admin";
+        roleIcon = "fa-crown";
+      } else if (u.Role === "HUB_OPERATOR") {
+        roleBadgeClass = "badge-role-hub";
+        roleIcon = "fa-building";
+      } else if (u.Role === "DATA_OPERATOR") {
+        roleBadgeClass = "badge-role-data";
+        roleIcon = "fa-keyboard";
+      } else if (u.Role === "FIELD_MOBILIZER") {
+        roleBadgeClass = "badge-role-field";
+        roleIcon = "fa-bullhorn";
+      } else if (u.Role === "VIEWER") {
+        roleBadgeClass = "badge-role-viewer";
+        roleIcon = "fa-eye";
+      }
+
+      // Location badge
+      const blockBadge = u.Block === "All" 
+        ? '<span class="badge info" style="background:#E0E7FF; color:#3730A3;"><i class="fas fa-globe"></i> All District</span>'
+        : `<span class="badge neutral" style="font-weight:600;"><i class="fas fa-map-marker-alt text-primary"></i> ${u.Block}</span>`;
+
+      const statusBadge = u.Status === "Active" 
+        ? '<span class="badge success"><i class="fas fa-check-circle"></i> Active</span>' 
+        : '<span class="badge neutral"><i class="fas fa-pause-circle"></i> Inactive</span>';
+
+      const currentIndicator = isCurrent 
+        ? '<span class="badge success" style="margin-left: 6px; font-size: 10px; background: #059669; color: #fff;">Current Session</span>' 
+        : '';
+
+      return `
+        <tr style="${isCurrent ? 'background-color: #F0FDF4;' : ''}">
+          <td>
+            <div style="font-weight: 700; color: #1E293B; font-family: monospace;">${u.User_ID || '-'}</div>
+          </td>
+          <td>
+            <div style="font-weight: 600; color: #0F172A; display: flex; align-items: center; gap: 6px;">
+              ${escapeHtml(u.Name || 'User')}
+              ${currentIndicator}
+            </div>
+          </td>
+          <td style="color: #475569; font-size: 12.5px;">${escapeHtml(u.Email)}</td>
+          <td>
+            <span class="${roleBadgeClass}">
+              <i class="fas ${roleIcon}"></i> ${u.Role}
+            </span>
+          </td>
+          <td>${blockBadge}</td>
+          <td style="font-size: 12px; color: #64748B;">${escapeHtml(u.Youth_Hub || (u.Block !== 'All' ? 'Youth Hub ' + u.Block : 'All Centers'))}</td>
+          <td>${statusBadge}</td>
+          <td style="text-align: center;">
+            <div style="display: inline-flex; gap: 6px; align-items: center; justify-content: center;">
+              <button type="button" class="btn-action-role" title="Switch Role / इस प्रोफाइल पर स्विच करें" onclick="App.switchUserRole('${escapeHtml(u.Email)}')">
+                <i class="fas fa-exchange-alt"></i> Switch
+              </button>
+              <button type="button" class="btn-action-icon" title="Edit Role Assignment" onclick="App.openEditUserModal('${escapeHtml(u.Email)}')">
+                <i class="fas fa-edit"></i>
+              </button>
+              ${u.User_ID !== 'USR-001' ? `
+                <button type="button" class="btn-action-icon text-danger" title="Delete User" onclick="App.deleteUser('${escapeHtml(u.Email)}')">
+                  <i class="fas fa-trash-alt"></i>
+                </button>
+              ` : ''}
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join("");
+  }
+
+  function filterUsersTable() {
+    const searchVal = (document.getElementById("usersSearchInput")?.value || "").toLowerCase().trim();
+    const roleVal = document.getElementById("usersRoleFilter")?.value || "";
+    const blockVal = document.getElementById("usersBlockFilter")?.value || "";
+
+    const filtered = cachedUsersList.filter(u => {
+      const matchSearch = !searchVal || 
+        (u.Name && u.Name.toLowerCase().includes(searchVal)) ||
+        (u.Email && u.Email.toLowerCase().includes(searchVal)) ||
+        (u.User_ID && u.User_ID.toLowerCase().includes(searchVal)) ||
+        (u.Youth_Hub && u.Youth_Hub.toLowerCase().includes(searchVal));
+
+      const matchRole = !roleVal || u.Role === roleVal;
+      const matchBlock = !blockVal || u.Block === blockVal;
+
+      return matchSearch && matchRole && matchBlock;
+    });
+
+    renderUsersTable(filtered);
+  }
+
+  function openAddUserDrawer() {
+    const drawer = document.getElementById("drawer_formUser");
+    const backdrop = document.getElementById("slideOverBackdrop");
+    if (drawer) drawer.classList.add("open");
+    if (backdrop) backdrop.classList.add("open");
+    handleRoleChange('new');
+  }
+
+  function closeAddUserDrawer() {
+    const drawer = document.getElementById("drawer_formUser");
+    const backdrop = document.getElementById("slideOverBackdrop");
+    if (drawer) drawer.classList.remove("open");
+    if (backdrop) backdrop.classList.remove("open");
+  }
+
+  function handleRoleChange(type) {
+    const prefix = type === 'new' ? 'newUser' : 'editUser';
+    const roleEl = document.getElementById(`${prefix}Role`);
+    const blockEl = document.getElementById(`${prefix}Block`);
+    const hubEl = document.getElementById(`${prefix}YouthHub`);
+    const infoEl = document.getElementById(`${prefix}RoleInfo`);
+
+    if (!roleEl || !blockEl) return;
+    const role = roleEl.value;
+
+    if (role === "ADMIN") {
+      blockEl.value = "All";
+      if (hubEl) hubEl.value = "All";
+      if (infoEl) infoEl.innerHTML = "• <strong>ADMIN</strong>: Full District Access. Can manage users, export all reports, see all blocks, and modify settings.";
+    } else if (role === "HUB_OPERATOR") {
+      if (blockEl.value === "All") blockEl.value = "Dantewada";
+      handleBlockChange(type);
+      if (infoEl) infoEl.innerHTML = "• <strong>HUB_OPERATOR</strong>: Locked to selected Block. Data entry and dashboard reports will auto-filter to this block.";
+    } else if (role === "DATA_OPERATOR") {
+      if (infoEl) infoEl.innerHTML = "• <strong>DATA_OPERATOR</strong>: Can enter and edit candidate records across assigned block, M-Forms, skill batches, and registrations.";
+    } else if (role === "FIELD_MOBILIZER") {
+      if (infoEl) infoEl.innerHTML = "• <strong>FIELD_MOBILIZER</strong>: Restricted to village and Gram Panchayat mobilization activities, camps, and attendance.";
+    } else if (role === "VIEWER") {
+      if (infoEl) infoEl.innerHTML = "• <strong>VIEWER</strong>: Read-Only access. Can inspect dashboards, milestone photos, and summaries without editing permission.";
+    }
+  }
+
+  function handleBlockChange(type) {
+    const prefix = type === 'new' ? 'newUser' : 'editUser';
+    const blockEl = document.getElementById(`${prefix}Block`);
+    const hubEl = document.getElementById(`${prefix}YouthHub`);
+    if (!blockEl || !hubEl) return;
+
+    const block = blockEl.value;
+    if (block === "All") {
+      hubEl.value = "All";
+    } else {
+      const matchOpt = Array.from(hubEl.options).find(o => o.value.toLowerCase().includes(block.toLowerCase()));
+      if (matchOpt) {
+        hubEl.value = matchOpt.value;
+      }
+    }
+  }
+
+  async function handleAddUserSubmit(e) {
+    if (e) e.preventDefault();
+    const btn = document.getElementById("btnSaveUser");
+    const name = document.getElementById("newUserName")?.value.trim();
+    const email = document.getElementById("newUserEmail")?.value.trim();
+    const password = document.getElementById("newUserPassword")?.value.trim();
+    const role = document.getElementById("newUserRole")?.value;
+    const block = document.getElementById("newUserBlock")?.value;
+    const youthHub = document.getElementById("newUserYouthHub")?.value;
+    const status = document.getElementById("newUserStatus")?.value || "Active";
+
+    if (!name || !email || !password || !role || !block) {
+      showToast("कृपया सभी आवश्यक फ़ील्ड भरें (Name, Email, Password, Role, Block)", "warning");
+      return;
+    }
+
+    // Check duplicate email
+    if (cachedUsersList.some(u => u.Email.toLowerCase() === email.toLowerCase())) {
+      showToast(`ईमेल "${email}" पहले से पंजीकृत है! कृपया भिन्न ईमेल चुनें।`, "warning");
+      return;
+    }
+
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating User...';
+    }
+
+    try {
+      const userId = "USR-" + ("000" + (cachedUsersList.length + 1)).slice(-3);
+      const newUserRecord = {
+        User_ID: userId,
+        Name: name,
+        Email: email,
+        Password_Hash: password,
+        Role: role,
+        Block: block,
+        Youth_Hub: youthHub || (block !== "All" ? `Youth Hub ${block}` : "All"),
+        Status: status,
+        Created_At: new Date().toISOString().split("T")[0]
+      };
+
+      // 1. Try sending to Google Sheets backend
+      try {
+        await API.call("addUser", newUserRecord);
+      } catch (err) {
+        console.warn("Could not sync user to Google Sheets backend, saving locally:", err);
+      }
+
+      // 2. Save in local custom users list for instant access and persistence
+      const customUsers = getLocalCustomUsers();
+      customUsers.push(newUserRecord);
+      saveLocalCustomUsers(customUsers);
+
+      showToast(`उपयोगकर्ता सफलतापूर्वक जोड़ा गया: ${name} (${role})`, "success");
+      closeAddUserDrawer();
+      document.getElementById("formAddUser")?.reset();
+      
+      // Reload table
+      await loadUsersTable();
+    } catch (err) {
+      showToast("Error creating user: " + err.message, "error");
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-save"></i> Save & Assign Role';
+      }
+    }
+  }
+
+  function openEditUserModal(email) {
+    const user = cachedUsersList.find(u => u.Email.toLowerCase() === email.toLowerCase());
+    if (!user) return;
+
+    document.getElementById("editUserId").value = user.User_ID || "";
+    document.getElementById("editUserName").value = user.Name || "";
+    document.getElementById("editUserEmail").value = user.Email || "";
+    document.getElementById("editUserRole").value = user.Role || "HUB_OPERATOR";
+    document.getElementById("editUserBlock").value = user.Block || "Dantewada";
+    document.getElementById("editUserYouthHub").value = user.Youth_Hub || "All";
+    document.getElementById("editUserStatus").value = user.Status || "Active";
+
+    const modal = document.getElementById("editUserModal");
+    if (modal) modal.classList.add("active");
+  }
+
+  function closeEditUserModal() {
+    const modal = document.getElementById("editUserModal");
+    if (modal) modal.classList.remove("active");
+  }
+
+  async function handleEditUserSubmit(e) {
+    if (e) e.preventDefault();
+    const btn = document.getElementById("btnUpdateUser");
+    const userId = document.getElementById("editUserId").value;
+    const email = document.getElementById("editUserEmail").value;
+    const name = document.getElementById("editUserName").value.trim();
+    const role = document.getElementById("editUserRole").value;
+    const block = document.getElementById("editUserBlock").value;
+    const youthHub = document.getElementById("editUserYouthHub").value;
+    const status = document.getElementById("editUserStatus").value;
+
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
+    }
+
+    try {
+      const updatedFields = {
+        Name: name,
+        Role: role,
+        Block: block,
+        Youth_Hub: youthHub,
+        Status: status
+      };
+
+      // 1. Sync update to backend
+      try {
+        await API.call("updateRecord", {
+          sheetName: "Users",
+          idField: "Email",
+          idValue: email,
+          updatedData: updatedFields
+        });
+      } catch (err) {
+        console.warn("Backend update error:", err);
+      }
+
+      // 2. Update local custom users
+      let customUsers = getLocalCustomUsers();
+      const idx = customUsers.findIndex(u => u.Email.toLowerCase() === email.toLowerCase());
+      if (idx !== -1) {
+        customUsers[idx] = { ...customUsers[idx], ...updatedFields };
+        saveLocalCustomUsers(customUsers);
+      }
+
+      // 3. If currently logged in as this user, update active session
+      if (currentUser && currentUser.email.toLowerCase() === email.toLowerCase()) {
+        currentUser = {
+          ...currentUser,
+          name: name,
+          role: role,
+          block: block,
+          youthHub: youthHub
+        };
+        API.setSession(API.getToken(), currentUser);
+        updateUserUI();
+      }
+
+      showToast(`User ${name} updated successfully!`, "success");
+      closeEditUserModal();
+      await loadUsersTable();
+    } catch (err) {
+      showToast("Error updating user: " + err.message, "error");
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-check"></i> Update User';
+      }
+    }
+  }
+
+  async function deleteUser(email) {
+    if (!confirm(`क्या आप निश्चित रूप से उपयोगकर्ता "${email}" को हटाना चाहते हैं?`)) {
+      return;
+    }
+
+    try {
+      // 1. Backend delete
+      try {
+        await API.call("deleteRecord", {
+          sheetName: "Users",
+          idField: "Email",
+          idValue: email
+        });
+      } catch (err) {
+        console.warn("Backend delete error:", err);
+      }
+
+      // 2. Remove from local storage
+      let customUsers = getLocalCustomUsers();
+      customUsers = customUsers.filter(u => u.Email.toLowerCase() !== email.toLowerCase());
+      saveLocalCustomUsers(customUsers);
+
+      showToast(`उपयोगकर्ता "${email}" हटाया गया।`, "info");
+      await loadUsersTable();
+    } catch (err) {
+      showToast("Error deleting user: " + err.message, "error");
+    }
+  }
+
+  /**
+   * 1-Click Role Switcher directly from the User Table
+   */
+  function switchUserRole(email) {
+    const user = cachedUsersList.find(u => u.Email.toLowerCase() === email.toLowerCase());
+    if (!user) {
+      showToast("उपयोगकर्ता नहीं मिला", "warning");
+      return;
+    }
+
+    const sessionUser = {
+      id: user.User_ID,
+      userId: user.User_ID,
+      name: user.Name,
+      email: user.Email,
+      role: user.Role,
+      block: user.Block,
+      youthHub: user.Youth_Hub || (user.Block !== "All" ? `Youth Hub ${user.Block}` : "All"),
+      badgeTitle: `${user.Role === 'ADMIN' ? '👑' : '👤'} ${user.Name} (${user.Role})`,
+      badgeClass: user.Role === 'ADMIN' ? 'badge-admin' : 'badge-hub-dantewada',
+      initials: (user.Name || "U").substring(0, 2).toUpperCase()
+    };
+
+    const token = "TOKEN-SWITCH-" + Date.now();
+    API.setSession(token, sessionUser);
+    currentUser = sessionUser;
+
+    showToast(`सक्रिय प्रोफाइल स्विच की गई: ${user.Name} (${user.Role} - ${user.Block})`, "success");
+    updateUserUI();
+
+    // Re-render users table to show new active indicator
+    renderUsersTable(cachedUsersList);
+
+    // Refresh dashboard and reports with block restrictions
+    if (window.DashboardModule && DashboardModule.loadDashboard) {
+      DashboardModule.loadDashboard();
+    }
+    if (window.ReportsModule && ReportsModule.loadActiveReport) {
+      ReportsModule.loadActiveReport();
+    }
+  }
+
+  function escapeHtml(text) {
+    if (!text) return "";
+    return String(text)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
   }
 
   return {
@@ -683,7 +1205,19 @@ const App = (function() {
     handleLogin,
     handleLogout,
     showLoginModal,
-    quickRoleLogin
+    quickRoleLogin,
+    loadUsersTable,
+    filterUsersTable,
+    openAddUserDrawer,
+    closeAddUserDrawer,
+    handleRoleChange,
+    handleBlockChange,
+    handleAddUserSubmit,
+    openEditUserModal,
+    closeEditUserModal,
+    handleEditUserSubmit,
+    deleteUser,
+    switchUserRole
   };
 })();
 
@@ -699,6 +1233,22 @@ document.addEventListener("DOMContentLoaded", () => {
       const email = document.getElementById("loginEmail").value;
       const pass = document.getElementById("loginPassword").value;
       App.handleLogin(email, pass);
+    });
+  }
+
+  // Add User Form submit handler
+  const formAddUser = document.getElementById("formAddUser");
+  if (formAddUser) {
+    formAddUser.addEventListener("submit", (e) => {
+      App.handleAddUserSubmit(e);
+    });
+  }
+
+  // Edit User Form submit handler
+  const formEditUser = document.getElementById("formEditUser");
+  if (formEditUser) {
+    formEditUser.addEventListener("submit", (e) => {
+      App.handleEditUserSubmit(e);
     });
   }
 });

@@ -383,7 +383,39 @@
           }
         }
 
-        // Check backend Google Apps Script
+        // 2. Check local custom users registered via User Management tab
+        try {
+          const rawCustom = localStorage.getItem("YH_DANTEWADA_CUSTOM_USERS");
+          if (rawCustom) {
+            const customUsers = JSON.parse(rawCustom);
+            const matchedCustom = customUsers.find(u => u.Email.toLowerCase() === emailClean && u.Password_Hash === passClean);
+            if (matchedCustom) {
+              const userObj = {
+                id: matchedCustom.User_ID,
+                userId: matchedCustom.User_ID,
+                name: matchedCustom.Name,
+                email: matchedCustom.Email,
+                role: matchedCustom.Role,
+                block: matchedCustom.Block,
+                youthHub: matchedCustom.Youth_Hub || (matchedCustom.Block !== "All" ? `Youth Hub ${matchedCustom.Block}` : "All"),
+                badgeTitle: `${matchedCustom.Role === 'ADMIN' ? '👑' : '👤'} ${matchedCustom.Name} (${matchedCustom.Role})`,
+                badgeClass: matchedCustom.Role === 'ADMIN' ? 'badge-admin' : 'badge-hub-dantewada',
+                initials: (matchedCustom.Name || "U").substring(0, 2).toUpperCase()
+              };
+              const token = "TOKEN-CUSTOM-" + Date.now();
+              API.setSession(token, userObj);
+              showAlert(`स्वागत है, ${userObj.name} (${userObj.role})! रीडायरेक्ट हो रहा है...`, false);
+              setTimeout(() => {
+                window.location.href = "index.html";
+              }, 250);
+              return;
+            }
+          }
+        } catch (errCustom) {
+          console.warn("Could not check custom users:", errCustom);
+        }
+
+        // 3. Check backend Google Apps Script
         const res = await API.call("login", { email, password });
         if (res && res.success && res.user) {
           API.setSession(res.token, res.user);

@@ -132,7 +132,8 @@ const ID_PREFIXES = {
   Rehabilitation: { prefix: "REH-2026-", idField: "Rehab_ID" },
   IIM_Raipur: { prefix: "IIM-2026-", idField: "IIM_ID" },
   Shasan_Sahyog: { prefix: "SS-2026-", idField: "Demand_ID" },
-  Progress_Gallery: { prefix: "GAL-2026-", idField: "Gallery_ID" }
+  Progress_Gallery: { prefix: "GAL-2026-", idField: "Gallery_ID" },
+  Users: { prefix: "USR-", idField: "User_ID" }
 };
 
 /**
@@ -232,14 +233,142 @@ function setupDatabase() {
     ]);
   }
 
+  // Create Default Progress Gallery Milestone Photos if Progress_Gallery sheet is empty
+  const galSheet = ss.getSheetByName("Progress_Gallery");
+  if (galSheet && galSheet.getLastRow() <= 1) {
+    const defaultGalleryRows = [
+      [
+        "GAL-2026-001",
+        "Electrician & Solar Technician Practical Training",
+        "Skill Training",
+        "2026-09-28",
+        "Dantewada",
+        "Chitalanka",
+        28,
+        "In Progress",
+        "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=900&q=80",
+        "Batch 1 hands-on wiring, circuit safety, and solar panel inverter installation practical sessions at Youth Hub Dantewada workshop.",
+        "Electrician, Solar, Practical Training, Batch 1",
+        "District Skill Coordinator",
+        "2026-09-28"
+      ],
+      [
+        "GAL-2026-002",
+        "Gram Panchayat Intensive Youth Mobilization Camp",
+        "Mobilization",
+        "2026-09-24",
+        "Geedam",
+        "Barsoor",
+        65,
+        "Completed",
+        "https://images.unsplash.com/photo-1577495508048-b635879837f1?auto=format&fit=crop&w=900&q=80",
+        "Special community mobilization drive organized in Barsoor Gram Panchayat. 42 youth registered on the spot with M-Form completion.",
+        "Gram Sabha, Mobilization, M-Form, Barsoor",
+        "Youth Hub Geedam",
+        "2026-09-24"
+      ],
+      [
+        "GAL-2026-003",
+        "Tribal Youth Micro-Enterprise: Tailoring & Apparel Unit",
+        "Entrepreneurship",
+        "2026-09-20",
+        "Katekalyan",
+        "Tumakpal",
+        6,
+        "Milestone Achieved",
+        "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=900&q=80",
+        "Inauguration and commercial launch of women self-help tailoring micro-enterprise supported by PMEGP loan sanction and Youth Hub mentorship.",
+        "Micro-Enterprise, Tailoring, PMEGP, Women SHG",
+        "Livelihood Officer",
+        "2026-09-20"
+      ],
+      [
+        "GAL-2026-004",
+        "District Mega Rojgar Mela & Offer Letter Distribution",
+        "Activities",
+        "2026-09-15",
+        "Dantewada",
+        "Dantewada Rural",
+        210,
+        "Completed",
+        "https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&w=900&q=80",
+        "14 participating private employers and skill partners conducted interviews at District HQ. 87 youth handed preliminary job offer letters.",
+        "Rojgar Mela, Placement, Offer Letters, District HQ",
+        "जिला रोजगार अधिकारी",
+        "2026-09-15"
+      ],
+      [
+        "GAL-2026-005",
+        "Computer Literacy & Digital Coding Batch (NavGurukul)",
+        "Skill Training",
+        "2026-09-10",
+        "Geedam",
+        "Javanga",
+        35,
+        "In Progress",
+        "https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=900&q=80",
+        "NavGurukul residential campus orientation and digital software foundation training for shortlisted rural students from across Dantewada.",
+        "NavGurukul, Coding, Software, Digital",
+        "NavGurukul Coordinator",
+        "2026-09-10"
+      ],
+      [
+        "GAL-2026-006",
+        "Rehabilitation Livelihood Toolkits Handover Ceremony",
+        "Rehabilitation",
+        "2026-09-05",
+        "Kuakonda",
+        "Palnar",
+        12,
+        "Milestone Achieved",
+        "https://images.unsplash.com/photo-1582213782179-e0d53f98f2ca?auto=format&fit=crop&w=900&q=80",
+        "Distribution of masonry, carpentry, and electrical toolkits along with financial assistance cheque disbursal for surrendered youth under district welfare package.",
+        "Rehabilitation, Toolkits, Welfare, Surrendered Youth",
+        "Rehabilitation Cell",
+        "2026-09-05"
+      ],
+      [
+        "GAL-2026-007",
+        "Field Counselling & Psychometric Aptitude Camp",
+        "Mobilization",
+        "2026-08-28",
+        "Kuakonda",
+        "Nakulnar",
+        52,
+        "Completed",
+        "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=900&q=80",
+        "Career counsellors conducted group counselling and mapped vocational aspirations for high school pass-outs in Nakulnar cluster.",
+        "Counselling, Nakulnar, Career Path",
+        "District Counsellor",
+        "2026-08-28"
+      ],
+      [
+        "GAL-2026-008",
+        "Mushroom Cultivation & Organic Farming Micro-Unit",
+        "Entrepreneurship",
+        "2026-08-18",
+        "Katekalyan",
+        "Bengpal",
+        8,
+        "Milestone Achieved",
+        "https://images.unsplash.com/photo-1592417817098-8f3d69109853?auto=format&fit=crop&w=900&q=80",
+        "Success story: 8 local youths launched cooperative oyster mushroom cultivation following 21-day skill training at KVK Dantewada.",
+        "Mushroom, Agri-Business, Bengpal, Cooperative",
+        "Agri-Skill Mentor",
+        "2026-08-18"
+      ]
+    ];
+    defaultGalleryRows.forEach(row => galSheet.appendRow(row));
+  }
+
   // Remove default "Sheet1" if still exists
   const defaultSheet = ss.getSheetByName("Sheet1");
   if (defaultSheet && ss.getSheets().length > 1) {
     try { ss.deleteSheet(defaultSheet); } catch (e) {}
   }
 
-  Logger.log("✅ Database Setup Complete! All 16 sheets created with proper headers.");
-  return { success: true, message: "Database initialized with all 16 sheets and default admin user." };
+  Logger.log("✅ Database Setup Complete! All 17 sheets created with proper headers.");
+  return { success: true, message: "Database initialized with all 17 sheets, default users, and milestone photos." };
 }
 
 /**
@@ -374,7 +503,8 @@ function handleAction(action, payload) {
     addRehabilitation: "Rehabilitation",
     addIIMRaipur: "IIM_Raipur",
     addShasanSahyog: "Shasan_Sahyog",
-    addProgressGallery: "Progress_Gallery"
+    addProgressGallery: "Progress_Gallery",
+    addUser: "Users"
   };
 
   if (actionToSheetMap[action]) {

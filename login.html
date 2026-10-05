@@ -363,20 +363,22 @@
       btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> प्रमाणीकरण जारी है...';
 
       try {
-        const emailLower = email.toLowerCase();
-        // Check standard predefined accounts first for instant 100% reliable login
-        const matchedRole = Object.values(ROLE_PROFILES).find(p => p.email.toLowerCase() === emailLower);
+        const emailClean = email.toLowerCase().trim();
+        const passClean = password.trim();
+
+        // 1. Direct match with defined role profiles
+        const matchedRole = Object.values(ROLE_PROFILES).find(p => p.email.toLowerCase().trim() === emailClean);
         if (matchedRole) {
           const validPass = matchedRole.role === "ADMIN" ? "Admin@EO2026" 
                           : matchedRole.block === "Dantewada" ? "Dantewada@2026" 
                           : "Geedam@2026";
-          if (password === validPass) {
+          if (passClean === validPass) {
             const token = "TOKEN-LIVE-" + Date.now();
             API.setSession(token, matchedRole);
             showAlert(`स्वागत है, ${matchedRole.name}! रीडायरेक्ट हो रहा है...`, false);
             setTimeout(() => {
               window.location.href = "index.html";
-            }, 300);
+            }, 250);
             return;
           }
         }

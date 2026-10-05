@@ -77,11 +77,8 @@ const App = (function() {
     let token = API.getToken();
 
     if (!token || !currentUser) {
-      // Default initial session: Employment Officer (ADMIN)
-      const defaultUser = ROLE_PROFILES.ADMIN;
-      token = "TOKEN-LIVE-" + Date.now();
-      API.setSession(token, defaultUser);
-      currentUser = defaultUser;
+      window.location.href = "login.html";
+      return;
     }
 
     showLoginModal(false);
@@ -611,7 +608,9 @@ const App = (function() {
     API.clearSession();
     currentUser = null;
     showToast("You have been signed out.", "info");
-    setTimeout(() => location.reload(), 500);
+    setTimeout(() => {
+      window.location.href = "login.html";
+    }, 400);
   }
 
   /**

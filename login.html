@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login | Youth Hub Dantewada - युवा सशक्तिकरण एवं कौशल विकास</title>
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <style>
+    :root {
+      --primary: #0F172A;
+      --govt-navy: #0B2545;
+      --govt-saffron: #D97706;
+      --govt-green: #059669;
+      --govt-blue: #1E40AF;
+      --text-main: #0F172A;
+      --text-muted: #64748B;
+      --border: #E2E8F0;
+      --radius: 12px;
+      --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-family);
+      min-height: 100vh;
+      background: radial-gradient(circle at 10% 20%, #F1F5F9 0%, #E2E8F0 90%);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      color: var(--text-main);
+      padding: 20px 16px;
+    }
+
+    /* Top Tricolor Strip */
+    .govt-strip {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #FF9933 0%, #FF9933 33.3%, #FFFFFF 33.3%, #FFFFFF 66.6%, #138808 66.6%, #138808 100%);
+      z-index: 100;
+    }
+
+    .login-container {
+      max-width: 460px;
+      width: 100%;
+      margin: 30px auto;
+      background: #FFFFFF;
+      border-radius: var(--radius);
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      border: 1px solid rgba(226, 232, 240, 0.8);
+      overflow: hidden;
+      animation: fadeIn 0.4s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Header with Emblem & Title */
+    .login-header {
+      background: linear-gradient(135deg, #0B2545 0%, #133E68 100%);
+      color: #FFFFFF;
+      padding: 28px 24px;
+      text-align: center;
+      position: relative;
+    }
+
+    .login-header .emblem-box {
+      width: 56px;
+      height: 56px;
+      background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+      border-radius: 12px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+      color: #FFFFFF;
+      box-shadow: 0 4px 12px rgba(217, 119, 6, 0.4);
+      margin-bottom: 12px;
+    }
+
+    .login-header h1 {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+
+    .login-header p {
+      font-size: 13px;
+      color: #94A3B8;
+      font-weight: 400;
+    }
+
+    .login-body {
+      padding: 24px;
+    }
+
+    /* Notification Alert Box */
+    .alert-box {
+      padding: 12px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      margin-bottom: 18px;
+      display: none;
+      align-items: center;
+      gap: 10px;
+    }
+    .alert-danger {
+      background: #FEE2E2;
+      color: #991B1B;
+      border: 1px solid #FCA5A5;
+    }
+    .alert-success {
+      background: #D1FAE5;
+      color: #065F46;
+      border: 1px solid #6EE7B7;
+    }
+
+    /* Role Quick Cards */
+    .section-label {
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #64748B;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .role-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 22px;
+    }
+
+    .role-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 14px;
+      border: 1.5px solid #E2E8F0;
+      border-radius: 10px;
+      cursor: pointer;
+      background: #FFFFFF;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .role-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
+    }
+
+    .role-card.admin {
+      background: #FFFBEB;
+      border-color: #FCD34D;
+    }
+    .role-card.admin:hover {
+      border-color: #F59E0B;
+      background: #FEF3C7;
+    }
+
+    .role-card.dantewada {
+      background: #EFF6FF;
+      border-color: #BFDBFE;
+    }
+    .role-card.dantewada:hover {
+      border-color: #60A5FA;
+      background: #DBEAFE;
+    }
+
+    .role-card.geedam {
+      background: #ECFDF5;
+      border-color: #A7F3D0;
+    }
+    .role-card.geedam:hover {
+      border-color: #34D399;
+      background: #D1FAE5;
+    }
+
+    .role-card .role-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .role-card .role-icon {
+      font-size: 22px;
+      line-height: 1;
+    }
+
+    .role-card .role-title {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: #1E293B;
+      display: block;
+    }
+
+    .role-card .role-desc {
+      font-size: 11px;
+      color: #64748B;
+      display: block;
+    }
+
+    .role-badge {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 12px;
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
+    }
+    .badge-admin { background: #FDE68A; color: #92400E; }
+    .badge-dantewada { background: #BFDBFE; color: #1E40AF; }
+    .badge-geedam { background: #A7F3D0; color: #065F46; }
+
+    /* Divider */
+    .login-divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 18px 0;
+    }
+    .login-divider .line {
+      flex: 1;
+      height: 1px;
+      background: #E2E8F0;
+    }
+    .login-divider span {
+      font-size: 11.5px;
+      color: #94A3B8;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-weight: 600;
+    }
+
+    /* Form Fields */
+    .form-group {
+      margin-bottom: 14px;
+    }
+    .form-group label {
+      display: block;
+      font-size: 12.5px;
+      font-weight: 600;
+      color: #334155;
+      margin-bottom: 6px;
+    }
+    .input-wrapper {
+      position: relative;
+    }
+    .input-wrapper i {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #94A3B8;
+      font-size: 14px;
+    }
+    .input-wrapper .toggle-pwd {
+      left: auto;
+      right: 14px;
+      cursor: pointer;
+    }
+    .form-control {
+      width: 100%;
+      padding: 10px 14px 10px 38px;
+      border: 1.5px solid #CBD5E1;
+      border-radius: 8px;
+      font-size: 13.5px;
+      color: #1E293B;
+      background: #FFFFFF;
+      transition: all 0.2s;
+    }
+    .form-control:focus {
+      outline: none;
+      border-color: #2563EB;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+    }
+
+    .btn-login {
+      width: 100%;
+      padding: 12px;
+      background: linear-gradient(135deg, #0B2545 0%, #1E40AF 100%);
+      color: #FFFFFF;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s;
+      box-shadow: 0 4px 6px -1px rgba(11, 37, 69, 0.2);
+    }
+    .btn-login:hover {
+      background: linear-gradient(135deg, #133E68 0%, #1D4ED8 100%);
+      transform: translateY(-1px);
+    }
+    .btn-login:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+
+    /* Footer */
+    .login-footer {
+      text-align: center;
+      font-size: 11.5px;
+      color: #64748B;
+      padding: 12px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="govt-strip"></div>
+
+  <div class="login-container">
+    <!-- Header -->
+    <div class="login-header">
+      <div class="emblem-box">
+        <i class="fas fa-landmark"></i>
+      </div>
+      <h1>YOUTH HUB DANTEWADA</h1>
+      <p>युवा सशक्तिकरण एवं कौशल विकास निगरानी प्रणाली • जिला प्रशासन</p>
+    </div>
+
+    <!-- Body -->
+    <div class="login-body">
+      <!-- Error & Success Alerts -->
+      <div id="loginAlert" class="alert-box alert-danger">
+        <i class="fas fa-exclamation-circle"></i>
+        <span id="loginAlertText">त्रुटि संदेश</span>
+      </div>
+
+      <!-- Quick 1-Click Role Login Cards -->
+      <div class="section-label">
+        <span>पद अनुसार त्वरित लॉगिन / 1-Click Access</span>
+        <i class="fas fa-shield-alt text-muted"></i>
+      </div>
+
+      <div class="role-grid">
+        <!-- 1. Employment Officer (Admin) -->
+        <div class="role-card admin" onclick="loginAsRole('ADMIN')">
+          <div class="role-info">
+            <span class="role-icon">👑</span>
+            <div>
+              <span class="role-title">जिला रोजगार अधिकारी (Admin)</span>
+              <span class="role-desc">Employment Officer • All 4 Blocks Full Access</span>
+            </div>
+          </div>
+          <span class="role-badge badge-admin">ADMIN</span>
+        </div>
+
+        <!-- 2. Youth Hub Dantewada -->
+        <div class="role-card dantewada" onclick="loginAsRole('DANTEWADA')">
+          <div class="role-info">
+            <span class="role-icon">🏢</span>
+            <div>
+              <span class="role-title">Youth Hub Dantewada</span>
+              <span class="role-desc">Hub Operator • Dantewada Block Data Entry</span>
+            </div>
+          </div>
+          <span class="role-badge badge-dantewada">Dantewada</span>
+        </div>
+
+        <!-- 3. Youth Hub Geedam -->
+        <div class="role-card geedam" onclick="loginAsRole('GEEDAM')">
+          <div class="role-info">
+            <span class="role-icon">💡</span>
+            <div>
+              <span class="role-title">Youth Hub Geedam</span>
+              <span class="role-desc">Hub Operator • Geedam Block Data Entry</span>
+            </div>
+          </div>
+          <span class="role-badge badge-geedam">Geedam</span>
+        </div>
+      </div>
+
+      <!-- Divider -->
+      <div class="login-divider">
+        <div class="line"></div>
+        <span>या पासवर्ड से लॉगिन करें</span>
+        <div class="line"></div>
+      </div>
+
+      <!-- Standard Email/Password Form -->
+      <form id="standaloneLoginForm" onsubmit="handleCustomLogin(event)">
+        <div class="form-group">
+          <label for="inputEmail">ईमेल आईडी / Email ID</label>
+          <div class="input-wrapper">
+            <i class="fas fa-envelope"></i>
+            <input type="email" id="inputEmail" class="form-control" placeholder="eo.dantewada@gmail.com" required autocomplete="email">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="inputPassword">पासवर्ड / Password</label>
+          <div class="input-wrapper">
+            <i class="fas fa-lock"></i>
+            <input type="password" id="inputPassword" class="form-control" placeholder="••••••••" required autocomplete="current-password" style="padding-right: 40px;">
+            <i class="fas fa-eye toggle-pwd" id="btnTogglePwd" onclick="togglePasswordVisibility()"></i>
+          </div>
+        </div>
+
+        <button type="submit" id="btnSubmitLogin" class="btn-login">
+          <i class="fas fa-sign-in-alt"></i> सुरक्षित लॉगिन करें (Login)
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <div class="login-footer">
+    <p>राष्ट्रीय सूचना विज्ञान केंद्र एवं जिला प्रशासन, दक्षिण बस्तर दंतेवाड़ा (छ.ग.)</p>
+    <p style="margin-top: 4px; color: #94A3B8;">Youth Hub Monitoring System v2.6 • Secure Access</p>
+  </div>
+
+  <!-- Dependencies -->
+  <script src="js/env.js"></script>
+  <script src="js/api.js"></script>
+  <script>
+    // Defined standard role profiles for Dantewada & Geedam
+    const ROLE_PROFILES = {
+      ADMIN: {
+        id: "USR-001",
+        name: "जिला रोजगार अधिकारी",
+        email: "eo.dantewada@gmail.com",
+        role: "ADMIN",
+        block: "All",
+        youthHub: "All",
+        badgeTitle: "👑 जिला रोजगार अधिकारी (Admin)",
+        initials: "EO"
+      },
+      DANTEWADA: {
+        id: "USR-002",
+        name: "Youth Hub Dantewada",
+        email: "youthhub.dantewada@gmail.com",
+        role: "HUB_OPERATOR",
+        block: "Dantewada",
+        youthHub: "Youth Hub Dantewada",
+        badgeTitle: "🏢 Youth Hub Dantewada",
+        initials: "DH"
+      },
+      GEEDAM: {
+        id: "USR-003",
+        name: "Youth Hub Geedam",
+        email: "youthhub.geedam@gmail.com",
+        role: "HUB_OPERATOR",
+        block: "Geedam",
+        youthHub: "Youth Hub Geedam",
+        badgeTitle: "💡 Youth Hub Geedam",
+        initials: "GH"
+      }
+    };
+
+    function showAlert(msg, isError = true) {
+      const alertBox = document.getElementById("loginAlert");
+      const alertText = document.getElementById("loginAlertText");
+      if (alertBox && alertText) {
+        alertText.textContent = msg;
+        alertBox.className = "alert-box " + (isError ? "alert-danger" : "alert-success");
+        alertBox.style.display = "flex";
+      }
+    }
+
+    function togglePasswordVisibility() {
+      const pwdInput = document.getElementById("inputPassword");
+      const toggleBtn = document.getElementById("btnTogglePwd");
+      if (pwdInput && toggleBtn) {
+        if (pwdInput.type === "password") {
+          pwdInput.type = "text";
+          toggleBtn.classList.replace("fa-eye", "fa-eye-slash");
+        } else {
+          pwdInput.type = "password";
+          toggleBtn.classList.replace("fa-eye-slash", "fa-eye");
+        }
+      }
+    }
+
+    // 1-Click Role Login
+    function loginAsRole(roleKey) {
+      const profile = ROLE_PROFILES[roleKey];
+      if (!profile) return;
+
+      const token = "TOKEN-LIVE-" + Date.now();
+      API.setSession(token, profile);
+
+      showAlert(`सफलतापूर्वक लॉगिन: ${profile.name}! रीडायरेक्ट हो रहा है...`, false);
+      setTimeout(() => {
+        window.location.href = "index.html";
+      }, 400);
+    }
+
+    // Standard credential login against Google Apps Script backend
+    async function handleCustomLogin(e) {
+      e.preventDefault();
+      const email = document.getElementById("inputEmail").value.trim();
+      const password = document.getElementById("inputPassword").value;
+      const btn = document.getElementById("btnSubmitLogin");
+
+      if (!email || !password) {
+        showAlert("कृपया ईमेल एवं पासवर्ड दर्ज करें।");
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> प्रमाणीकरण जारी है...';
+
+      try {
+        const res = await API.call("login", { email, password });
+        if (res && res.success && res.user) {
+          API.setSession(res.token, res.user);
+          showAlert(`स्वागत है, ${res.user.name}! रीडायरेक्ट हो रहा है...`, false);
+          setTimeout(() => {
+            window.location.href = "index.html";
+          }, 400);
+        } else {
+          showAlert(res.message || "अमान्य ईमेल या पासवर्ड। कृपया पुनः प्रयास करें।");
+        }
+      } catch (err) {
+        showAlert("सर्वर से संपर्क नहीं हो पाया: " + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> सुरक्षित लॉगिन करें (Login)';
+      }
+    }
+  </script>
+</body>
+</html>

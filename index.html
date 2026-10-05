@@ -60,6 +60,14 @@
           </div>
         </a>
 
+        <a class="nav-item" data-view="gallery" data-tooltip="Progress Gallery / प्रगति गैलरी">
+          <span class="nav-icon"><i class="fas fa-photo-film"></i></span>
+          <div class="nav-label">
+            <span class="nav-label-en">Progress Gallery</span>
+            <span class="nav-label-hi">प्रगति फोटो गैलरी</span>
+          </div>
+        </a>
+
         <!-- SECTION 2: DATA ENTRY -->
         <div class="nav-section-title">
           <span>DATA ENTRY / डेटा प्रविष्टि</span>
@@ -345,6 +353,10 @@
           <button class="btn-header" onclick="Forms.openYouthSearchModal('ym')" title="Lookup Youth">
             <i class="fas fa-address-book"></i> Lookup Youth
           </button>
+
+          <button class="btn-header" onclick="App.switchView('gallery')" title="Track Progress Photo Gallery">
+            <i class="fas fa-images"></i> Progress Gallery
+          </button>
         </div>
       </header>
 
@@ -427,6 +439,22 @@
               <h2>युवा विकास मॉनिटरिंग डैशबोर्ड • Youth Development Monitoring Dashboard</h2>
               <p>Dynamic live performance metrics aggregated from Google Sheets database</p>
             </div>
+          </div>
+
+          <!-- Visual Progress Tracker & Gallery Callout Banner -->
+          <div class="dashboard-progress-banner" style="background: linear-gradient(135deg, #0B2545 0%, #1E3A8A 100%); color: #FFFFFF; border-radius: 10px; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(11,37,69,0.15); flex-wrap: wrap;">
+            <div style="display: flex; align-items: center; gap: 14px;">
+              <div style="width: 44px; height: 44px; border-radius: 8px; background: rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; font-size: 20px; color: #F59E0B; flex-shrink: 0;">
+                <i class="fas fa-photo-film"></i>
+              </div>
+              <div>
+                <h4 style="font-size: 15px; font-weight: 700; margin: 0; color: #FFFFFF;">Track Field Progress & Milestones • प्रगति फोटो गैलरी</h4>
+                <p style="font-size: 12px; margin: 2px 0 0; color: #BFDBFE;">Visual evidence & milestone tracking of training batches, field mobilization, and micro-enterprises across Dantewada.</p>
+              </div>
+            </div>
+            <button type="button" onclick="App.switchView('gallery')" style="background: #FFFFFF; color: #0B2545; font-weight: 700; font-size: 12.5px; border: none; padding: 8px 18px; border-radius: 6px; white-space: nowrap; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.15);">
+              <i class="fas fa-images text-primary" style="color: #2563EB;"></i> Open Progress Gallery &rarr;
+            </button>
           </div>
 
           <!-- 12 Dynamic KPI Cards -->
@@ -662,6 +690,255 @@
               <div class="chart-canvas-container">
                 <canvas id="chartTopGps"></canvas>
               </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+             VIEW: PROGRESS GALLERY (Track Progress Photos & Milestones)
+        =========================================== -->
+        <section class="page-section" id="view_gallery">
+          <div class="gallery-section-wrap">
+
+            <!-- Top Header & Action Bar -->
+            <div class="gallery-header-bar">
+              <div class="gallery-title-box">
+                <h2><i class="fas fa-photo-film"></i> Progress Gallery • फील्ड प्रगति फोटो गैलरी</h2>
+                <p>Visual tracking of training batches, mobilization camps, micro-enterprises, and youth milestones across Dantewada district</p>
+              </div>
+              <div class="gallery-header-actions">
+                <button type="button" class="btn-tb-secondary" onclick="GalleryModule.loadGallery()" title="Refresh Gallery Data">
+                  <i class="fas fa-sync-alt"></i> <span>Refresh</span>
+                </button>
+                <button type="button" class="btn btn-primary" id="btnOpenAddGalleryDrawer">
+                  <i class="fas fa-camera"></i> <span>Add Progress Photo</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Progress Metric Strip (KPIs) -->
+            <div class="gallery-kpi-grid">
+              <div class="gallery-kpi-card blue">
+                <div class="gallery-kpi-icon"><i class="fas fa-images"></i></div>
+                <div class="gallery-kpi-data">
+                  <div class="gallery-kpi-num" id="galKpiTotalPhotos">0</div>
+                  <div class="gallery-kpi-label">Progress Photos</div>
+                  <div class="gallery-kpi-sub">कुल संकलित फोटो</div>
+                </div>
+              </div>
+
+              <div class="gallery-kpi-card teal">
+                <div class="gallery-kpi-icon"><i class="fas fa-tools"></i></div>
+                <div class="gallery-kpi-data">
+                  <div class="gallery-kpi-num" id="galKpiTrainings">0</div>
+                  <div class="gallery-kpi-label">Skill Trainings</div>
+                  <div class="gallery-kpi-sub">कौशल प्रशिक्षण सत्र</div>
+                </div>
+              </div>
+
+              <div class="gallery-kpi-card emerald">
+                <div class="gallery-kpi-icon"><i class="fas fa-bullhorn"></i></div>
+                <div class="gallery-kpi-data">
+                  <div class="gallery-kpi-num" id="galKpiMobilization">0</div>
+                  <div class="gallery-kpi-label">Mobilization Camps</div>
+                  <div class="gallery-kpi-sub">मोबिलाइजेशन शिविर</div>
+                </div>
+              </div>
+
+              <div class="gallery-kpi-card amber">
+                <div class="gallery-kpi-icon"><i class="fas fa-store"></i></div>
+                <div class="gallery-kpi-data">
+                  <div class="gallery-kpi-num" id="galKpiEnterprises">0</div>
+                  <div class="gallery-kpi-label">Micro-Enterprises</div>
+                  <div class="gallery-kpi-sub">स्थापित स्वरोजगार</div>
+                </div>
+              </div>
+
+              <div class="gallery-kpi-card purple">
+                <div class="gallery-kpi-icon"><i class="fas fa-users"></i></div>
+                <div class="gallery-kpi-data">
+                  <div class="gallery-kpi-num" id="galKpiBeneficiaries">0</div>
+                  <div class="gallery-kpi-label">Youth Reached</div>
+                  <div class="gallery-kpi-sub">कुल प्रतिभागी युवा</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Gallery Filter & Search Card -->
+            <div class="gallery-filter-card">
+              <!-- Category Filter Pills -->
+              <div class="gallery-pills-row">
+                <button type="button" class="gallery-pill-btn active" data-category="All">
+                  <i class="fas fa-border-all"></i> All Categories / सभी
+                </button>
+                <button type="button" class="gallery-pill-btn" data-category="Skill Training">
+                  <i class="fas fa-tools"></i> Skill Training / कौशल प्रशिक्षण
+                </button>
+                <button type="button" class="gallery-pill-btn" data-category="Mobilization">
+                  <i class="fas fa-bullhorn"></i> Mobilization / मोबिलाइजेशन
+                </button>
+                <button type="button" class="gallery-pill-btn" data-category="Entrepreneurship">
+                  <i class="fas fa-store"></i> Entrepreneurship / स्वरोजगार
+                </button>
+                <button type="button" class="gallery-pill-btn" data-category="Activities">
+                  <i class="fas fa-calendar-alt"></i> Field Outreach / गतिविधियां
+                </button>
+                <button type="button" class="gallery-pill-btn" data-category="Rehabilitation">
+                  <i class="fas fa-hand-holding-heart"></i> Rehabilitation / पुनर्वास
+                </button>
+              </div>
+
+              <!-- Secondary Filters & Search -->
+              <div class="gallery-filters-row">
+                <div class="gallery-search-wrap">
+                  <i class="fas fa-search"></i>
+                  <input type="text" class="gallery-search-input" id="gallerySearchInput" placeholder="Search milestones, village, training batch, or keyword...">
+                </div>
+
+                <select id="galleryFilterBlock" class="gallery-select" title="Filter by Block">
+                  <option value="All">All Blocks / सभी विकासखंड</option>
+                </select>
+
+                <select id="galleryFilterGP" class="gallery-select" title="Filter by Gram Panchayat">
+                  <option value="All">All Gram Panchayats / सभी पंचायत</option>
+                </select>
+
+                <select id="galleryFilterStatus" class="gallery-select" title="Filter by Status">
+                  <option value="All">All Status / सभी स्थिति</option>
+                  <option value="Completed">Completed / सम्पन्न</option>
+                  <option value="In Progress">In Progress / जारी</option>
+                  <option value="Milestone Achieved">Milestone Achieved / उपलब्धि</option>
+                </select>
+
+                <!-- View Mode Toggle: Grid vs Timeline -->
+                <div class="gallery-view-mode-toggle">
+                  <button type="button" class="gallery-mode-btn active" id="btnGalleryGridView" title="Grid View">
+                    <i class="fas fa-th-large"></i> Grid
+                  </button>
+                  <button type="button" class="gallery-mode-btn" id="btnGalleryTimelineView" title="Progress Timeline">
+                    <i class="fas fa-stream"></i> Timeline
+                  </button>
+                </div>
+              </div>
+
+              <!-- Results status count -->
+              <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: #64748B; padding-top: 4px; border-top: 1px dashed #E2E8F0;">
+                <span id="galleryFilteredCount">Loading progress photos...</span>
+                <span><i class="fas fa-info-circle"></i> Click any card to zoom photo & view details</span>
+              </div>
+            </div>
+
+            <!-- Loading Spinner -->
+            <div id="galleryLoadingSpinner" style="display: none; justify-content: center; align-items: center; padding: 40px; color: #2563EB; font-weight: 600; gap: 10px;">
+              <i class="fas fa-spinner fa-spin fa-2x"></i>
+              <span>Loading progress photo records...</span>
+            </div>
+
+            <!-- Photo Grid Container -->
+            <div class="gallery-grid-container" id="galleryGridContainer">
+              <!-- Injected dynamically by GalleryModule -->
+            </div>
+
+            <!-- Chronological Timeline Container (Hidden by default) -->
+            <div class="gallery-timeline-container" id="galleryTimelineContainer">
+              <!-- Injected dynamically by GalleryModule -->
+            </div>
+
+          </div>
+
+          <!-- Slide-Over Drawer: Add Progress Photo Form -->
+          <div class="slide-over-drawer" id="drawer_formGallery">
+            <div class="slide-over-header">
+              <div>
+                <h3><i class="fas fa-camera"></i> Add Progress Photo • प्रगति फोटो जोड़ें</h3>
+                <p>Upload field progress photo and record milestone achievements</p>
+              </div>
+              <button type="button" class="btn-drawer-close" onclick="GalleryModule.closeAddPhotoDrawer()" title="Close">&times;</button>
+            </div>
+            <div class="slide-over-body">
+              <form id="formAddProgressGallery">
+                <div class="form-body">
+                  <div class="form-grid">
+                    <div class="form-group col-span-3">
+                      <label class="form-label">Activity / Milestone Title <span class="required">*</span></label>
+                      <input type="text" name="Title" class="form-control" placeholder="e.g. Electrician Batch 1 Practical Wiring Session" required>
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">Category <span class="required">*</span></label>
+                      <select name="Category" class="form-control" required>
+                        <option value="Skill Training">Skill Training / कौशल प्रशिक्षण</option>
+                        <option value="Mobilization">Mobilization / मोबिलाइजेशन शिविर</option>
+                        <option value="Entrepreneurship">Entrepreneurship / स्वरोजगार</option>
+                        <option value="Activities">Field Activities / कार्यक्रम व गतिविधियां</option>
+                        <option value="Rehabilitation">Rehabilitation / आत्मसमर्पण व पुनर्वास</option>
+                        <option value="Other">Other / अन्य गतिविधि</option>
+                      </select>
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">Date <span class="required">*</span></label>
+                      <input type="date" name="Date" id="galDate" class="form-control" required>
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">Progress Status <span class="required">*</span></label>
+                      <select name="Progress_Status" class="form-control" required>
+                        <option value="In Progress">In Progress / कार्य जारी</option>
+                        <option value="Completed" selected>Completed / सम्पन्न</option>
+                        <option value="Milestone Achieved">Milestone Achieved / विशेष उपलब्धि</option>
+                      </select>
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">Block <span class="required">*</span></label>
+                      <select name="Block" id="galBlock" class="form-control" required>
+                        <option value="">-- Select Block --</option>
+                      </select>
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">Gram Panchayat</label>
+                      <select name="Gram_Panchayat" id="galGP" class="form-control">
+                        <option value="">-- Select Gram Panchayat --</option>
+                      </select>
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">Youth Participants / Beneficiaries</label>
+                      <input type="number" name="Participants" class="form-control" placeholder="e.g. 25" min="0" value="0">
+                    </div>
+
+                    <div class="form-group col-span-3">
+                      <label class="form-label">Photograph Upload (File or Image URL) <span class="required">*</span></label>
+                      <div class="upload-box" style="margin-bottom: 10px;">
+                        <i class="fas fa-cloud-upload-alt upload-box-icon"></i>
+                        <div>Click or drag progress photo to upload (JPEG/PNG)</div>
+                        <input type="file" accept="image/*" data-preview="galPhotoPreview">
+                        <img id="galPhotoPreview" data-preview-img class="upload-preview" alt="Preview" style="display: none; max-height: 160px; margin: 10px auto; border-radius: 6px;">
+                      </div>
+                      <div style="font-size: 11.5px; color: #64748B; margin-bottom: 6px;">Or paste direct image URL (optional fallback):</div>
+                      <input type="url" name="Photo_URL_Fallback" class="form-control" placeholder="https://example.com/photo.jpg">
+                    </div>
+
+                    <div class="form-group col-span-3">
+                      <label class="form-label">Progress Description & Key Outcomes</label>
+                      <textarea name="Description" class="form-control" rows="3" placeholder="Describe the activity, key milestones reached, youth response, or training outcomes..."></textarea>
+                    </div>
+
+                    <div class="form-group col-span-3">
+                      <label class="form-label">Tags (comma separated)</label>
+                      <input type="text" name="Tags" class="form-control" placeholder="e.g. Batch 1, Solar, Practical, Placement">
+                    </div>
+                  </div>
+                </div>
+
+                <div class="slide-over-footer form-footer">
+                  <button type="button" class="btn btn-secondary" onclick="GalleryModule.closeAddPhotoDrawer()">Cancel</button>
+                  <button type="reset" class="btn btn-secondary">Clear</button>
+                  <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Save Progress Photo</button>
+                </div>
+              </form>
             </div>
           </div>
         </section>
@@ -3766,8 +4043,58 @@
     </div>
   </div>
 
+  <!-- Modal 4: Progress Photo Gallery Lightbox Viewer -->
+  <div class="gallery-lightbox-modal" id="galleryLightboxModal" onclick="if(event.target===this) GalleryModule.closeLightbox()">
+    <div class="lightbox-box">
+      <div class="lightbox-header">
+        <div class="lightbox-counter" id="lightboxCounter">1 of 1</div>
+        <div class="lightbox-header-actions">
+          <a href="#" id="lightboxDownloadBtn" target="_blank" download="Progress_Photo.jpg" class="btn btn-secondary" style="padding: 4px 10px; font-size: 12px; text-decoration: none;">
+            <i class="fas fa-download"></i> Download
+          </a>
+          <button type="button" class="lightbox-close-btn" onclick="GalleryModule.closeLightbox()" title="Close (Esc)">&times;</button>
+        </div>
+      </div>
+      <div class="lightbox-body-grid">
+        <div class="lightbox-img-col">
+          <button type="button" class="lightbox-nav-btn lightbox-prev" onclick="GalleryModule.prevLightbox()" title="Previous (Left Arrow)">
+            <i class="fas fa-chevron-left"></i>
+          </button>
+          <img id="lightboxImage" src="" alt="Progress Photo" />
+          <button type="button" class="lightbox-nav-btn lightbox-next" onclick="GalleryModule.nextLightbox()" title="Next (Right Arrow)">
+            <i class="fas fa-chevron-right"></i>
+          </button>
+        </div>
+        <div class="lightbox-info-col">
+          <div class="lightbox-badges-row">
+            <span id="lightboxCategory" class="gallery-badge badge-skill">Category</span>
+            <span id="lightboxStatus" class="gallery-badge-status status-completed">Status</span>
+          </div>
+          <h3 id="lightboxTitle" class="lightbox-title">Progress Milestone Title</h3>
+          
+          <div class="lightbox-meta-list">
+            <div class="lightbox-meta-row">
+              <i class="fas fa-calendar-alt"></i> <span><strong>Date:</strong> <span id="lightboxDate">2026-09-28</span></span>
+            </div>
+            <div class="lightbox-meta-row">
+              <i class="fas fa-map-marker-alt"></i> <span><strong>Location:</strong> <span id="lightboxLocation">Dantewada, Chitalanka</span></span>
+            </div>
+            <div class="lightbox-meta-row">
+              <i class="fas fa-users"></i> <span><strong>Participants Reached:</strong> <span id="lightboxParticipants">28</span></span>
+            </div>
+          </div>
+
+          <div class="lightbox-desc-box">
+            <h5>Milestone Progress & Description</h5>
+            <p id="lightboxDescription">Detailed progress highlights will appear here.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Slide-Over Drawer Global Backdrop -->
-  <div class="slide-over-backdrop" id="slideOverBackdrop" onclick="Forms.closeDrawer()"></div>
+  <div class="slide-over-backdrop" id="slideOverBackdrop" onclick="Forms.closeDrawer(); GalleryModule.closeAddPhotoDrawer();"></div>
 
   <!-- Toast Notification Container -->
   <div class="toast-container" id="toastContainer"></div>
@@ -3780,6 +4107,7 @@
   <script src="js/dashboard.js"></script>
   <script src="js/forms.js"></script>
   <script src="js/reports.js"></script>
+  <script src="js/gallery.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

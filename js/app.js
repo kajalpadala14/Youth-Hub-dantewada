@@ -31,6 +31,9 @@ const App = (function() {
     setupMobileSidebar();
     setupSettingsHandlers();
     Forms.init();
+    if (typeof GalleryModule !== "undefined") {
+      GalleryModule.init();
+    }
   }
 
   const ROLE_PROFILES = {
@@ -141,9 +144,16 @@ const App = (function() {
         }
         youthHubFilter.disabled = true;
       }
+      const galBlockFilter = document.getElementById("galleryFilterBlock");
+      if (galBlockFilter) {
+        galBlockFilter.value = currentUser.block;
+        galBlockFilter.disabled = true;
+      }
     } else {
       if (blockFilter) blockFilter.disabled = false;
       if (youthHubFilter) youthHubFilter.disabled = false;
+      const galBlockFilter = document.getElementById("galleryFilterBlock");
+      if (galBlockFilter) galBlockFilter.disabled = false;
     }
   }
 
@@ -304,6 +314,10 @@ const App = (function() {
               setTimeout(() => card.classList.remove("highlight-target"), 1800);
             }
           }, 350);
+        }
+      } else if (viewName === "gallery") {
+        if (typeof GalleryModule !== "undefined") {
+          GalleryModule.loadGallery();
         }
       } else if (viewName === "reports") {
         if (reportType) {

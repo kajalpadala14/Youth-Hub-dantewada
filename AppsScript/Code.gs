@@ -104,6 +104,11 @@ const SHEETS_SCHEMA = {
     "Demand_ID", "Name", "Father_Husband_Name", "DOB", "Address", "Village",
     "Block", "District", "Mobile_Number", "Assistance_Required", "Status", "Remarks"
   ],
+  Progress_Gallery: [
+    "Gallery_ID", "Title", "Category", "Date", "Block", "Gram_Panchayat",
+    "Participants", "Progress_Status", "Photo_URL", "Description", "Tags",
+    "Uploaded_By", "Created_At"
+  ],
   Users: [
     "User_ID", "Name", "Email", "Password_Hash", "Role", "Block", "Youth_Hub", "Status", "Created_At"
   ]
@@ -126,7 +131,8 @@ const ID_PREFIXES = {
   Activities: { prefix: "ACT-2026-", idField: "Activity_ID" },
   Rehabilitation: { prefix: "REH-2026-", idField: "Rehab_ID" },
   IIM_Raipur: { prefix: "IIM-2026-", idField: "IIM_ID" },
-  Shasan_Sahyog: { prefix: "SS-2026-", idField: "Demand_ID" }
+  Shasan_Sahyog: { prefix: "SS-2026-", idField: "Demand_ID" },
+  Progress_Gallery: { prefix: "GAL-2026-", idField: "Gallery_ID" }
 };
 
 /**
@@ -232,8 +238,8 @@ function setupDatabase() {
     try { ss.deleteSheet(defaultSheet); } catch (e) {}
   }
 
-  Logger.log("✅ Database Setup Complete! All 15 sheets created with proper headers.");
-  return { success: true, message: "Database initialized with all 15 sheets and default admin user." };
+  Logger.log("✅ Database Setup Complete! All 16 sheets created with proper headers.");
+  return { success: true, message: "Database initialized with all 16 sheets and default admin user." };
 }
 
 /**
@@ -367,7 +373,8 @@ function handleAction(action, payload) {
     addActivity: "Activities",
     addRehabilitation: "Rehabilitation",
     addIIMRaipur: "IIM_Raipur",
-    addShasanSahyog: "Shasan_Sahyog"
+    addShasanSahyog: "Shasan_Sahyog",
+    addProgressGallery: "Progress_Gallery"
   };
 
   if (actionToSheetMap[action]) {

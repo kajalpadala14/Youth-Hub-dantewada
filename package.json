@@ -4,9 +4,8 @@
   "description": "Youth Hub Dantewada - Youth Development & Employment Monitoring System",
   "main": "index.html",
   "scripts": {
-    "server": "node server.js",
-    "dev": "node server.js",
-    "start": "node server.js",
+    "dev": "npx serve -l 3000",
+    "start": "npx serve -l 3000",
     "serve": "npx serve -l 3000"
   },
   "keywords": [

@@ -353,19 +353,15 @@ const GalleryModule = (function() {
     // 1. Gather custom items from localStorage
     const customItems = getCustomItems();
 
-    // 2. Fetch live data from Sheets (dedicated getProgressGallery or multi-table query)
+    // 2. Fetch live data from Sheets (Progress_Gallery, Mobilization, Trainings, Activities)
     let liveItems = [];
     try {
-      const directRes = await API.call("getProgressGallery", {}).catch(() => null);
-      if (directRes && directRes.success && Array.isArray(directRes.records) && directRes.records.length > 0) {
-        liveItems = directRes.records;
-      } else {
-        const [galRes, mobRes, trgRes, actRes] = await Promise.all([
-          API.call("getTableRecords", { sheetName: "Progress_Gallery" }).catch(() => null),
-          API.call("getTableRecords", { sheetName: "Mobilization" }).catch(() => null),
-          API.call("getTableRecords", { sheetName: "Trainings" }).catch(() => null),
-          API.call("getTableRecords", { sheetName: "Activities" }).catch(() => null)
-        ]);
+      const [galRes, mobRes, trgRes, actRes] = await Promise.all([
+        API.call("getTableRecords", { sheetName: "Progress_Gallery" }).catch(() => null),
+        API.call("getTableRecords", { sheetName: "Mobilization" }).catch(() => null),
+        API.call("getTableRecords", { sheetName: "Trainings" }).catch(() => null),
+        API.call("getTableRecords", { sheetName: "Activities" }).catch(() => null)
+      ]);
 
       // Process dedicated Progress_Gallery records if backend has them
       const gRecords = (galRes && (galRes.records || galRes.data)) || [];
@@ -454,7 +450,6 @@ const GalleryModule = (function() {
           });
         }
       });
-      }
     } catch (e) {
       console.warn("Could not fetch remote sheet gallery images:", e);
     }

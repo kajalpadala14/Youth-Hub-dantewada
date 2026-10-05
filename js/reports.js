@@ -70,7 +70,7 @@ const ReportsModule = (function() {
         gramPanchayat: document.getElementById("filterGP") ? document.getElementById("filterGP").value : "All"
       };
 
-      // Determine target sheet and format
+      // Determine target sheet, headers and rowMapper based on reportType
       let sheetName = "Youth_Master";
       let reportTitle = "Comprehensive Youth Master Directory";
       let headers = ["Youth ID", "Name", "Father/Husband", "Mobile", "Gender", "Category", "Qualification", "Block", "Gram Panchayat", "Village", "Career Interest"];
@@ -88,7 +88,47 @@ const ReportsModule = (function() {
         r.Career_Interest || ""
       ];
 
-      if (reportType === "rehabilitation") {
+      if (reportType === "block_wise") {
+        sheetName = "Youth_Master";
+        reportTitle = "Block-wise Consolidated Monitoring Report";
+        headers = ["Block", "Gram Panchayat", "Youth ID", "Name", "Mobile", "Qualification", "Career Interest", "Reg Date"];
+        rowMapper = r => [r.Block || "", r.Gram_Panchayat || "", r.Youth_ID || "", r.Youth_Name || "", r.Mobile_Number || "", r.Qualification || "", r.Career_Interest || "", r.Registration_Date || ""];
+      } else if (reportType === "gp_wise") {
+        sheetName = "Youth_Master";
+        reportTitle = "Gram Panchayat Wise Youth Progress";
+        headers = ["Gram Panchayat", "Block", "Village", "Youth ID", "Name", "Mobile", "Gender", "Category"];
+        rowMapper = r => [r.Gram_Panchayat || "", r.Block || "", r.Village || "", r.Youth_ID || "", r.Youth_Name || "", r.Mobile_Number || "", r.Gender || "", r.Category || ""];
+      } else if (reportType === "employment") {
+        sheetName = "Employment_Linked";
+        reportTitle = "Employment Linkage & Placement Report";
+        headers = ["Link ID", "Youth ID", "Name", "Employer", "Job Role", "Placement Date", "Salary (₹)", "Status"];
+        rowMapper = r => [r.Emp_Link_ID || "", r.Youth_ID || "", r.Youth_Name || "", r.Employer_Name || "", r.Job_Role || "", r.Placement_Date || "", r.Salary ? "₹" + Number(r.Salary).toLocaleString("en-IN") : "-", r.Status || ""];
+      } else if (reportType === "skill_training") {
+        sheetName = "Skill_Training";
+        reportTitle = "Skill Training & Certification Report";
+        headers = ["Record ID", "Youth ID", "Name", "Training Name", "Skill/Trade", "Provider", "Status", "Certificate"];
+        rowMapper = r => [r.Training_Record_ID || "", r.Youth_ID || "", r.Youth_Name || "", r.Training_Name || "", r.Skill_Trade || "", r.Training_Provider || "", r.Training_Status || "", r.Certificate_Status || ""];
+      } else if (reportType === "entrepreneurship") {
+        sheetName = "Entrepreneurs";
+        reportTitle = "Entrepreneurship & Self-Employment Report";
+        headers = ["ID", "Youth ID", "Name", "Mobile", "Block", "Business Idea", "Scheme", "Loan Status", "Amount (₹)"];
+        rowMapper = r => [r.Entrepreneur_ID || "", r.Youth_ID || "", r.Name || "", r.Mobile || "", r.Block || "", r.Business_Idea || "", r.Loan_Scheme || "", r.Loan_Status || "", r.Loan_Amount ? "₹" + Number(r.Loan_Amount).toLocaleString("en-IN") : "-"];
+      } else if (reportType === "navgurukul") {
+        sheetName = "NavGurukul";
+        reportTitle = "NavGurukul Fellowship Status Report";
+        headers = ["Candidate ID", "Youth ID", "Name", "Mobile", "Block", "Qualification", "Pipeline Status", "Admission"];
+        rowMapper = r => [r.Candidate_ID || "", r.Youth_ID || "", r.Candidate_Name || "", r.Mobile || "", r.Block || "", r.Qualification || "", r.Selection_Status || "", r.Admission_Status || ""];
+      } else if (reportType === "training_activity") {
+        sheetName = "Trainings";
+        reportTitle = "Trainings Conducted Report";
+        headers = ["Training ID", "Training Name", "Type", "Date", "Block", "Venue", "Provider", "Participants"];
+        rowMapper = r => [r.Training_ID || "", r.Training_Name || "", r.Training_Type || "", r.Date || "", r.Block || "", r.Venue || "", r.Training_Provider || "", r.Total_Participants || "0"];
+      } else if (reportType === "mobilization") {
+        sheetName = "Mobilization";
+        reportTitle = "Mobilization Events Report";
+        headers = ["Activity ID", "Date", "Event Name", "Block", "Gram Panchayat", "Source", "Total Mobilized"];
+        rowMapper = r => [r.Activity_ID || "", r.Date || "", r.Activity_Name || "", r.Block || "", r.Gram_Panchayat || "", r.Mobilization_Source || "", r.Total_Mobilized || "0"];
+      } else if (reportType === "rehabilitation") {
         sheetName = "Rehabilitation";
         reportTitle = "Rehabilitation & Surrender Monitoring Report";
         headers = ["Rehab ID", "Youth ID", "Name", "Guardian", "Mobile", "Block", "Gram Panchayat", "Surrender Date", "Status", "Assistance Type", "Amount (₹)", "Scheme Linked", "Employment"];
@@ -111,7 +151,19 @@ const ReportsModule = (function() {
 
       // Fetch live records directly from connected Google Sheet
       const res = await API.call("getTableRecords", { sheetName });
-      const recordList = res && (res.records || res.data);
+      let recordList = res && (res.records || res.data);
+
+      // Apply Block & GP Filters if active
+      if (Array.isArray(recordList)) {
+        if (filters.block && filters.block !== "All") {
+          const b = filters.block.toLowerCase();
+          recordList = recordList.filter(r => String(r.Block || "").toLowerCase() === b);
+        }
+        if (filters.gramPanchayat && filters.gramPanchayat !== "All") {
+          const gp = filters.gramPanchayat.toLowerCase();
+          recordList = recordList.filter(r => String(r.Gram_Panchayat || r.GP || "").toLowerCase() === gp);
+        }
+      }
 
       if (res && res.success && Array.isArray(recordList)) {
         currentReportData = {

@@ -90,19 +90,50 @@ const DashboardModule = (function() {
         API.call("getTableRecords", { sheetName: "Rehabilitation" })
       ]);
 
-      const ymList = (ymRes && (ymRes.data || ymRes.records)) || [];
-      const mobList = (mobRes && (mobRes.data || mobRes.records)) || [];
-      const mfList = (mfRes && (mfRes.data || mfRes.records)) || [];
-      const mbList = (mbRes && (mbRes.data || mbRes.records)) || [];
-      const couList = (couRes && (couRes.data || couRes.records)) || [];
-      const sklList = (sklRes && (sklRes.data || sklRes.records)) || [];
-      const erList = (erRes && (erRes.data || erRes.records)) || [];
-      const elList = (elRes && (elRes.data || elRes.records)) || [];
-      const eduList = (eduRes && (eduRes.data || eduRes.records)) || [];
-      const entList = (entRes && (entRes.data || entRes.records)) || [];
-      const ngList = (ngRes && (ngRes.data || ngRes.records)) || [];
-      const trgList = (trgRes && (trgRes.data || trgRes.records)) || [];
-      const rehList = (rehRes && (rehRes.data || rehRes.records)) || [];
+      let ymList = (ymRes && (ymRes.data || ymRes.records)) || [];
+      let mobList = (mobRes && (mobRes.data || mobRes.records)) || [];
+      let mfList = (mfRes && (mfRes.data || mfRes.records)) || [];
+      let mbList = (mbRes && (mbRes.data || mbRes.records)) || [];
+      let couList = (couRes && (couRes.data || couRes.records)) || [];
+      let sklList = (sklRes && (sklRes.data || sklRes.records)) || [];
+      let erList = (erRes && (erRes.data || erRes.records)) || [];
+      let elList = (elRes && (elRes.data || elRes.records)) || [];
+      let eduList = (eduRes && (eduRes.data || eduRes.records)) || [];
+      let entList = (entRes && (entRes.data || entRes.records)) || [];
+      let ngList = (ngRes && (ngRes.data || ngRes.records)) || [];
+      let trgList = (trgRes && (trgRes.data || trgRes.records)) || [];
+      let rehList = (rehRes && (rehRes.data || rehRes.records)) || [];
+
+      if (filters.block && filters.block !== "All") {
+        const b = filters.block.toLowerCase();
+        const fBlock = list => list.filter(item => String(item.Block || "").toLowerCase() === b);
+        ymList = fBlock(ymList);
+        mobList = fBlock(mobList);
+        mfList = fBlock(mfList);
+        mbList = fBlock(mbList);
+        couList = fBlock(couList);
+        sklList = fBlock(sklList);
+        erList = fBlock(erList);
+        elList = fBlock(elList);
+        eduList = fBlock(eduList);
+        entList = fBlock(entList);
+        ngList = fBlock(ngList);
+        trgList = fBlock(trgList);
+        rehList = fBlock(rehList);
+      }
+
+      if (filters.gramPanchayat && filters.gramPanchayat !== "All") {
+        const gp = filters.gramPanchayat.toLowerCase();
+        const fGP = list => list.filter(item => String(item.Gram_Panchayat || item.GP || "").toLowerCase() === gp);
+        ymList = fGP(ymList);
+        mobList = fGP(mobList);
+        mfList = fGP(mfList);
+        mbList = fGP(mbList);
+        entList = fGP(entList);
+        ngList = fGP(ngList);
+        trgList = fGP(trgList);
+        rehList = fGP(rehList);
+      }
 
       const totalMob = mobList.reduce((acc, m) => acc + (Number(m.Total_Mobilized) || 0), 0) || ymList.length;
 

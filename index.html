@@ -297,14 +297,7 @@
           </div>
         </a>
 
-        <a class="nav-item" data-view="settings" data-tooltip="Settings & Database / सेटिंग्स एवं डेटाबेस">
-          <span class="nav-icon"><i class="fas fa-cog"></i></span>
-          <div class="nav-label">
-            <span class="nav-label-en">Settings & Database</span>
-            <span class="nav-label-hi">सेटिंग्स एवं डेटाबेस</span>
-          </div>
-        </a>
-
+        <!-- Settings & Database removed from navigation for now -->
       </nav>
 
       <!-- Sidebar User Profile Footer -->
@@ -734,7 +727,7 @@
                   <div class="form-grid">
                     <div class="form-group">
                       <label class="form-label">Youth ID <span class="required">*</span></label>
-                      <input type="text" class="form-control" value="Auto-generated (e.g. YH-2026-00001)" readonly>
+                      <input type="text" name="Youth_ID" class="form-control" value="Auto-generated (e.g. YH-2026-00001)" readonly>
                     </div>
 
                     <div class="form-group">
@@ -744,7 +737,7 @@
 
                     <div class="form-group">
                       <label class="form-label">Father / Mother / Guardian Name</label>
-                      <input type="text" name="Father_Mother_Name" id="ymParent" class="form-control" placeholder="Guardian Name">
+                      <input type="text" name="Father_Husband_Name" id="ymParent" class="form-control" placeholder="Guardian Name">
                     </div>
 
                     <div class="form-group">
@@ -762,8 +755,23 @@
                     </div>
 
                     <div class="form-group">
-                      <label class="form-label">Date of Birth / Age</label>
-                      <input type="text" name="DOB_Age" class="form-control" placeholder="e.g. 22 years or YYYY-MM-DD">
+                      <label class="form-label">Date of Birth (जन्म तिथि)</label>
+                      <input type="date" name="DOB" id="ymDOB" class="form-control">
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">Age (उम्र)</label>
+                      <input type="number" name="Age" id="ymAge" class="form-control" placeholder="Age in years" min="15" max="45">
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">Aadhaar Number (आधार नंबर)</label>
+                      <input type="text" name="Aadhaar_Number" id="ymAadhaar" class="form-control" placeholder="12-digit Aadhaar" maxlength="12">
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">District (जिला)</label>
+                      <input type="text" name="District" class="form-control" value="Dantewada" readonly>
                     </div>
 
                     <div class="form-group">
@@ -971,9 +979,26 @@
                       <input type="text" name="Village" class="form-control" placeholder="Village / Venue">
                     </div>
 
-                    <div class="form-group col-span-3">
+                    <div class="form-group col-span-2">
                       <label class="form-label">Activity / Event Name <span class="required">*</span></label>
                       <input type="text" name="Activity_Name" class="form-control" placeholder="e.g. Village Youth Chopal / Haat Bazar Outreach" required>
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">Mobilization Source / माध्यम</label>
+                      <select name="Mobilization_Source" class="form-control">
+                        <option value="Haat Bazar">Haat Bazar / हाट बाजार</option>
+                        <option value="Gram Sabha">Gram Sabha / ग्राम सभा</option>
+                        <option value="School/College">School/College / शिक्षण संस्थान</option>
+                        <option value="Panchayat Bhawan">Panchayat Bhawan / पंचायत भवन</option>
+                        <option value="Door-to-Door">Door-to-Door / घर-घर संपर्क</option>
+                        <option value="Other">Other / अन्य</option>
+                      </select>
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">Mobilizer Name / प्रेरक का नाम</label>
+                      <input type="text" name="Mobilizer_Name" class="form-control" placeholder="Name of Mobilizer / CRP">
                     </div>
 
                     <div class="form-group">
@@ -1369,6 +1394,17 @@
                     </div>
 
                     <div class="form-group">
+                      <label class="form-label">Block / विकासखंड</label>
+                      <select name="Block" id="couBlock" class="form-control">
+                        <option value="">Select Block</option>
+                        <option value="Dantewada">Dantewada</option>
+                        <option value="Geedam">Geedam</option>
+                        <option value="Katekalyan">Katekalyan</option>
+                        <option value="Kuakonda">Kuakonda</option>
+                      </select>
+                    </div>
+
+                    <div class="form-group">
                       <label class="form-label">Counselling Date</label>
                       <input type="date" name="Date" class="form-control" value="2026-09-29">
                     </div>
@@ -1381,7 +1417,7 @@
                         <option value="Skill Training">Skill Training / कौशल प्रशिक्षण</option>
                         <option value="Employment">Employment / रोजगार</option>
                         <option value="Entrepreneurship">Entrepreneurship / स्वरोजगार</option>
-                        <option value="NavGurukul">NavGurukul / नवगुरुकुल</option>
+                        <option value="NavGurukul">NavGurukul / नवगुरुकul</option>
                         <option value="Other">Other / अन्य</option>
                       </select>
                     </div>
@@ -1409,9 +1445,33 @@
                       </select>
                     </div>
 
+                    <div class="form-group">
+                      <label class="form-label">Follow-up Date</label>
+                      <input type="date" name="Follow_Up_Date" class="form-control">
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">Follow-up Status</label>
+                      <select name="Follow_Up_Status" class="form-control">
+                        <option value="Pending">Pending / लंबित</option>
+                        <option value="Completed">Completed / पूर्ण</option>
+                        <option value="Not Required">Not Required</option>
+                      </select>
+                    </div>
+
+                    <div class="form-group col-span-2">
+                      <label class="form-label">Pending Issue / समस्या (यदि कोई हो)</label>
+                      <input type="text" name="Pending_Issue" class="form-control" placeholder="Any issue or grievance">
+                    </div>
+
                     <div class="form-group col-span-3">
                       <label class="form-label">Recommended Action / Next Steps</label>
                       <input type="text" name="Recommended_Action" class="form-control" placeholder="e.g. Enroll in Batch 4 Livelihood College">
+                    </div>
+
+                    <div class="form-group col-span-3">
+                      <label class="form-label">Remarks</label>
+                      <input type="text" name="Remarks" class="form-control" placeholder="Any additional notes">
                     </div>
                   </div>
                 </div>
@@ -2744,7 +2804,7 @@
                   <div class="form-grid">
                     <div class="form-group">
                       <label class="form-label">Rehab ID <span class="required">*</span></label>
-                      <input type="text" class="form-control" value="Auto-generated (e.g. REH-2026-00001)" readonly>
+                      <input type="text" name="Rehab_ID" class="form-control" value="Auto-generated (e.g. REH-2026-00001)" readonly>
                     </div>
 
                     <div class="form-group">

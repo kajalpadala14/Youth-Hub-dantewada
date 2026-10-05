@@ -33,7 +33,7 @@ const SHEETS_SCHEMA = {
     "Block", "GP", "MyBharat_Reg_No", "Status", "Remarks"
   ],
   Counselling: [
-    "Counselling_ID", "Youth_ID", "Youth_Name", "Date", "Counselling_Type",
+    "Counselling_ID", "Youth_ID", "Youth_Name", "Date", "Block", "Counselling_Type",
     "Career_Interest", "Counsellor_Name", "Counselling_Outcome",
     "Follow_Up_Required", "Follow_Up_Date", "Follow_Up_Status",
     "Pending_Issue", "Recommended_Action", "Remarks"
@@ -61,7 +61,8 @@ const SHEETS_SCHEMA = {
   Entrepreneurs: [
     "Entrepreneur_ID", "Stage", "Youth_ID", "Name", "Father_Name", "Mobile", "Block", "Village",
     "Business_Type", "Business_Idea", "Business_Category", "Identification_Date",
-    "Business_Status", "Establishment_Date", "Loan_Required", "Loan_Processed_Date",
+    "Business_Plan_Status", "DPR_Status", "Business_Status", "Establishment_Date",
+    "Loan_Required", "Loan_Applied", "Loan_Approved", "Loan_Processed_Date",
     "Loan_Status", "Loan_Amount", "Received_Amount", "Loan_Scheme",
     "Bank_Name", "Account_Number", "IFSC_Code",
     "Udyam_Registration", "Bank_Documents", "Pan_Card", "Aadhar_Card", "Voter_Card", "Quotation", "Updates",
@@ -75,7 +76,8 @@ const SHEETS_SCHEMA = {
   Trainings: [
     "Training_ID", "Training_Name", "Training_Type", "Date", "Start_Date", "End_Date",
     "Block", "GP", "Venue", "Training_Provider", "Trainer_Name",
-    "Male_Participants", "Female_Participants", "Total_Participants", "Remarks"
+    "Male_Participants", "Female_Participants", "Total_Participants",
+    "Training_Topic", "Outcome", "Photo_URL", "Remarks"
   ],
   Activities: [
     "Activity_ID", "Date", "Activity_Type", "Activity_Name", "Block", "GP",
@@ -134,6 +136,21 @@ const ID_PREFIXES = {
  * and headers automatically.
  * =========================================================================
  */
+/**
+ * Adds custom admin menu directly in Google Sheets top menu bar
+ */
+function onOpen() {
+  SpreadsheetApp.getUi()
+    .createMenu("🚀 Youth Hub Admin")
+    .addItem("🔄 Update / Setup Database Columns", "menuSetupDatabase")
+    .addToUi();
+}
+
+function menuSetupDatabase() {
+  const result = setupDatabase();
+  SpreadsheetApp.getUi().alert("✅ Success!\n\nAll 16 sheets and column headers are up to date with the latest system schema.");
+}
+
 function setupDatabase() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
 
@@ -307,9 +324,14 @@ function handleAction(action, payload) {
     return handleFileUpload(payload);
   }
 
+  // List Users (Admin only)
+  if (action === "listUsers") {
+    return listUsers(ss);
+  }
+
   // Get Dashboard KPIs & Charts
   if (action === "getDashboard") {
-    return calculateDashboardKPIs(ss);
+    return calculateDashboardKPIs(ss, payload.filters);
   }
 
   // Dynamic Add Form Handlers
@@ -417,6 +439,21 @@ function insertRecord(ss, sheetName, payload) {
   const headers = SHEETS_SCHEMA[sheetName];
   const config = ID_PREFIXES[sheetName];
 
+  // Handle field aliases and backward compatibility
+  if (sheetName === "Youth_Master") {
+    if (!payload.Father_Husband_Name && payload.Father_Mother_Name) {
+      payload.Father_Husband_Name = payload.Father_Mother_Name;
+    }
+    if (!payload.DOB && payload.DOB_Age) {
+      const dobVal = String(payload.DOB_Age).trim();
+      if (dobVal.includes("-") || dobVal.includes("/")) {
+        payload.DOB = dobVal;
+      } else {
+        payload.Age = dobVal;
+      }
+    }
+  }
+
   // Generate ID if missing
   if (config && (!payload[config.idField] || String(payload[config.idField]).trim() === "")) {
     const nextNum = Math.max(1, sheet.getLastRow());
@@ -435,6 +472,18 @@ function insertRecord(ss, sheetName, payload) {
     message: `${sheetName.replace(/_/g, " ")} record saved successfully.`,
     id: config ? payload[config.idField] : null
   };
+}
+
+function listUsers(ss) {
+  const sheet = ss.getSheetByName("Users");
+  if (!sheet) return { success: false, message: "Users sheet not found." };
+  const recordsRes = getSheetRecords(ss, "Users");
+  const users = (recordsRes.records || []).map(u => {
+    const userCopy = Object.assign({}, u);
+    delete userCopy.Password_Hash;
+    return userCopy;
+  });
+  return { success: true, users };
 }
 
 function updateRecord(ss, sheetName, idField, idValue, updatedData) {
@@ -557,20 +606,54 @@ function handleFileUpload(payload) {
   }
 }
 
-function calculateDashboardKPIs(ss) {
-  const youth = (getSheetRecords(ss, "Youth_Master").records || []);
-  const mob = (getSheetRecords(ss, "Mobilization").records || []);
-  const mform = (getSheetRecords(ss, "M_Form").records || []);
-  const mybharat = (getSheetRecords(ss, "My_Bharat").records || []);
-  const cou = (getSheetRecords(ss, "Counselling").records || []);
-  const skill = (getSheetRecords(ss, "Skill_Training").records || []);
-  const empLinked = (getSheetRecords(ss, "Employment_Linked").records || []);
-  const empReg = (getSheetRecords(ss, "Employment_Registered").records || []);
-  const edu = (getSheetRecords(ss, "Education").records || []);
-  const ent = (getSheetRecords(ss, "Entrepreneurs").records || []);
-  const nav = (getSheetRecords(ss, "NavGurukul").records || []);
-  const trg = (getSheetRecords(ss, "Trainings").records || []);
-  const rehab = (getSheetRecords(ss, "Rehabilitation").records || []);
+function calculateDashboardKPIs(ss, filters) {
+  filters = filters || {};
+  let youth = (getSheetRecords(ss, "Youth_Master").records || []);
+  let mob = (getSheetRecords(ss, "Mobilization").records || []);
+  let mform = (getSheetRecords(ss, "M_Form").records || []);
+  let mybharat = (getSheetRecords(ss, "My_Bharat").records || []);
+  let cou = (getSheetRecords(ss, "Counselling").records || []);
+  let skill = (getSheetRecords(ss, "Skill_Training").records || []);
+  let empLinked = (getSheetRecords(ss, "Employment_Linked").records || []);
+  let empReg = (getSheetRecords(ss, "Employment_Registered").records || []);
+  let edu = (getSheetRecords(ss, "Education").records || []);
+  let ent = (getSheetRecords(ss, "Entrepreneurs").records || []);
+  let nav = (getSheetRecords(ss, "NavGurukul").records || []);
+  let trg = (getSheetRecords(ss, "Trainings").records || []);
+  let rehab = (getSheetRecords(ss, "Rehabilitation").records || []);
+
+  // Filter by Block if selected
+  if (filters.block && filters.block !== "All") {
+    const b = String(filters.block).toLowerCase();
+    const filterByBlock = list => list.filter(item => String(item.Block || "").toLowerCase() === b);
+    youth = filterByBlock(youth);
+    mob = filterByBlock(mob);
+    mform = filterByBlock(mform);
+    mybharat = filterByBlock(mybharat);
+    cou = filterByBlock(cou);
+    skill = filterByBlock(skill);
+    empLinked = filterByBlock(empLinked);
+    empReg = filterByBlock(empReg);
+    edu = filterByBlock(edu);
+    ent = filterByBlock(ent);
+    nav = filterByBlock(nav);
+    trg = filterByBlock(trg);
+    rehab = filterByBlock(rehab);
+  }
+
+  // Filter by Gram Panchayat if selected
+  if (filters.gramPanchayat && filters.gramPanchayat !== "All") {
+    const gp = String(filters.gramPanchayat).toLowerCase();
+    const filterByGP = list => list.filter(item => String(item.Gram_Panchayat || item.GP || "").toLowerCase() === gp);
+    youth = filterByGP(youth);
+    mob = filterByGP(mob);
+    mform = filterByGP(mform);
+    mybharat = filterByGP(mybharat);
+    ent = filterByGP(ent);
+    nav = filterByGP(nav);
+    trg = filterByGP(trg);
+    rehab = filterByGP(rehab);
+  }
 
   const totMob = mob.reduce((acc, m) => acc + (Number(m.Total_Mobilized) || 0), 0) || youth.length;
   const blocks = ["Dantewada", "Geedam", "Katekalyan", "Kuakonda"];

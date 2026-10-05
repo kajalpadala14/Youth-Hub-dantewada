@@ -431,6 +431,26 @@ const Forms = (function() {
 
     if (trgMale) trgMale.addEventListener("input", calcTrgTotal);
     if (trgFemale) trgFemale.addEventListener("input", calcTrgTotal);
+
+    // DOB to Age Auto-calculation
+    const ymDob = document.getElementById("ymDOB");
+    const ymAge = document.getElementById("ymAge");
+    if (ymDob && ymAge) {
+      ymDob.addEventListener("change", function() {
+        if (this.value) {
+          const birthDate = new Date(this.value);
+          const today = new Date();
+          let age = today.getFullYear() - birthDate.getFullYear();
+          const m = today.getMonth() - birthDate.getMonth();
+          if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+            age--;
+          }
+          if (age >= 0 && age < 100) {
+            ymAge.value = age;
+          }
+        }
+      });
+    }
   }
 
   /**

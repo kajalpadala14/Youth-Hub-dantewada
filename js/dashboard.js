@@ -50,12 +50,24 @@ const DashboardModule = (function() {
   }
 
   function getActiveFilters() {
+    const currentUser = API.getCurrentUser();
+    let blockVal = document.getElementById("filterBlock") ? document.getElementById("filterBlock").value : "All";
+    let hubVal = document.getElementById("filterYouthHub") ? document.getElementById("filterYouthHub").value : "All";
+
+    // Enforce operator block restrictions
+    if (currentUser && currentUser.block && currentUser.block !== "All") {
+      blockVal = currentUser.block;
+      if (currentUser.youthHub && currentUser.youthHub !== "All") {
+        hubVal = currentUser.youthHub;
+      }
+    }
+
     return {
       financialYear: document.getElementById("filterFY") ? document.getElementById("filterFY").value : "All",
       month: document.getElementById("filterMonth") ? document.getElementById("filterMonth").value : "All",
-      block: document.getElementById("filterBlock") ? document.getElementById("filterBlock").value : "All",
+      block: blockVal,
       gramPanchayat: document.getElementById("filterGP") ? document.getElementById("filterGP").value : "All",
-      youthHub: document.getElementById("filterYouthHub") ? document.getElementById("filterYouthHub").value : "All"
+      youthHub: hubVal
     };
   }
 

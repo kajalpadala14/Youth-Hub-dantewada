@@ -729,8 +729,17 @@ const Forms = (function() {
 
     try {
       const res = await API.call("getTableRecords", { sheetName: config.sheetName });
-      const recordList = res && (res.records || res.data);
+      let recordList = res && (res.records || res.data);
       if (res && res.success && Array.isArray(recordList)) {
+        // Role-based block filtering for Hub Operators
+        const currentUser = API.getCurrentUser();
+        if (currentUser && currentUser.block && currentUser.block !== "All") {
+          const userBlock = currentUser.block.toLowerCase();
+          recordList = recordList.filter(rec => {
+            const rowBlock = String(rec.Block || rec.block || "").toLowerCase();
+            return !rowBlock || rowBlock === userBlock;
+          });
+        }
         tableDataCache[moduleKey] = recordList;
         renderTabTable(moduleKey, recordList);
       } else {
@@ -768,6 +777,9 @@ const Forms = (function() {
       return;
     }
 
+    const currentUser = API.getCurrentUser();
+    const isAdmin = currentUser && currentUser.role === "ADMIN";
+
     let rowsHtml = "";
     records.forEach(rec => {
       rowsHtml += "<tr>";
@@ -793,14 +805,14 @@ const Forms = (function() {
         rowsHtml += `<td>${val}</td>`;
       });
 
-      // Actions column (View, Edit, Delete)
+      // Actions column (View, Edit, Delete only for Admin)
       const recId = rec[config.idField] || "";
       const youthId = rec.Youth_ID || "";
       rowsHtml += `
         <td style="text-align: center; white-space: nowrap;">
           ${youthId ? `<button type="button" class="btn-action-icon view" onclick="ReportsModule.openYouthProfileModal('${youthId}')" title="360° Profile"><i class="fas fa-id-card"></i></button>` : ''}
           <button type="button" class="btn-action-icon edit" onclick="Forms.openEditModal('${moduleKey}', '${recId}')" title="Edit Record"><i class="fas fa-edit"></i></button>
-          <button type="button" class="btn-action-icon delete" onclick="Forms.confirmDeleteRecord('${moduleKey}', '${recId}')" title="Delete Record"><i class="fas fa-trash-alt"></i></button>
+          ${isAdmin ? `<button type="button" class="btn-action-icon delete" onclick="Forms.confirmDeleteRecord('${moduleKey}', '${recId}')" title="Delete Record (Admin Only)"><i class="fas fa-trash-alt"></i></button>` : ''}
         </td>
       `;
       rowsHtml += "</tr>";
@@ -1005,6 +1017,12 @@ const Forms = (function() {
   }
 
   async function confirmDeleteRecord(moduleKey, recordId) {
+    const currentUser = API.getCurrentUser();
+    if (!currentUser || currentUser.role !== "ADMIN") {
+      App.showToast("रिकॉर्ड हटाने की अनुमति केवल जिला रोजगार अधिकारी (Admin) को है।", "error");
+      return;
+    }
+
     const config = TAB_TABLE_CONFIGS[moduleKey];
     if (!config || !recordId) return;
 
@@ -1141,6 +1159,12 @@ const Forms = (function() {
         const payload = {};
         formData.forEach((value, key) => { payload[key] = value; });
 
+        // Enforce assigned Block for Hub Operators even if select is disabled
+        const currentUser = API.getCurrentUser();
+        if (currentUser && currentUser.block && currentUser.block !== "All") {
+          payload.Block = currentUser.block;
+        }
+
         const fileInput = form.querySelector('input[type="file"]');
         if (fileInput && fileInput.dataset && fileInput.dataset.base64) {
           const uploadRes = await API.call("uploadFile", {
@@ -1257,6 +1281,33 @@ const Forms = (function() {
     const backdrop = document.getElementById("slideOverBackdrop");
     if (backdrop) backdrop.classList.add("active");
     document.body.classList.add("drawer-open");
+
+    // Block locking for Hub Operators in open drawer
+    const currentUser = API.getCurrentUser();
+    if (currentUser && currentUser.block && currentUser.block !== "All") {
+      drawer.querySelectorAll("select[name='Block'], select[data-block-select]").forEach(sel => {
+        sel.value = currentUser.block;
+        sel.disabled = true;
+        // Trigger GP dropdown cascade
+        const targetGpId = sel.getAttribute("data-gp-target");
+        if (targetGpId) {
+          const gpSelect = document.getElementById(targetGpId);
+          if (gpSelect && AppConfig.BLOCKS[currentUser.block]) {
+            gpSelect.innerHTML = '<option value="">Select Gram Panchayat</option>';
+            AppConfig.BLOCKS[currentUser.block].forEach(gp => {
+              const opt = document.createElement("option");
+              opt.value = gp;
+              opt.textContent = gp;
+              gpSelect.appendChild(opt);
+            });
+          }
+        }
+      });
+    } else {
+      drawer.querySelectorAll("select[name='Block'], select[data-block-select]").forEach(sel => {
+        sel.disabled = false;
+      });
+    }
 
     // Focus on first editable input
     setTimeout(() => {

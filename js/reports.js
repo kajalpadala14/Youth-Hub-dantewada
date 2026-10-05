@@ -63,10 +63,16 @@ const ReportsModule = (function() {
     }
 
     try {
+      const currentUser = API.getCurrentUser();
+      let blockFilterVal = document.getElementById("filterBlock") ? document.getElementById("filterBlock").value : "All";
+      if (currentUser && currentUser.block && currentUser.block !== "All") {
+        blockFilterVal = currentUser.block;
+      }
+
       const filters = {
         financialYear: document.getElementById("filterFY") ? document.getElementById("filterFY").value : "All",
         month: document.getElementById("filterMonth") ? document.getElementById("filterMonth").value : "All",
-        block: document.getElementById("filterBlock") ? document.getElementById("filterBlock").value : "All",
+        block: blockFilterVal,
         gramPanchayat: document.getElementById("filterGP") ? document.getElementById("filterGP").value : "All"
       };
 

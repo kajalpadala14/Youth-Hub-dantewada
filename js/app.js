@@ -33,6 +33,42 @@ const App = (function() {
     Forms.init();
   }
 
+  const ROLE_PROFILES = {
+    ADMIN: {
+      id: "USR-001",
+      name: "जिला रोजगार अधिकारी",
+      email: "eo.dantewada@gmail.com",
+      role: "ADMIN",
+      block: "All",
+      youthHub: "All",
+      badgeTitle: "👑 जिला रोजगार अधिकारी (Admin)",
+      badgeClass: "badge-admin",
+      initials: "EO"
+    },
+    DANTEWADA: {
+      id: "USR-002",
+      name: "Youth Hub Dantewada",
+      email: "youthhub.dantewada@gmail.com",
+      role: "HUB_OPERATOR",
+      block: "Dantewada",
+      youthHub: "Youth Hub Dantewada",
+      badgeTitle: "🏢 Youth Hub Dantewada (दंतेवाड़ा)",
+      badgeClass: "badge-hub-dantewada",
+      initials: "DH"
+    },
+    GEEDAM: {
+      id: "USR-003",
+      name: "Youth Hub Geedam",
+      email: "youthhub.geedam@gmail.com",
+      role: "HUB_OPERATOR",
+      block: "Geedam",
+      youthHub: "Youth Hub Geedam",
+      badgeTitle: "💡 Youth Hub Geedam (गीदम)",
+      badgeClass: "badge-hub-geedam",
+      initials: "GH"
+    }
+  };
+
   /**
    * Authentication Verification & UI Setup
    */
@@ -41,14 +77,8 @@ const App = (function() {
     let token = API.getToken();
 
     if (!token || !currentUser) {
-      // Auto-initialize standard session for Dantewada Admin
-      const defaultUser = {
-        name: "Admin Dantewada",
-        email: "admin@youthhub.cg.gov.in",
-        role: "ADMIN",
-        block: "All",
-        youthHub: "All"
-      };
+      // Default initial session: Employment Officer (ADMIN)
+      const defaultUser = ROLE_PROFILES.ADMIN;
       token = "TOKEN-LIVE-" + Date.now();
       API.setSession(token, defaultUser);
       currentUser = defaultUser;
@@ -69,22 +99,78 @@ const App = (function() {
     const avatarEl = document.getElementById("navUserAvatar");
 
     if (nameEl) nameEl.textContent = currentUser.name || currentUser.email;
-    if (roleEl) roleEl.textContent = `${currentUser.role} ${currentUser.block !== "All" ? "(" + currentUser.block + ")" : ""}`;
-    if (avatarEl) avatarEl.textContent = (currentUser.name || "U").charAt(0).toUpperCase();
+    
+    let displayRole = currentUser.role;
+    let initials = (currentUser.name || "U").substring(0, 2).toUpperCase();
 
-    // Role-based visibility
+    if (currentUser.role === "ADMIN") {
+      displayRole = "👑 जिला रोजगार अधिकारी (Admin)";
+      initials = "EO";
+    } else if (currentUser.block === "Dantewada") {
+      displayRole = "🏢 Youth Hub Dantewada";
+      initials = "DH";
+    } else if (currentUser.block === "Geedam") {
+      displayRole = "💡 Youth Hub Geedam";
+      initials = "GH";
+    } else if (currentUser.block && currentUser.block !== "All") {
+      displayRole = `Operator (${currentUser.block})`;
+    }
+
+    if (roleEl) roleEl.textContent = displayRole;
+    if (avatarEl) avatarEl.textContent = initials;
+
+    // Role-based visibility for Admin Users view
     const usersNav = document.querySelector('[data-view="users"]');
     if (usersNav) {
       usersNav.style.display = currentUser.role === "ADMIN" ? "flex" : "none";
     }
 
-    // If Block User, pre-lock block select
-    if (currentUser.role === "BLOCK USER" && currentUser.block && currentUser.block !== "All") {
-      const blockFilter = document.getElementById("filterBlock");
+    // Block Filter Lock for Hub Operators
+    const blockFilter = document.getElementById("filterBlock");
+    const youthHubFilter = document.getElementById("filterYouthHub");
+
+    if (currentUser.block && currentUser.block !== "All") {
       if (blockFilter) {
         blockFilter.value = currentUser.block;
         blockFilter.disabled = true;
         DashboardModule.updateGramPanchayatFilterOptions(currentUser.block);
+      }
+      if (youthHubFilter && currentUser.youthHub && currentUser.youthHub !== "All") {
+        for (let i = 0; i < youthHubFilter.options.length; i++) {
+          if (youthHubFilter.options[i].text.toLowerCase().includes(currentUser.block.toLowerCase())) {
+            youthHubFilter.selectedIndex = i;
+            break;
+          }
+        }
+        youthHubFilter.disabled = true;
+      }
+    } else {
+      if (blockFilter) blockFilter.disabled = false;
+      if (youthHubFilter) youthHubFilter.disabled = false;
+    }
+  }
+
+  function quickRoleLogin(roleKey) {
+    const profile = ROLE_PROFILES[roleKey];
+    if (!profile) return;
+
+    const token = "TOKEN-LIVE-" + Date.now();
+    API.setSession(token, profile);
+    currentUser = profile;
+    showLoginModal(false);
+    updateUserUI();
+    showToast(`स्विच किया गया: ${profile.name} (${profile.role})`, "success");
+
+    // Refresh active views
+    DashboardModule.loadDashboard();
+    ReportsModule.loadActiveReport();
+    
+    // Refresh current visible table if on a module view
+    const activeSection = document.querySelector(".page-section.active");
+    if (activeSection && activeSection.id.startsWith("view_")) {
+      const viewKey = activeSection.id.replace("view_", "");
+      if (viewKey !== "dashboard" && viewKey !== "reports" && viewKey !== "users") {
+        Forms.loadTabTable(viewKey);
       }
     }
   }
@@ -563,7 +649,9 @@ const App = (function() {
     switchView,
     showToast,
     handleLogin,
-    handleLogout
+    handleLogout,
+    showLoginModal,
+    quickRoleLogin
   };
 })();
 

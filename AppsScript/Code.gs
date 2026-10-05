@@ -188,28 +188,39 @@ function setupDatabase() {
     }
   });
 
-  // Create Default Admin User in Users sheet if empty
+  // Create Default Role-Based Users in Users sheet if empty
   const usersSheet = ss.getSheetByName("Users");
   if (usersSheet && usersSheet.getLastRow() <= 1) {
     usersSheet.appendRow([
       "USR-001",
-      "Administrator",
-      "admin@dantewada.gov.in",
-      "Admin@Dantewada2026",
+      "Employment Officer (जिला रोजगार अधिकारी)",
+      "eo.dantewada@gmail.com",
+      "Admin@EO2026",
       "ADMIN",
       "All",
-      "Youth Hub Dantewada",
+      "All",
       "Active",
       new Date().toISOString().split("T")[0]
     ]);
     usersSheet.appendRow([
       "USR-002",
-      "Data Operator",
-      "operator@dantewada.gov.in",
-      "Operator@2026",
-      "DATA_OPERATOR",
-      "All",
       "Youth Hub Dantewada",
+      "youthhub.dantewada@gmail.com",
+      "Dantewada@2026",
+      "HUB_OPERATOR",
+      "Dantewada",
+      "Youth Hub Dantewada",
+      "Active",
+      new Date().toISOString().split("T")[0]
+    ]);
+    usersSheet.appendRow([
+      "USR-003",
+      "Youth Hub Geedam",
+      "youthhub.geedam@gmail.com",
+      "Geedam@2026",
+      "HUB_OPERATOR",
+      "Geedam",
+      "Youth Hub Geedam",
       "Active",
       new Date().toISOString().split("T")[0]
     ]);
@@ -369,6 +380,55 @@ function handleAction(action, payload) {
  */
 
 function handleLogin(ss, payload) {
+  const email = (payload.email || "").trim().toLowerCase();
+  const password = (payload.password || "").trim();
+
+  // 1. Built-in system default accounts for immediate role-based access
+  const DEFAULT_ACCOUNTS = [
+    {
+      userId: "USR-001",
+      name: "Employment Officer (जिला रोजगार अधिकारी)",
+      email: "eo.dantewada@gmail.com",
+      password: "Admin@EO2026",
+      role: "ADMIN",
+      block: "All",
+      youthHub: "All"
+    },
+    {
+      userId: "USR-002",
+      name: "Youth Hub Dantewada",
+      email: "youthhub.dantewada@gmail.com",
+      password: "Dantewada@2026",
+      role: "HUB_OPERATOR",
+      block: "Dantewada",
+      youthHub: "Youth Hub Dantewada"
+    },
+    {
+      userId: "USR-003",
+      name: "Youth Hub Geedam",
+      email: "youthhub.geedam@gmail.com",
+      password: "Geedam@2026",
+      role: "HUB_OPERATOR",
+      block: "Geedam",
+      youthHub: "Youth Hub Geedam"
+    }
+  ];
+
+  const matchedDefault = DEFAULT_ACCOUNTS.find(a => a.email.toLowerCase() === email && a.password === password);
+  if (matchedDefault) {
+    const user = {
+      userId: matchedDefault.userId,
+      name: matchedDefault.name,
+      email: matchedDefault.email,
+      role: matchedDefault.role,
+      block: matchedDefault.block,
+      youthHub: matchedDefault.youthHub
+    };
+    const token = Utilities.base64Encode(JSON.stringify(user));
+    return { success: true, token, user };
+  }
+
+  // 2. Dynamic check in Users Google Sheet
   const sheet = ss.getSheetByName("Users");
   if (!sheet) return { success: false, message: "Users sheet not found. Run setupDatabase first." };
 
@@ -376,9 +436,6 @@ function handleLogin(ss, payload) {
   const headers = data[0];
   const emailIdx = headers.indexOf("Email");
   const passIdx = headers.indexOf("Password_Hash");
-
-  const email = (payload.email || "").trim().toLowerCase();
-  const password = (payload.password || "").trim();
 
   for (let i = 1; i < data.length; i++) {
     const row = data[i];

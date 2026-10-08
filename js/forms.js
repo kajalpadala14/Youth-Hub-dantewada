@@ -726,12 +726,22 @@ const Forms = (function() {
       const res = await API.call("getTableRecords", { sheetName: config.sheetName });
       let recordList = res && (res.records || res.data);
       if (res && res.success && Array.isArray(recordList)) {
+        // Filter out completely blank or phantom rows (rows with only an auto-generated ID but no candidate info)
+        recordList = recordList.filter(rec => {
+          const keys = Object.keys(rec).filter(k => k !== "S.NO" && k !== "Entrepreneur_ID" && k !== "Youth_ID");
+          return keys.some(k => String(rec[k] || "").trim().length > 0);
+        });
+
         // Role-based block filtering for Hub Operators
         const currentUser = API.getCurrentUser();
         if (currentUser && currentUser.block && currentUser.block !== "All") {
           const userBlock = currentUser.block.toLowerCase();
           recordList = recordList.filter(rec => {
-            const rowBlock = String(rec.Block || rec.block || "").toLowerCase();
+            const blockValRaw = String(rec.BLOCK || rec.Block || "").trim();
+            const isShifted = /^[5-9]\d{9}$/.test(blockValRaw);
+            const rowBlock = isShifted 
+              ? String(rec["MOBILE NO."] || rec.Mobile || "").toLowerCase()
+              : String(rec.Block || rec.BLOCK || rec.block || "").toLowerCase();
             return !rowBlock || rowBlock === userBlock;
           });
         }
@@ -758,6 +768,48 @@ const Forms = (function() {
         return sno;
       }
       return (idx !== undefined ? idx + 1 : 1);
+    }
+
+    // 2. Intelligent Auto-Correction for Shifted Entrepreneurship Rows
+    // In some bulk-uploaded sheets, phone numbers ended up in BLOCK, candidate name in FATHER NAME,
+    // father's name in VILLAGE, block name in MOBILE NO., village in BUSINESS, business in UDHYAM REGISTRATION,
+    // and remark in an empty column key ('').
+    const blockValRaw = String(rec.BLOCK || rec.Block || "").trim();
+    const isShiftedEntrepreneur = /^[5-9]\d{9}$/.test(blockValRaw);
+
+    if (isShiftedEntrepreneur) {
+      switch (col.key) {
+        case "Mobile":
+          return blockValRaw;
+        case "Name":
+          return rec["FATHER NAME"] || rec.Father_Name || "-";
+        case "Father_Name":
+          return rec.VILLAGE || rec.Village || "-";
+        case "Block":
+          return rec["MOBILE NO."] || rec.Mobile || "-";
+        case "Village":
+          return rec.BUSINESS || rec.Business || "-";
+        case "Business":
+          return rec["UDHYAM REGISTRATION"] || rec.Udyam_Registration || "-";
+        case "Loan_Amount":
+          return rec["BANK DOCUMENTS"] || rec.Bank_Documents || "-";
+        case "Udyam_Registration":
+          return rec["PAN CARD"] || rec.Pan_Card || "-";
+        case "Bank_Documents":
+          return rec["ADHAR CARD"] || rec.Aadhar_Card || "-";
+        case "Pan_Card":
+          return rec["VOTER CARD"] || rec.Voter_Card || "-";
+        case "Aadhar_Card":
+          return rec["QUOTATION"] || rec.Quotation || "-";
+        case "Voter_Card":
+          return rec["REMARK"] || rec.Remark || "-";
+        case "Quotation":
+          return rec["UPDATES"] || rec.Updates || "-";
+        case "Remarks":
+          return rec[""] || rec.Remark || rec.REMARK || rec.Remarks || "-";
+        case "Updates":
+          return rec.Updates || rec["UPDATES"] || "-";
+      }
     }
 
     // Direct key match

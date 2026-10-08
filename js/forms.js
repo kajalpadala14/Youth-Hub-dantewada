@@ -779,6 +779,21 @@ const Forms = (function() {
     const isShiftedEntrepreneur = /^\d{7,13}$/.test(blockValRaw) || 
       (Boolean(rec["FATHER NAME"] || rec["father name"]) && !rec["NAME"] && !rec["Name"]);
 
+    // Lookup supplementary PMEGP fields if candidate exists in Excel database
+    const candName = (isShiftedEntrepreneur ? (rec["FATHER NAME"] || rec.Father_Name) : (rec.NAME || rec.Name || rec["FATHER NAME"])) || "";
+    const candMob = (isShiftedEntrepreneur ? blockValRaw : (rec["MOBILE NO."] || rec.Mobile || "")) || "";
+    const cleanCandName = String(candName).trim().toLowerCase();
+    const cleanCandMob = String(candMob).trim();
+
+    let pmegpInfo = null;
+    if (typeof PMEGP_CANDIDATE_DATA !== "undefined" && PMEGP_CANDIDATE_DATA) {
+      if (cleanCandMob && PMEGP_CANDIDATE_DATA["mob:" + cleanCandMob]) {
+        pmegpInfo = PMEGP_CANDIDATE_DATA["mob:" + cleanCandMob];
+      } else if (cleanCandName && PMEGP_CANDIDATE_DATA["name:" + cleanCandName]) {
+        pmegpInfo = PMEGP_CANDIDATE_DATA["name:" + cleanCandName];
+      }
+    }
+
     if (isShiftedEntrepreneur) {
       switch (col.key) {
         case "Mobile":
@@ -792,25 +807,25 @@ const Forms = (function() {
         case "Village":
           return rec.BUSINESS || rec.Business || "-";
         case "Business":
-          return rec["UDHYAM REGISTRATION"] || rec.Udyam_Registration || "-";
+          return rec["UDHYAM REGISTRATION"] || rec.Udyam_Registration || (pmegpInfo ? pmegpInfo.business : "") || "-";
         case "Loan_Amount":
-          return rec["BANK DOCUMENTS"] || rec.Bank_Documents || "-";
+          return (pmegpInfo && pmegpInfo.loan) ? pmegpInfo.loan : (rec["BANK DOCUMENTS"] || rec.Bank_Documents || "-");
         case "Udyam_Registration":
-          return rec["PAN CARD"] || rec.Pan_Card || "-";
+          return (pmegpInfo && pmegpInfo.udyam) ? pmegpInfo.udyam : (rec["PAN CARD"] || rec.Pan_Card || "-");
         case "Bank_Documents":
-          return rec["ADHAR CARD"] || rec.Aadhar_Card || "-";
+          return (pmegpInfo && pmegpInfo.bank) ? pmegpInfo.bank : (rec["ADHAR CARD"] || rec.Aadhar_Card || "-");
         case "Pan_Card":
-          return rec["VOTER CARD"] || rec.Voter_Card || "-";
+          return (pmegpInfo && pmegpInfo.pan) ? pmegpInfo.pan : (rec["VOTER CARD"] || rec.Voter_Card || "-");
         case "Aadhar_Card":
-          return rec["QUOTATION"] || rec.Quotation || "-";
+          return (pmegpInfo && pmegpInfo.adhar) ? pmegpInfo.adhar : (rec["QUOTATION"] || rec.Quotation || "-");
         case "Voter_Card":
-          return rec["REMARK"] || rec.Remark || "-";
+          return (pmegpInfo && pmegpInfo.voter) ? pmegpInfo.voter : (rec["REMARK"] || rec.Remark || "-");
         case "Quotation":
-          return rec["UPDATES"] || rec.Updates || "-";
+          return (pmegpInfo && pmegpInfo.quotation) ? pmegpInfo.quotation : (rec["UPDATES"] || rec.Updates || "-");
         case "Remarks":
-          return rec[""] || rec.Remark || rec.REMARK || rec.Remarks || "-";
+          return (pmegpInfo && pmegpInfo.remark) ? pmegpInfo.remark : (rec[""] || rec.Remark || rec.REMARK || rec.Remarks || "-");
         case "Updates":
-          return rec.Updates || rec["UPDATES"] || "-";
+          return (pmegpInfo && pmegpInfo.updates) ? pmegpInfo.updates : (rec.Updates || rec["UPDATES"] || "-");
       }
     }
 

@@ -90,15 +90,14 @@ const SHEETS_SCHEMA = {
     "Current_Status", "Follow_Up_Date", "Follow_Up_Status", "Pending_Issue", "Remarks"
   ],
   IIM_Raipur: [
-    "IIM_ID", "Candidate_Name", "Father_Husband_Name", "Age", "Category", "Address",
-    "Village", "Block", "District", "Mobile_Number", "Aadhaar_Number",
+    "IIM_ID", "Candidate_Name", "Father_Husband_Name", "Age", "Category",
+    "Address", "Village", "Block", "Mobile_Number", "Aadhaar_Number",
     "Latest_Exam_Percentage", "Stream_Subject", "Vocational_Course", "Certificate_Diploma",
     "Current_Occupation", "Work_Experience", "Raipur_Stay_3Months",
     "Home_Responsibility_Manager", "Family_Recall_Risk", "Family_Consent",
     "Business_Type_Desired", "Existing_Business_Idea", "Local_Problem_To_Solve",
     "Why_This_Course", "Plan_After_Course", "Dropout_History", "Source_Info",
-    "Declaration", "Entrepreneurship_Thoughts", "Selection_Status", "Batch",
-    "Activity_Name", "Financial_Assistance_Amount", "Installment_2nd", "Remarks"
+    "Declaration", "Entrepreneurship_Thoughts", "Selection_Status"
   ],
   Shasan_Sahyog: [
     "Demand_ID", "Name", "Father_Husband_Name", "DOB", "Address", "Village",

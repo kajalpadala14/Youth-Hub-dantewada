@@ -3364,14 +3364,14 @@
                       </select>
                     </div>
 
-                    <div class="form-group">
-                      <label class="form-label">मोबाइल नंबर (Mobile Number) <span class="required">*</span></label>
-                      <input type="tel" name="Mobile_Number" id="iimMobile" class="form-control" required placeholder="10-digit mobile" maxlength="10">
+                    <div class="form-group col-span-3">
+                      <label class="form-label">पूरा पता — ग्राम, ब्लॉक, जिला (Full Address)</label>
+                      <input type="text" name="Address" class="form-control" placeholder="ग्राम, पोस्ट, ब्लॉक, जिला">
                     </div>
 
                     <div class="form-group">
-                      <label class="form-label">आधार नंबर (Aadhar Number)</label>
-                      <input type="text" name="Aadhaar_Number" class="form-control" placeholder="12-digit Aadhaar" maxlength="12">
+                      <label class="form-label">ग्राम (Village)</label>
+                      <input type="text" name="Village" id="iimVillage" class="form-control" placeholder="ग्राम का नाम">
                     </div>
 
                     <div class="form-group">
@@ -3385,18 +3385,13 @@
                     </div>
 
                     <div class="form-group">
-                      <label class="form-label">ग्राम (Village)</label>
-                      <input type="text" name="Village" id="iimVillage" class="form-control" placeholder="ग्राम का नाम">
+                      <label class="form-label">मोबाइल नंबर (Mobile Number) <span class="required">*</span></label>
+                      <input type="tel" name="Mobile_Number" id="iimMobile" class="form-control" required placeholder="10-digit mobile" maxlength="10">
                     </div>
 
                     <div class="form-group">
-                      <label class="form-label">जिला (District)</label>
-                      <input type="text" name="District" class="form-control" value="दंतेवाड़ा" readonly>
-                    </div>
-
-                    <div class="form-group col-span-3">
-                      <label class="form-label">पूरा पता — ग्राम, ब्लॉक, जिला (Full Address)</label>
-                      <input type="text" name="Address" class="form-control" placeholder="ग्राम, पोस्ट, ब्लॉक, जिला">
+                      <label class="form-label">आधार नंबर (Aadhar Number)</label>
+                      <input type="text" name="Aadhaar_Number" class="form-control" placeholder="12-digit Aadhaar" maxlength="12">
                     </div>
 
                     <!-- SECTION B: EDUCATION & EXPERIENCE -->
@@ -3527,56 +3522,27 @@
                       <textarea name="Entrepreneurship_Thoughts" class="form-control" rows="2" placeholder="जोखिम लेने, नई सोच और समस्याओं को व्यापार में बदलने पर आपके विचार..."></textarea>
                     </div>
 
-                    <!-- SECTION E: SELECTION & FUNDING TRACKING (Image 5) -->
+                    <!-- SECTION E: DECLARATION & SELECTION STATUS -->
                     <div class="form-group col-span-3" style="background: #EFF6FF; padding: 10px 14px; border-radius: 6px; font-weight: 700; color: #1E40AF; margin-top: 10px;">
-                      5. बैच, चयन स्थिति एवं वित्तीय सहयोग (Batch &amp; Financial Support)
+                      5. घोषणा एवं चयन स्थिति (Declaration &amp; Selection Status)
+                    </div>
+
+                    <div class="form-group col-span-2">
+                      <label class="form-label">सत्यता की घोषणा (Declaration) <span class="required">*</span></label>
+                      <select name="Declaration" class="form-control" required>
+                        <option value="Agreed & Confirmed">पुष्टि करता/करती हूँ कि उपरोक्त सभी जानकारी सत्य और सही है (Agreed &amp; Confirmed)</option>
+                      </select>
                     </div>
 
                     <div class="form-group">
-                      <label class="form-label">Selection Status</label>
-                      <select name="Selection_Status" class="form-control">
+                      <label class="form-label">चयन स्थिति (Selection Status) <span class="required">*</span></label>
+                      <select name="Selection_Status" class="form-control" required>
                         <option value="Applied">1. Applied / पंजीकृत</option>
                         <option value="Screened">2. Screened / मूल्यांकित</option>
                         <option value="Selected">3. Selected / चयनित</option>
                         <option value="Enrolled">4. Enrolled / प्रवेशित</option>
                         <option value="Completed">5. Completed / पूर्ण</option>
                       </select>
-                    </div>
-
-                    <div class="form-group">
-                      <label class="form-label">Batch (शैक्षणिक वर्ष)</label>
-                      <select name="Batch" class="form-control">
-                        <option value="IIM 2026">IIM 2026 (Current)</option>
-                        <option value="IIM 2025">IIM 2025</option>
-                        <option value="IIM 2027">IIM 2027</option>
-                      </select>
-                    </div>
-
-                    <div class="form-group">
-                      <label class="form-label">Activity / व्यवसाय नाम</label>
-                      <input type="text" name="Activity_Name" class="form-control" placeholder="उदा. KIRANA SHOP, SILAI DUKAN">
-                    </div>
-
-                    <div class="form-group">
-                      <label class="form-label">Financial Assistance Amount (₹)</label>
-                      <input type="number" name="Financial_Assistance_Amount" class="form-control" placeholder="उदा. 50000">
-                    </div>
-
-                    <div class="form-group">
-                      <label class="form-label">2nd Installment Status / टिप्पणी</label>
-                      <input type="text" name="Installment_2nd" class="form-control" placeholder="उदा. 30000 / Pending / Released">
-                    </div>
-
-                    <div class="form-group">
-                      <label class="form-label">सत्यता की घोषणा (Declaration)</label>
-                      <select name="Declaration" class="form-control">
-                        <option value="Agreed & Confirmed">पुष्टि करता/करती हूँ (Agreed &amp; Confirmed)</option>
-                      </select>
-                    </div>
-
-                    <div class="form-group col-span-3">
-                      <label class="form-label">Remarks</label>
-                      <input type="text" name="Remarks" class="form-control" placeholder="अतिरिक्त टिप्पणी">
                     </div>
                   </div>
                 </div>

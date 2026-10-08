@@ -295,20 +295,36 @@ const Forms = (function() {
       countId: "countTblIIMRaipur",
       idField: "IIM_ID",
       columns: [
-        { key: "IIM_ID", label: "ID" },
-        { key: "Candidate_Name", label: "Candidate Name" },
-        { key: "Father_Husband_Name", label: "Father / Husband" },
-        { key: "Mobile_Number", label: "Mobile" },
-        { key: "Block", label: "Block" },
-        { key: "Village", label: "Village" },
-        { key: "Stream_Subject", label: "Stream / Qual." },
-        { key: "Raipur_Stay_3Months", label: "3Mo Raipur Stay" },
-        { key: "Selection_Status", label: "Selection Status", isStatusBadge: true },
-        { key: "Batch", label: "Batch" },
-        { key: "Activity_Name", label: "Activity / Unit" },
-        { key: "Financial_Assistance_Amount", label: "Assistance (₹)", isMoney: true },
-        { key: "Installment_2nd", label: "2nd Installment" },
-        { key: "Remarks", label: "Remarks" }
+        { key: "S_No", label: "क्र.", isSerial: true },
+        { key: "Candidate_Name", label: "पूरा नाम (Full Name)" },
+        { key: "Father_Husband_Name", label: "पिता / पति का नाम" },
+        { key: "Age", label: "उम्र (Age)" },
+        { key: "Category", label: "वर्ग (Category)" },
+        { key: "Address", label: "पूरा पता (Address)" },
+        { key: "Village", label: "ग्राम (Village)" },
+        { key: "Block", label: "ब्लॉक (Block)" },
+        { key: "Mobile_Number", label: "मोबाइल नंबर" },
+        { key: "Aadhaar_Number", label: "आधार नंबर" },
+        { key: "Latest_Exam_Percentage", label: "हालिया परीक्षा %" },
+        { key: "Stream_Subject", label: "विषय/स्ट्रीम (Stream)" },
+        { key: "Vocational_Course", label: "व्यावसायिक/तकनीकी कोर्स?" },
+        { key: "Certificate_Diploma", label: "सर्टिफिकेट/डिप्लोमा" },
+        { key: "Current_Occupation", label: "वर्तमान व्यवसाय (Occupation)" },
+        { key: "Work_Experience", label: "इंटर्नशिप/कार्य अनुभव" },
+        { key: "Raipur_Stay_3Months", label: "3 महीने रायपुर प्रवास?", isStatusBadge: true },
+        { key: "Home_Responsibility_Manager", label: "घर की जिम्मेदारी कौन संभालेगा?" },
+        { key: "Family_Recall_Risk", label: "वापस बुलाने की बाध्यता?" },
+        { key: "Family_Consent", label: "परिवार की सहमति?", isStatusBadge: true },
+        { key: "Business_Type_Desired", label: "शुरू करने योग्य व्यवसाय" },
+        { key: "Existing_Business_Idea", label: "बिज़नेस आइडिया है?" },
+        { key: "Local_Problem_To_Solve", label: "हल करने योग्य समस्या" },
+        { key: "Why_This_Course", label: "कोर्स क्यों करना चाहते हैं?" },
+        { key: "Plan_After_Course", label: "3 महीने बाद की योजना" },
+        { key: "Dropout_History", label: "ट्रेनिंग बीच में छोड़ी है?" },
+        { key: "Source_Info", label: "कोर्स की जानकारी का स्रोत" },
+        { key: "Declaration", label: "घोषणा (Declaration)", isStatusBadge: true },
+        { key: "Entrepreneurship_Thoughts", label: "एंट्रेंपेन्योरशिप विचार" },
+        { key: "Selection_Status", label: "चयन स्थिति (Status)", isStatusBadge: true }
       ]
     },
     shasan_sahyog: {
@@ -893,6 +909,87 @@ const Forms = (function() {
           break;
         case "Updates":
           val = rec.Updates || rec["UPDATES"] || rec.Loan_Updates || rec.updates || "";
+          break;
+        case "Candidate_Name":
+          val = rec.Candidate_Name || rec["Candidate_Name"] || rec.Name || rec["पूरा नाम (Full Name)"] || rec["पूरा नाम"] || rec.Youth_Name || "";
+          break;
+        case "Father_Husband_Name":
+          val = rec.Father_Husband_Name || rec["Father_Husband_Name"] || rec.Father_Name || rec["पिता / पति का नाम (Father / Husband Name)"] || rec["पिता / पति का नाम"] || rec["पिता का नाम"] || "";
+          break;
+        case "Age":
+          val = rec.Age || rec["उम्र (Age)"] || rec["उम्र"] || "";
+          break;
+        case "Category":
+          val = rec.Category || rec["वर्ग (Category)"] || rec["वर्ग"] || "";
+          break;
+        case "Address":
+          val = rec.Address || rec["पूरा पता — ग्राम, ब्लॉक, जिला (Full Address)"] || rec["पूरा पता"] || rec["पता"] || "";
+          break;
+        case "Mobile_Number":
+          val = rec.Mobile_Number || rec.Mobile || rec["मोबाइल नंबर (Mobile Number)"] || rec["मोबाइल नंबर"] || rec["MOBILE NO."] || "";
+          break;
+        case "Aadhaar_Number":
+          val = rec.Aadhaar_Number || rec.Aadhar_Number || rec["आधार नंबर (Aadhar Number)"] || rec["आधार नंबर"] || "";
+          break;
+        case "Latest_Exam_Percentage":
+          val = rec.Latest_Exam_Percentage || rec["आपकी सबसे हालिया परीक्षा में प्रतिशत (Latest exam percentage)"] || rec["हालिया परीक्षा %"] || "";
+          break;
+        case "Stream_Subject":
+          val = rec.Stream_Subject || rec["किस विषय/स्ट्रीम से पढ़े हैं? (Stream/subject studied)"] || rec["शैक्षणिक योग्यता"] || rec.Qualification || "";
+          break;
+        case "Vocational_Course":
+          val = rec.Vocational_Course || rec["क्या आपने कोई व्यावसायिक या तकनीकी कोर्स किया है? (Any vocational/technical course?)"] || "";
+          break;
+        case "Certificate_Diploma":
+          val = rec.Certificate_Diploma || rec["क्या आपके पास कोई सर्टिफिकेट या डिप्लोमा है? (Any certificate or diploma?)"] || "";
+          break;
+        case "Current_Occupation":
+          val = rec.Current_Occupation || rec["वर्तमान में आप क्या करते हैं? (Current occupation)"] || "";
+          break;
+        case "Work_Experience":
+          val = rec.Work_Experience || rec["क्या आपने पहले कभी इंटर्नशिप या किसी व्यवसाय में काम किया है? (Any internship or work experience?)"] || "";
+          break;
+        case "Raipur_Stay_3Months":
+          val = rec.Raipur_Stay_3Months || rec["क्या आप 3 महीने के लिए रायपुर में रहकर यह कोर्स कर सकते हैं? (Can you stay in Raipur for 3 months?)"] || "";
+          break;
+        case "Home_Responsibility_Manager":
+          val = rec.Home_Responsibility_Manager || rec["आपकी अनुपस्थिति में घर की जिम्मेदारी कौन संभालेगा? (Who will manage home responsibilities in your absence?)"] || "";
+          break;
+        case "Family_Recall_Risk":
+          val = rec.Family_Recall_Risk || rec["क्या परिवार की कोई जिम्मेदारी है जो आपको बीच में वापस बुला सकती है? (Any responsibility that could recall you mid-course?)"] || "";
+          break;
+        case "Family_Consent":
+          val = rec.Family_Consent || rec["क्या आपके परिवार ने इस कोर्स के लिए सहमति दी है? (Has your family given consent for this course?)"] || "";
+          break;
+        case "Business_Type_Desired":
+          val = rec.Business_Type_Desired || rec["आप किस प्रकार का व्यवसाय शुरू करना चाहते हैं? (What type of business do you want to start?)"] || "";
+          break;
+        case "Existing_Business_Idea":
+          val = rec.Existing_Business_Idea || rec["क्या आपके पास कोई बिज़नेस आइडिया पहले से है? (Do you already have a business idea?)"] || "";
+          break;
+        case "Local_Problem_To_Solve":
+          val = rec.Local_Problem_To_Solve || rec["आपके क्षेत्र में सबसे बड़ी समस्या क्या है जिसे आप अपने व्यवसाय से हल करना चाहते हैं? (What local problem do you want to solve with your business?)"] || "";
+          break;
+        case "Why_This_Course":
+          val = rec.Why_This_Course || rec["आप यह कोर्स क्यों करना चाहते हैं? कम से कम 3 वाक्यों में लिखें। (Why do you want this course? Write at least 3 sentences.)"] || "";
+          break;
+        case "Plan_After_Course":
+          val = rec.Plan_After_Course || rec["3 महीने बाद आप क्या करने की योजना बना रहे हैं? (What is your plan after the 3-month course?)"] || "";
+          break;
+        case "Dropout_History":
+          val = rec.Dropout_History || rec["क्या आपने पहले कभी कोई कोर्स या ट्रेनिंग बीच में छोड़ी है? (Have you ever dropped out of a course or training?)"] || "";
+          break;
+        case "Source_Info":
+          val = rec.Source_Info || rec["आपने इस कोर्स के बारे में कैसे जाना? (How did you hear about this course?)"] || "";
+          break;
+        case "Declaration":
+          val = rec.Declaration || rec["घोषणा  (Declaration)"] || rec["घोषणा (Declaration)"] || rec["घोषणा"] || "";
+          break;
+        case "Entrepreneurship_Thoughts":
+          val = rec.Entrepreneurship_Thoughts || rec["एंट्रेंपेन्योर शिप के बारे मे विचार"] || rec["एंट्रेंपेन्योरशिप विचार"] || "";
+          break;
+        case "Selection_Status":
+          val = rec.Selection_Status || rec.Status || "";
           break;
       }
     }
@@ -1568,10 +1665,14 @@ const Forms = (function() {
       apiAction: "addIIMRaipur",
       headers: [
         "Candidate_Name", "Father_Husband_Name", "Age", "Category", "Address",
-        "Village", "Block", "District", "Mobile_Number", "Aadhaar_Number",
+        "Village", "Block", "Mobile_Number", "Aadhaar_Number",
         "Latest_Exam_Percentage", "Stream_Subject", "Vocational_Course",
-        "Current_Occupation", "Selection_Status", "Batch", "Activity_Name",
-        "Financial_Assistance_Amount", "Installment_2nd", "Remarks"
+        "Certificate_Diploma", "Current_Occupation", "Work_Experience",
+        "Raipur_Stay_3Months", "Home_Responsibility_Manager", "Family_Recall_Risk",
+        "Family_Consent", "Business_Type_Desired", "Existing_Business_Idea",
+        "Local_Problem_To_Solve", "Why_This_Course", "Plan_After_Course",
+        "Dropout_History", "Source_Info", "Declaration", "Entrepreneurship_Thoughts",
+        "Selection_Status"
       ],
       sample: {
         Candidate_Name: "Prakash Markam",
@@ -1581,19 +1682,28 @@ const Forms = (function() {
         Address: "Main Road Kuakonda",
         Village: "Kuakonda",
         Block: "Kuakonda",
-        District: "Dantewada",
         Mobile_Number: "9406123456",
         Aadhaar_Number: "123456789012",
         Latest_Exam_Percentage: "74%",
         Stream_Subject: "Commerce",
         Vocational_Course: "Computer DCA",
+        Certificate_Diploma: "DCA Certificate",
         Current_Occupation: "Unemployed",
-        Selection_Status: "Selected",
-        Batch: "Batch 2",
-        Activity_Name: "Food Processing Unit",
-        Financial_Assistance_Amount: 75000,
-        Installment_2nd: "Released",
-        Remarks: "Trained in entrepreneurship"
+        Work_Experience: "No",
+        Raipur_Stay_3Months: "Yes",
+        Home_Responsibility_Manager: "माता-पिता",
+        Family_Recall_Risk: "No",
+        Family_Consent: "Yes",
+        Business_Type_Desired: "Food Processing Unit",
+        Existing_Business_Idea: "Yes",
+        Local_Problem_To_Solve: "स्थानीय वनोपज प्रसंस्करण की कमी",
+        Why_This_Course: "उद्यमिता कौशल सीखकर दंतेवाड़ा में स्वरोजगार स्थापित करना चाहता हूँ।",
+        Plan_After_Course: "स्वयं की इकाई स्थापित करना",
+        Dropout_History: "No",
+        Source_Info: "Youth Hub Dantewada",
+        Declaration: "Agreed & Confirmed",
+        Entrepreneurship_Thoughts: "जोखिम लेकर नए उत्पाद और सेवाएं शुरू करना",
+        Selection_Status: "Applied"
       }
     },
     shasan_sahyog: {
@@ -1679,7 +1789,26 @@ const Forms = (function() {
     voter_card: ["votercard", "voter_card", "voterid", "voter_id", "voter", "epic", "epicno", "मतदातापरिचयपत्र", "वोटरकार्ड", "मतदाता"],
     quotation: ["quotation", "quote", "estimate", "quotationstatus", "कोटेशन", "अनुमान"],
     remarks: ["remark", "remarks", "note", "notes", "comment", "comments", "टिप्पणी", "विवरण"],
-    updates: ["updates", "update", "loanupdates", "loan_updates", "statusupdate", "currentstatus", "latestupdate", "अद्यतन", "स्थिति"]
+    updates: ["updates", "update", "loanupdates", "loan_updates", "statusupdate", "currentstatus", "latestupdate", "अद्यतन", "स्थिति"],
+    latest_exam_percentage: ["latestexampercentage", "exampercentage", "percentage", "हालियापरीक्षामेंप्रतिशत", "प्रतिशत", "आपकीसबसेहालियापरीक्षामेंप्रतिशत"],
+    stream_subject: ["streamsubject", "stream", "subject", "स्ट्रीम", "विषय", "किसविषयस्ट्रीमसेपढ़ेहैं"],
+    vocational_course: ["vocationalcourse", "technicalcourse", "व्यावसायिककोर्स", "तकनीकीकोर्स", "क्याआपनेकोईव्यावसायिकयातनीकीकोर्सकियाहै"],
+    certificate_diploma: ["certificatediploma", "diploma", "certificate", "सर्टिफिकेट", "डिप्लोमा", "क्याआपकेपासकोईसर्टिफिकेटयाडिप्लोमाहै"],
+    current_occupation: ["currentoccupation", "occupation", "व्यवसाय", "वर्तमानव्यवसाय", "वर्तमानमेंआपक्याकरतेहैं"],
+    work_experience: ["workexperience", "internship", "अनुभव", "इंटर्नशिप", "कार्यअनुभव", "क्याआपनेपहलेकभीइंटर्नशिपयाकिसीव्यवसायमेंकामकियाहै"],
+    raipur_stay_3months: ["raipurstay3months", "raipurstay", "3महीनेरायपुरप्रवास", "क्याआप3महीनेकेलिएरायपुरमेंरहकरयहकोर्सकरसकतेहैं"],
+    home_responsibility_manager: ["homeresponsibilitymanager", "homeresponsibility", "घरकीजिम्मेदारी", "आपकीअनुपस्थितिमेंघरकीजिम्मेदारीकौनसंभालेगा"],
+    family_recall_risk: ["familyrecallrisk", "recallrisk", "वापसबुलानेकीबाध्यता", "क्यापरिवारकीकोईजिम्मेदारीहैजोआपकोबीचमेंवापसबुलासकतीहै"],
+    family_consent: ["familyconsent", "consent", "सहमति", "परिवारकीसहमति", "क्याआपकेपरिवारनेइसकोर्सकेलिएसहमतिदीहै"],
+    business_type_desired: ["businesstypedesired", "businessdesired", "व्यवसायशुरू", "आपकिसप्रकारकाव्यवसायशुरूकरनाचाहतेहैं"],
+    existing_business_idea: ["existingbusinessidea", "businessidea", "बिज़नेसआइडिया", "क्याआपकेपासकोईबिज़नेसआइडियापहलेसेहै"],
+    local_problem_to_solve: ["localproblemtosolve", "problem", "स्थानीयसमस्या", "आपकेक्षेत्रमेंसबसेबड़ीसमस्याक्याहैजिसेआपअपनेव्यवसायसेहलकरनाचाहतेहैं"],
+    why_this_course: ["whythiscourse", "purpose", "उद्देश्य", "आपयहकोर्सक्योंकरनाचाहतेहैं"],
+    plan_after_course: ["planaftercourse", "futureplan", "3महीनेबादकीयोजना", "3महीनेबादआपक्याकरनेकीयोजनाबनारहेहैं"],
+    dropout_history: ["dropouthistory", "dropout", "कोर्सछोड़ा", "क्याआपनेपहलेकभीकोईकोर्सयाट्रेनिंगबीचमेंछोड़ीहै"],
+    source_info: ["sourceinfo", "source", "जानकारीकास्रोत", "आपनेइसकोर्सकेबारेमेंकैसेजाना"],
+    declaration: ["declaration", "agreed", "सहमतिपुष्टि", "घोषणा", "मैंपुष्टिकरतहूँ"],
+    entrepreneurship_thoughts: ["entrepreneurshipthoughts", "mindset", "एंट्रेंपेन्योरशिपकेबारेमेविचार", "उद्यमिताविचार", "एंटरप्रेन्योरशिपकामतलब"]
   };
 
   function findMatchingExcelRawKey(rawKeys, targetKey) {

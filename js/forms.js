@@ -738,7 +738,8 @@ const Forms = (function() {
           const userBlock = currentUser.block.toLowerCase();
           recordList = recordList.filter(rec => {
             const blockValRaw = String(rec.BLOCK || rec.Block || "").trim();
-            const isShifted = /^[5-9]\d{9}$/.test(blockValRaw);
+            const isShifted = /^\d{7,13}$/.test(blockValRaw) || 
+              (Boolean(rec["FATHER NAME"] || rec["father name"]) && !rec["NAME"] && !rec["Name"]);
             const rowBlock = isShifted 
               ? String(rec["MOBILE NO."] || rec.Mobile || "").toLowerCase()
               : String(rec.Block || rec.BLOCK || rec.block || "").toLowerCase();
@@ -775,12 +776,13 @@ const Forms = (function() {
     // father's name in VILLAGE, block name in MOBILE NO., village in BUSINESS, business in UDHYAM REGISTRATION,
     // and remark in an empty column key ('').
     const blockValRaw = String(rec.BLOCK || rec.Block || "").trim();
-    const isShiftedEntrepreneur = /^[5-9]\d{9}$/.test(blockValRaw);
+    const isShiftedEntrepreneur = /^\d{7,13}$/.test(blockValRaw) || 
+      (Boolean(rec["FATHER NAME"] || rec["father name"]) && !rec["NAME"] && !rec["Name"]);
 
     if (isShiftedEntrepreneur) {
       switch (col.key) {
         case "Mobile":
-          return blockValRaw;
+          return /^\d{7,13}$/.test(blockValRaw) ? blockValRaw : (rec["MOBILE NO."] || rec.Mobile || "-");
         case "Name":
           return rec["FATHER NAME"] || rec.Father_Name || "-";
         case "Father_Name":

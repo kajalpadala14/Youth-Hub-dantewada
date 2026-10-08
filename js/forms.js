@@ -191,14 +191,13 @@ const Forms = (function() {
       tableId: "tblEntrepreneurs",
       searchId: "searchTblEntrepreneurs",
       countId: "countTblEntrepreneurs",
-      idField: "Entrepreneur_ID",
+      idField: "S.NO",
       columns: [
         { key: "S_No", label: "S.NO", isSerial: true },
         { key: "Block", label: "BLOCK" },
         { key: "Name", label: "NAME" },
         { key: "Father_Name", label: "FATHER NAME" },
         { key: "Village", label: "VILLAGE" },
-        { key: "Block_2", label: "BLOCK" },
         { key: "Mobile", label: "MOBILE NO." },
         { key: "Business", label: "BUSINESS" },
         { key: "Loan_Amount", label: "LONE AMOUNT", isMoney: true },
@@ -755,7 +754,10 @@ const Forms = (function() {
     // 1. Serial Number
     if (col.isSerial || col.key === "S_No" || col.label === "S.NO") {
       const sno = rec["S.NO"] || rec["S.No"] || rec["S_No"] || rec.S_No || rec.SNO || rec.sno || rec.serial;
-      return sno !== undefined && sno !== null && sno !== "" ? sno : (idx !== undefined ? idx + 1 : 1);
+      if (sno !== undefined && sno !== null && String(sno).trim() !== "" && !String(sno).startsWith("ENT-") && !String(sno).startsWith("YH-")) {
+        return sno;
+      }
+      return (idx !== undefined ? idx + 1 : 1);
     }
 
     // Direct key match
@@ -1365,7 +1367,7 @@ const Forms = (function() {
       title: "Entrepreneurs / उद्यमिता विकास",
       apiAction: "addEntrepreneur",
       headers: [
-        "S.NO", "BLOCK", "NAME", "FATHER NAME", "VILLAGE", "BLOCK",
+        "S.NO", "BLOCK", "NAME", "FATHER NAME", "VILLAGE",
         "MOBILE NO.", "BUSINESS", "LONE AMOUNT", "UDHYAM REGISTRATION",
         "BANK DOCUMENTS", "PAN CARD", "ADHAR CARD", "VOTER CARD",
         "QUOTATION", "REMARK", "UPDATES"
@@ -1376,7 +1378,6 @@ const Forms = (function() {
         "NAME": "Ramesh Kumar",
         "FATHER NAME": "Suresh Kumar",
         "VILLAGE": "Chitalanka",
-        "BLOCK": "Dantewada",
         "MOBILE NO.": "9406123456",
         "BUSINESS": "Dairy Farming Unit",
         "LONE AMOUNT": 100000,
@@ -1592,6 +1593,66 @@ const Forms = (function() {
     updates: ["updates", "update", "loanupdates", "statusupdate", "अद्यतन"]
   };
 
+  const CONCEPT_ALIASES = {
+    s_no: ["sno", "sno.", "s_no", "srno", "sr_no", "serialno", "serial_no", "slno", "sl_no", "sl", "no", "id", "entrepreneurid", "entrepreneur_id", "entid", "ent_id", "क्र", "क्रमांक"],
+    block: ["block", "blockname", "block_name", "विकासखंड", "ब्लॉक", "तहसील"],
+    block_2: ["block2", "block_2", "gp", "grampanchayat", "gram_panchayat", "panchayat", "ग्रामपंचायत", "पंचायत"],
+    name: ["name", "youthname", "youth_name", "candidatename", "candidate_name", "fullname", "applicantname", "entrepreneurname", "नाम", "आवेदककानाम", "युवाकानाम", "उद्यमीकानाम", "उद्यमी"],
+    father_name: ["fathername", "father_name", "fatherhusbandname", "father_husband_name", "parentname", "guardianname", "guardian", "पिताकानाम", "पतिपिताकानाम", "पालककानाम", "पिता"],
+    village: ["village", "villagename", "village_name", "para", "tolla", "गांव", "ग्राम", "ग्रामकानाम", "पता", "address"],
+    mobile: ["mobile", "mobileno", "mobile_no", "mobilenumber", "mobile_number", "phone", "phoneno", "phonenumber", "contact", "contactno", "contactnumber", "मोबाइलनंबर", "मोबाइल", "फोननंबर", "दूरभाष"],
+    business: ["business", "businessidea", "business_idea", "businesstype", "business_type", "businessname", "business_name", "unitname", "unit_name", "enterprise", "activity", "व्यवसाय", "उद्यम", "कार्य", "इकाई"],
+    loan_amount: ["loanamount", "loan_amount", "loneamount", "lone_amount", "loan", "amount", "sanctionedamount", "loanrequired", "ऋणराशि", "लोनराशि", "ऋण", "राशि"],
+    udyam_registration: ["udyamregistration", "udyam_registration", "udhyamregistration", "udhyam_registration", "udyamreg", "udyam", "udhyam", "msme", "msmeregistration", "उद्यमपंजीयन", "उद्यम"],
+    bank_documents: ["bankdocuments", "bank_documents", "bankdocs", "bank_docs", "bankdocument", "bankpassbook", "passbook", "बैंकदस्तावेज", "बैंकपासबुक", "बैंक"],
+    pan_card: ["pancard", "pan_card", "pan", "panno", "pan_no", "पैनकार्ड", "पैन"],
+    aadhar_card: ["aadharcard", "aadhar_card", "adharcard", "adhar_card", "aadhar", "adhar", "aadharno", "adharno", "aadhaarnumber", "आधारकार्ड", "आधार", "आधारनंबर"],
+    voter_card: ["votercard", "voter_card", "voterid", "voter_id", "voter", "epic", "epicno", "मतदातापरिचयपत्र", "वोटरकार्ड", "मतदाता"],
+    quotation: ["quotation", "quote", "estimate", "quotationstatus", "कोटेशन", "अनुमान"],
+    remarks: ["remark", "remarks", "note", "notes", "comment", "comments", "टिप्पणी", "विवरण"],
+    updates: ["updates", "update", "loanupdates", "loan_updates", "statusupdate", "currentstatus", "latestupdate", "अद्यतन", "स्थिति"]
+  };
+
+  function findMatchingExcelRawKey(rawKeys, targetKey) {
+    if (!rawKeys || rawKeys.length === 0) return undefined;
+    const cleanTarget = String(targetKey).toLowerCase().replace(/[^a-z0-9]/g, "");
+
+    // 1. Exact match
+    if (rawKeys.includes(targetKey)) return targetKey;
+
+    // 2. Exact clean match
+    let found = rawKeys.find(k => String(k).toLowerCase().replace(/[^a-z0-9]/g, "") === cleanTarget);
+    if (found) return found;
+
+    // 3. Concept / Alias match
+    let matchedConcept = null;
+    for (const [ckey, aliases] of Object.entries(CONCEPT_ALIASES)) {
+      const allAliases = [ckey.replace(/_/g, ""), ...aliases.map(a => String(a).toLowerCase().replace(/[^a-z0-9]/g, ""))];
+      if (allAliases.includes(cleanTarget)) {
+        matchedConcept = ckey;
+        break;
+      }
+    }
+
+    if (matchedConcept && CONCEPT_ALIASES[matchedConcept]) {
+      const cleanAliases = CONCEPT_ALIASES[matchedConcept].map(a => String(a).toLowerCase().replace(/[^a-z0-9]/g, ""));
+      found = rawKeys.find(k => {
+        const cleanRaw = String(k).toLowerCase().replace(/[^a-z0-9]/g, "");
+        return cleanAliases.includes(cleanRaw);
+      });
+      if (found) return found;
+    }
+
+    // 4. Substring fallback for multi-word headers
+    found = rawKeys.find(k => {
+      const cleanRaw = String(k).toLowerCase().replace(/[^a-z0-9]/g, "");
+      return cleanRaw.length > 2 && (cleanTarget.includes(cleanRaw) || cleanRaw.includes(cleanTarget));
+    });
+    if (found) return found;
+
+    return undefined;
+  }
+
   function formatExcelValue(val, key) {
     if (val === undefined || val === null) return "";
     const isDateField = /date|dob/i.test(key);
@@ -1622,23 +1683,18 @@ const Forms = (function() {
     return String(val).trim();
   }
 
-  function normalizeExcelRow(rawRow, targetHeaders) {
+  function normalizeExcelRow(rawRow, targetHeaders, rowIndex) {
     const rawKeys = Object.keys(rawRow);
     const normalized = {};
 
     targetHeaders.forEach(targetKey => {
-      const cleanTarget = targetKey.toLowerCase().replace(/[^a-z0-9]/g, "");
-      const aliases = COLUMN_ALIASES[targetKey.toLowerCase()] || [];
+      const isSerial = /^(s\.?no|sr\.?no|sl\.?no|serial)$/i.test(String(targetKey).trim());
+      const matchedKey = findMatchingExcelRawKey(rawKeys, targetKey);
 
-      let matchedRawKey = rawKeys.find(k => {
-        const cleanRaw = k.toLowerCase().replace(/[^a-z0-9]/g, "");
-        if (cleanRaw === cleanTarget) return true;
-        if (aliases.includes(cleanRaw)) return true;
-        return false;
-      });
-
-      if (matchedRawKey !== undefined) {
-        normalized[targetKey] = formatExcelValue(rawRow[matchedRawKey], targetKey);
+      if (matchedKey !== undefined && rawRow[matchedKey] !== undefined && rawRow[matchedKey] !== null && String(rawRow[matchedKey]).trim() !== "") {
+        normalized[targetKey] = formatExcelValue(rawRow[matchedKey], targetKey);
+      } else if (isSerial && rowIndex !== undefined) {
+        normalized[targetKey] = rowIndex + 1;
       } else {
         normalized[targetKey] = "";
       }
@@ -1890,13 +1946,36 @@ const Forms = (function() {
       const currentUser = API.getCurrentUser();
       const userBlock = (currentUser && currentUser.block && currentUser.block !== "All") ? currentUser.block : null;
 
-      rawRows.forEach(rawRow => {
-        const norm = normalizeExcelRow(rawRow, targetHeaders);
-        const hasContent = Object.values(norm).some(v => String(v).trim().length > 0);
+      rawRows.forEach((rawRow, idx) => {
+        const norm = normalizeExcelRow(rawRow, targetHeaders, idx);
+        // Only accept row if at least one meaningful non-serial field has content
+        const nonSerialKeys = targetHeaders.filter(h => !/^(s\.?no|sr\.?no|sl\.?no|serial)$/i.test(String(h).trim()));
+        const hasContent = nonSerialKeys.some(k => String(norm[k] || "").trim().length > 0);
         if (hasContent) {
           if (userBlock && norm.Block !== undefined) {
             norm.Block = userBlock;
           }
+          if (userBlock && norm["BLOCK"] !== undefined) {
+            norm["BLOCK"] = userBlock;
+          }
+
+          // Populate dual keys (Uppercase and CamelCase) so backend matches any header style
+          if (norm["NAME"]) norm.Name = norm["NAME"];
+          if (norm["FATHER NAME"]) norm.Father_Name = norm["FATHER NAME"];
+          if (norm["MOBILE NO."]) norm.Mobile = norm["MOBILE NO."];
+          if (norm["BLOCK"]) norm.Block = norm["BLOCK"];
+          if (norm["VILLAGE"]) norm.Village = norm["VILLAGE"];
+          if (norm["BUSINESS"]) { norm.Business = norm["BUSINESS"]; norm.Business_Idea = norm["BUSINESS"]; }
+          if (norm["LONE AMOUNT"]) { norm.Loan_Amount = norm["LONE AMOUNT"]; norm.Lone_Amount = norm["LONE AMOUNT"]; }
+          if (norm["UDHYAM REGISTRATION"]) norm.Udyam_Registration = norm["UDHYAM REGISTRATION"];
+          if (norm["BANK DOCUMENTS"]) norm.Bank_Documents = norm["BANK DOCUMENTS"];
+          if (norm["PAN CARD"]) norm.Pan_Card = norm["PAN CARD"];
+          if (norm["ADHAR CARD"]) norm.Aadhar_Card = norm["ADHAR CARD"];
+          if (norm["VOTER CARD"]) norm.Voter_Card = norm["VOTER CARD"];
+          if (norm["QUOTATION"]) norm.Quotation = norm["QUOTATION"];
+          if (norm["REMARK"]) norm.Remarks = norm["REMARK"];
+          if (norm["UPDATES"]) norm.Updates = norm["UPDATES"];
+
           validRecords.push(norm);
         }
       });

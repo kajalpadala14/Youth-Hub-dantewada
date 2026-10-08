@@ -485,6 +485,11 @@ function handleAction(action, payload) {
     return bulkInsertRecords(ss, payload.sheetName, payload.records);
   }
 
+  // Clear data rows in a sheet (leaves headers intact)
+  if (action === "clearSheetData") {
+    return clearSheetData(ss, payload.sheetName);
+  }
+
   // Dynamic Add Form Handlers
   const actionToSheetMap = {
     addYouth: "Youth_Master",
@@ -793,8 +798,18 @@ function bulkInsertRecords(ss, sheetName, records) {
     const existingHeaders = (sheet.getLastRow() >= 1 && sheet.getLastColumn() >= 1) ? sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0] : null;
     const targetHeaders = (existingHeaders && existingHeaders.length > 0 && String(existingHeaders[0]).trim() !== "") ? existingHeaders : headers;
 
-    const rowData = targetHeaders.map(header => {
+    const rowData = targetHeaders.map((header, colIdx) => {
       let val = record[header];
+
+      // S.NO header check: use serial number
+      const isSerialHeader = /^(s\.?no|sr\.?no|sl\.?no|serial)$/i.test(String(header).trim());
+      if (isSerialHeader) {
+        if (val !== undefined && val !== null && String(val).trim() !== "" && !String(val).startsWith("ENT-") && !String(val).startsWith("YH-")) {
+          return val;
+        }
+        return lastRow + i;
+      }
+
       if (val === undefined || val === null || val === "") {
         const cleanH = String(header).replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
         for (const k of Object.keys(record)) {
@@ -804,6 +819,27 @@ function bulkInsertRecords(ss, sheetName, records) {
           }
         }
       }
+
+      // Explicit fallbacks for standard schema
+      if (val === undefined || val === null || val === "") {
+        const cleanH = String(header).replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
+        if (cleanH === "name") val = record.Name || record.Youth_Name || record.NAME || "";
+        else if (cleanH === "fathername") val = record.Father_Name || record["FATHER NAME"] || record.Father_Husband_Name || "";
+        else if (cleanH === "village") val = record.Village || record.VILLAGE || "";
+        else if (cleanH === "block") val = record.Block || record.BLOCK || "";
+        else if (cleanH === "mobileno" || cleanH === "mobile") val = record.Mobile || record["MOBILE NO."] || record.Mobile_Number || "";
+        else if (cleanH === "business") val = record.Business || record["BUSINESS"] || record.Business_Idea || "";
+        else if (cleanH === "loneamount" || cleanH === "loanamount") val = record.Loan_Amount || record["LONE AMOUNT"] || record.Lone_Amount || "";
+        else if (cleanH.includes("udyam") || cleanH.includes("udhyam")) val = record.Udyam_Registration || record["UDHYAM REGISTRATION"] || "";
+        else if (cleanH.includes("bankdoc")) val = record.Bank_Documents || record["BANK DOCUMENTS"] || "";
+        else if (cleanH.includes("pancard") || cleanH === "pan") val = record.Pan_Card || record["PAN CARD"] || "";
+        else if (cleanH.includes("adhar") || cleanH.includes("aadhar")) val = record.Aadhar_Card || record["ADHAR CARD"] || "";
+        else if (cleanH.includes("voter")) val = record.Voter_Card || record["VOTER CARD"] || "";
+        else if (cleanH.includes("quotation")) val = record.Quotation || record["QUOTATION"] || "";
+        else if (cleanH.includes("remark")) val = record.Remarks || record["REMARK"] || "";
+        else if (cleanH.includes("update")) val = record.Updates || record["UPDATES"] || "";
+      }
+
       if (val === undefined || val === null) return "";
       return val;
     });
@@ -812,7 +848,9 @@ function bulkInsertRecords(ss, sheetName, records) {
   }
 
   if (rowsToAppend.length > 0) {
-    sheet.getRange(lastRow + 1, 1, rowsToAppend.length, headers.length).setValues(rowsToAppend);
+    const existingHeaders = (sheet.getLastRow() >= 1 && sheet.getLastColumn() >= 1) ? sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0] : null;
+    const targetHeaders = (existingHeaders && existingHeaders.length > 0 && String(existingHeaders[0]).trim() !== "") ? existingHeaders : headers;
+    sheet.getRange(lastRow + 1, 1, rowsToAppend.length, targetHeaders.length).setValues(rowsToAppend);
   }
 
   return {
@@ -820,6 +858,16 @@ function bulkInsertRecords(ss, sheetName, records) {
     count: rowsToAppend.length,
     message: `Successfully added ${rowsToAppend.length} records to ${sheetName.replace(/_/g, " ")}.`
   };
+}
+
+function clearSheetData(ss, sheetName) {
+  const sheet = ss.getSheetByName(sheetName);
+  if (!sheet) return { success: false, message: `Sheet '${sheetName}' not found.` };
+  const lastRow = sheet.getLastRow();
+  if (lastRow > 1) {
+    sheet.deleteRows(2, lastRow - 1);
+  }
+  return { success: true, message: `All data rows cleared from ${sheetName}. Headers preserved.` };
 }
 
 function listUsers(ss) {
@@ -840,8 +888,15 @@ function updateRecord(ss, sheetName, idField, idValue, updatedData) {
 
   const data = sheet.getDataRange().getValues();
   const headers = data[0];
-  const idColIdx = headers.indexOf(idField);
-  if (idColIdx === -1) return { success: false, message: `Field ${idField} not found.` };
+  let idColIdx = headers.indexOf(idField);
+  if (idColIdx === -1) {
+    idColIdx = headers.findIndex(h => {
+      const cleanH = String(h).replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
+      const cleanId = String(idField).replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
+      return cleanH === cleanId || cleanH.includes("id") || cleanH === "sno";
+    });
+  }
+  if (idColIdx === -1) idColIdx = 0;
 
   let targetRow = -1;
   for (let r = 1; r < data.length; r++) {
@@ -855,7 +910,11 @@ function updateRecord(ss, sheetName, idField, idValue, updatedData) {
 
   // Update cells
   Object.keys(updatedData).forEach(key => {
-    const colIdx = headers.indexOf(key);
+    let colIdx = headers.indexOf(key);
+    if (colIdx === -1) {
+      const cleanKey = String(key).replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
+      colIdx = headers.findIndex(h => String(h).replace(/[^a-zA-Z0-9]/g, "").toLowerCase() === cleanKey);
+    }
     if (colIdx !== -1) {
       sheet.getRange(targetRow, colIdx + 1).setValue(updatedData[key]);
     }
@@ -870,8 +929,15 @@ function deleteRecord(ss, sheetName, idField, idValue) {
 
   const data = sheet.getDataRange().getValues();
   const headers = data[0];
-  const idColIdx = headers.indexOf(idField);
-  if (idColIdx === -1) return { success: false, message: `Field ${idField} not found.` };
+  let idColIdx = headers.indexOf(idField);
+  if (idColIdx === -1) {
+    idColIdx = headers.findIndex(h => {
+      const cleanH = String(h).replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
+      const cleanId = String(idField).replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
+      return cleanH === cleanId || cleanH.includes("id") || cleanH === "sno";
+    });
+  }
+  if (idColIdx === -1) idColIdx = 0;
 
   for (let r = 1; r < data.length; r++) {
     if (String(data[r][idColIdx]).trim() === String(idValue).trim()) {

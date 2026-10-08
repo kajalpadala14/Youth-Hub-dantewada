@@ -653,14 +653,55 @@ function insertRecord(ss, sheetName, payload) {
     }
   }
 
+  if (sheetName === "Entrepreneurs") {
+    if (!payload.Name && payload.NAME) payload.Name = payload.NAME;
+    if (!payload.Father_Name && (payload["FATHER NAME"] || payload.Father_Husband_Name)) {
+      payload.Father_Name = payload["FATHER NAME"] || payload.Father_Husband_Name;
+    }
+    if (!payload.Mobile && (payload["MOBILE NO."] || payload.Mobile_Number)) {
+      payload.Mobile = payload["MOBILE NO."] || payload.Mobile_Number;
+    }
+    if (!payload.Business && (payload["BUSINESS"] || payload.Business_Idea || payload.Business_Type)) {
+      payload.Business = payload["BUSINESS"] || payload.Business_Idea || payload.Business_Type;
+    }
+    if (!payload.Business_Idea && payload.Business) payload.Business_Idea = payload.Business;
+    if (!payload.Loan_Amount && (payload["LONE AMOUNT"] || payload.Lone_Amount)) {
+      payload.Loan_Amount = payload["LONE AMOUNT"] || payload.Lone_Amount;
+    }
+    if (!payload.Udyam_Registration && (payload["UDHYAM REGISTRATION"] || payload.Udhyam_Registration)) {
+      payload.Udyam_Registration = payload["UDHYAM REGISTRATION"] || payload.Udhyam_Registration;
+    }
+    if (!payload.Bank_Documents && payload["BANK DOCUMENTS"]) payload.Bank_Documents = payload["BANK DOCUMENTS"];
+    if (!payload.Pan_Card && payload["PAN CARD"]) payload.Pan_Card = payload["PAN CARD"];
+    if (!payload.Aadhar_Card && (payload["ADHAR CARD"] || payload.Adhar_Card)) {
+      payload.Aadhar_Card = payload["ADHAR CARD"] || payload.Adhar_Card;
+    }
+    if (!payload.Voter_Card && payload["VOTER CARD"]) payload.Voter_Card = payload["VOTER CARD"];
+    if (!payload.Quotation && payload["QUOTATION"]) payload.Quotation = payload["QUOTATION"];
+    if (!payload.Remarks && (payload["REMARK"] || payload.Remark)) payload.Remarks = payload["REMARK"] || payload.Remark;
+    if (!payload.Updates && payload["UPDATES"]) payload.Updates = payload["UPDATES"];
+  }
+
   // Generate ID if missing
   if (config && (!payload[config.idField] || String(payload[config.idField]).trim() === "")) {
     const nextNum = Math.max(1, sheet.getLastRow());
     payload[config.idField] = config.prefix + ("0000" + nextNum).slice(-4);
   }
 
-  const rowData = headers.map(header => {
+  const existingHeaders = (sheet.getLastRow() >= 1 && sheet.getLastColumn() >= 1) ? sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0] : null;
+  const targetHeaders = (existingHeaders && existingHeaders.length > 0 && String(existingHeaders[0]).trim() !== "") ? existingHeaders : headers;
+
+  const rowData = targetHeaders.map(header => {
     let val = payload[header];
+    if (val === undefined || val === null || val === "") {
+      const cleanH = String(header).replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
+      for (const k of Object.keys(payload)) {
+        if (k.replace(/[^a-zA-Z0-9]/g, "").toLowerCase() === cleanH) {
+          val = payload[k];
+          break;
+        }
+      }
+    }
     if (val === undefined || val === null) return "";
     return val;
   });
@@ -714,14 +755,55 @@ function bulkInsertRecords(ss, sheetName, records) {
       }
     }
 
+    if (sheetName === "Entrepreneurs") {
+      if (!record.Name && record.NAME) record.Name = record.NAME;
+      if (!record.Father_Name && (record["FATHER NAME"] || record.Father_Husband_Name)) {
+        record.Father_Name = record["FATHER NAME"] || record.Father_Husband_Name;
+      }
+      if (!record.Mobile && (record["MOBILE NO."] || record.Mobile_Number)) {
+        record.Mobile = record["MOBILE NO."] || record.Mobile_Number;
+      }
+      if (!record.Business && (record["BUSINESS"] || record.Business_Idea || record.Business_Type)) {
+        record.Business = record["BUSINESS"] || record.Business_Idea || record.Business_Type;
+      }
+      if (!record.Business_Idea && record.Business) record.Business_Idea = record.Business;
+      if (!record.Loan_Amount && (record["LONE AMOUNT"] || record.Lone_Amount)) {
+        record.Loan_Amount = record["LONE AMOUNT"] || record.Lone_Amount;
+      }
+      if (!record.Udyam_Registration && (record["UDHYAM REGISTRATION"] || record.Udhyam_Registration)) {
+        record.Udyam_Registration = record["UDHYAM REGISTRATION"] || record.Udhyam_Registration;
+      }
+      if (!record.Bank_Documents && record["BANK DOCUMENTS"]) record.Bank_Documents = record["BANK DOCUMENTS"];
+      if (!record.Pan_Card && record["PAN CARD"]) record.Pan_Card = record["PAN CARD"];
+      if (!record.Aadhar_Card && (record["ADHAR CARD"] || record.Adhar_Card)) {
+        record.Aadhar_Card = record["ADHAR CARD"] || record.Adhar_Card;
+      }
+      if (!record.Voter_Card && record["VOTER CARD"]) record.Voter_Card = record["VOTER CARD"];
+      if (!record.Quotation && record["QUOTATION"]) record.Quotation = record["QUOTATION"];
+      if (!record.Remarks && (record["REMARK"] || record.Remark)) record.Remarks = record["REMARK"] || record.Remark;
+      if (!record.Updates && record["UPDATES"]) record.Updates = record["UPDATES"];
+    }
+
     // Auto-generate ID if missing
     if (config && (!record[config.idField] || String(record[config.idField]).trim() === "")) {
       const nextNum = lastRow + i;
       record[config.idField] = config.prefix + ("0000" + nextNum).slice(-4);
     }
 
-    const rowData = headers.map(header => {
+    const existingHeaders = (sheet.getLastRow() >= 1 && sheet.getLastColumn() >= 1) ? sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0] : null;
+    const targetHeaders = (existingHeaders && existingHeaders.length > 0 && String(existingHeaders[0]).trim() !== "") ? existingHeaders : headers;
+
+    const rowData = targetHeaders.map(header => {
       let val = record[header];
+      if (val === undefined || val === null || val === "") {
+        const cleanH = String(header).replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
+        for (const k of Object.keys(record)) {
+          if (k.replace(/[^a-zA-Z0-9]/g, "").toLowerCase() === cleanH) {
+            val = record[k];
+            break;
+          }
+        }
+      }
       if (val === undefined || val === null) return "";
       return val;
     });

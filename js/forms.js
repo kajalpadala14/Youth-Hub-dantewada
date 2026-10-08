@@ -193,29 +193,23 @@ const Forms = (function() {
       countId: "countTblEntrepreneurs",
       idField: "Entrepreneur_ID",
       columns: [
-        { key: "Entrepreneur_ID", label: "ID" },
-        { key: "Youth_ID", label: "Youth ID", isLink: true },
-        { key: "Name", label: "Name" },
-        { key: "Father_Name", label: "Father Name" },
-        { key: "Mobile", label: "Mobile" },
-        { key: "Block", label: "Block" },
-        { key: "Village", label: "Village" },
-        { key: "Business_Type", label: "Business Type / Activity" },
-        { key: "Business_Idea", label: "Unit Name" },
-        { key: "Business_Status", label: "Business Status", isStatusBadge: true },
-        { key: "Loan_Scheme", label: "Scheme" },
-        { key: "Loan_Status", label: "Loan Status" },
-        { key: "Loan_Amount", label: "Loan (₹)", isMoney: true },
-        { key: "Udyam_Registration", label: "Udyam Reg." },
-        { key: "Bank_Documents", label: "Bank Docs" },
-        { key: "Pan_Card", label: "PAN Card" },
-        { key: "Voter_Card", label: "Voter Card" },
-        { key: "Quotation", label: "Quotation" },
-        { key: "Updates", label: "Updates" },
-        { key: "Bank_Name", label: "Bank" },
-        { key: "Account_Number", label: "Account No." },
-        { key: "IFSC_Code", label: "IFSC" },
-        { key: "Follow_Up_Date", label: "Follow-up Date" }
+        { key: "S_No", label: "S.NO", isSerial: true },
+        { key: "Block", label: "BLOCK" },
+        { key: "Name", label: "NAME" },
+        { key: "Father_Name", label: "FATHER NAME" },
+        { key: "Village", label: "VILLAGE" },
+        { key: "Block_2", label: "BLOCK" },
+        { key: "Mobile", label: "MOBILE NO." },
+        { key: "Business", label: "BUSINESS" },
+        { key: "Loan_Amount", label: "LONE AMOUNT", isMoney: true },
+        { key: "Udyam_Registration", label: "UDHYAM REGISTRATION", isStatusBadge: true },
+        { key: "Bank_Documents", label: "BANK DOCUMENTS", isStatusBadge: true },
+        { key: "Pan_Card", label: "PAN CARD", isStatusBadge: true },
+        { key: "Aadhar_Card", label: "ADHAR CARD", isStatusBadge: true },
+        { key: "Voter_Card", label: "VOTER CARD", isStatusBadge: true },
+        { key: "Quotation", label: "QUOTATION", isStatusBadge: true },
+        { key: "Remarks", label: "REMARK" },
+        { key: "Updates", label: "UPDATES" }
       ]
     },
     navgurukul: {
@@ -752,6 +746,90 @@ const Forms = (function() {
     }
   }
 
+  /**
+   * Helper to retrieve value for any record column with multi-field alias support & serial numbering
+   */
+  function getRecordColValue(rec, col, idx) {
+    if (!rec) return "-";
+
+    // 1. Serial Number
+    if (col.isSerial || col.key === "S_No" || col.label === "S.NO") {
+      const sno = rec["S.NO"] || rec["S.No"] || rec["S_No"] || rec.S_No || rec.SNO || rec.sno || rec.serial;
+      return sno !== undefined && sno !== null && sno !== "" ? sno : (idx !== undefined ? idx + 1 : 1);
+    }
+
+    // Direct key match
+    let val = rec[col.key];
+
+    // Case-insensitive / clean match fallback
+    if (val === undefined || val === null || val === "") {
+      const targetClean = col.label.replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
+      for (const k of Object.keys(rec)) {
+        if (k.replace(/[^a-zA-Z0-9]/g, "").toLowerCase() === targetClean) {
+          val = rec[k];
+          break;
+        }
+      }
+    }
+
+    // Specific field fallbacks for entrepreneurship & common aliases
+    if (val === undefined || val === null || val === "") {
+      switch (col.key) {
+        case "Block_2":
+          val = rec.Block_2 || rec["BLOCK_2"] || rec.GP || rec.Gram_Panchayat || rec.Block || rec.BLOCK || "";
+          break;
+        case "Block":
+          val = rec.Block || rec.BLOCK || rec.block || "";
+          break;
+        case "Name":
+          val = rec.Name || rec.NAME || rec.Youth_Name || rec.Candidate_Name || "";
+          break;
+        case "Father_Name":
+          val = rec.Father_Name || rec["FATHER NAME"] || rec.Father_Husband_Name || rec["Father Name"] || "";
+          break;
+        case "Village":
+          val = rec.Village || rec.VILLAGE || rec.village || "";
+          break;
+        case "Mobile":
+          val = rec.Mobile || rec["MOBILE NO."] || rec["Mobile No"] || rec.Mobile_Number || rec.Mobile_No || rec.mobile || "";
+          break;
+        case "Business":
+          val = rec.Business || rec["BUSINESS"] || rec.Business_Idea || rec.Business_Type || rec.Business_Name || "";
+          break;
+        case "Loan_Amount":
+          val = rec.Loan_Amount || rec["LONE AMOUNT"] || rec["LOAN AMOUNT"] || rec.Lone_Amount || rec.loan_amount || rec.Loan || "";
+          break;
+        case "Udyam_Registration":
+          val = rec.Udyam_Registration || rec["UDHYAM REGISTRATION"] || rec["UDYAM REGISTRATION"] || rec.Udhyam_Registration || rec.Udyam_Reg || "";
+          break;
+        case "Bank_Documents":
+          val = rec.Bank_Documents || rec["BANK DOCUMENTS"] || rec.Bank_Docs || rec.Bank_Doc || "";
+          break;
+        case "Pan_Card":
+          val = rec.Pan_Card || rec["PAN CARD"] || rec.PAN_Card || rec.Pan || "";
+          break;
+        case "Aadhar_Card":
+          val = rec.Aadhar_Card || rec["ADHAR CARD"] || rec["AADHAR CARD"] || rec.Adhar_Card || rec.Aadhaar_Number || rec.Aadhar || "";
+          break;
+        case "Voter_Card":
+          val = rec.Voter_Card || rec["VOTER CARD"] || rec.Voter_ID || rec.Voter || "";
+          break;
+        case "Quotation":
+          val = rec.Quotation || rec["QUOTATION"] || rec.quotation || "";
+          break;
+        case "Remarks":
+          val = rec.Remarks || rec["REMARK"] || rec["REMARKS"] || rec.Remark || rec.remarks || rec.remark || "";
+          break;
+        case "Updates":
+          val = rec.Updates || rec["UPDATES"] || rec.Loan_Updates || rec.updates || "";
+          break;
+      }
+    }
+
+    if (val === undefined || val === null || val === "") return "-";
+    return val;
+  }
+
   function renderTabTable(moduleKey, records) {
     const config = TAB_TABLE_CONFIGS[moduleKey];
     if (!config) return;
@@ -783,22 +861,21 @@ const Forms = (function() {
     const isAdmin = currentUser && currentUser.role === "ADMIN";
 
     let rowsHtml = "";
-    records.forEach(rec => {
+    records.forEach((rec, idx) => {
       rowsHtml += "<tr>";
       config.columns.forEach(col => {
-        let val = rec[col.key];
-        if (val === undefined || val === null) val = "-";
+        let val = getRecordColValue(rec, col, idx);
 
         if (col.isLink && typeof val === "string" && val.startsWith("YH-")) {
           val = `<a href="javascript:void(0)" onclick="ReportsModule.openYouthProfileModal('${val}')" style="font-weight: 700; color: #2563EB; text-decoration: underline;">${val}</a>`;
-        } else if (col.isStatusBadge) {
-          const s = String(val).toLowerCase();
+        } else if (col.isStatusBadge && val !== "-") {
+          const s = String(val).toLowerCase().trim();
           let cls = "neutral";
-          if (["submitted", "registered", "placed", "completed", "established", "passed", "admitted", "joined"].includes(s)) cls = "success";
-          else if (["pending", "in progress", "shortlisted"].includes(s)) cls = "warning";
-          else if (["rejected", "dropped", "failed", "inactive"].includes(s)) cls = "danger";
+          if (["submitted", "registered", "placed", "completed", "established", "passed", "admitted", "joined", "available", "verified", "yes"].includes(s)) cls = "success";
+          else if (["pending", "in progress", "shortlisted", "applied"].includes(s)) cls = "warning";
+          else if (["rejected", "dropped", "failed", "inactive", "incomplete", "no"].includes(s)) cls = "danger";
           val = `<span class="badge ${cls}">${val}</span>`;
-        } else if (col.isBadge) {
+        } else if (col.isBadge && val !== "-") {
           val = `<span class="badge ${col.isBadge}">${val}</span>`;
         } else if (col.isMoney && !isNaN(val) && val !== "-") {
           val = "₹" + Number(val).toLocaleString("en-IN");
@@ -808,7 +885,7 @@ const Forms = (function() {
       });
 
       // Actions column (View, Edit, Delete only for Admin)
-      const recId = rec[config.idField] || "";
+      const recId = rec[config.idField] || rec.Entrepreneur_ID || rec.Youth_ID || (idx + 1);
       const youthId = rec.Youth_ID || "";
       rowsHtml += `
         <td style="text-align: center; white-space: nowrap;">
@@ -835,9 +912,9 @@ const Forms = (function() {
             renderTabTable(moduleKey, allRecords);
             return;
           }
-          const filtered = allRecords.filter(rec => {
+          const filtered = allRecords.filter((rec, idx) => {
             return config.columns.some(col => {
-              const val = String(rec[col.key] || "").toLowerCase();
+              const val = String(getRecordColValue(rec, col, idx) || "").toLowerCase();
               return val.includes(query);
             });
           });
@@ -896,10 +973,11 @@ const Forms = (function() {
     }
 
     const headers = config.columns.map(c => `"${c.label}"`).join(",");
-    const rows = records.map(r => {
+    const rows = records.map((r, idx) => {
       return config.columns.map(c => {
-        let val = r[c.key] === undefined || r[c.key] === null ? "" : String(r[c.key]);
-        return `"${val.replace(/"/g, '""')}"`;
+        let val = getRecordColValue(r, c, idx);
+        if (val === "-") val = "";
+        return `"${String(val).replace(/"/g, '""')}"`;
       }).join(",");
     }).join("\n");
 
@@ -930,7 +1008,11 @@ const Forms = (function() {
     const config = TAB_TABLE_CONFIGS[moduleKey];
     if (!config) return;
     const records = tableDataCache[moduleKey] || [];
-    const record = records.find(r => String(r[config.idField]) === String(recordId));
+    let recordIndex = records.findIndex(r => String(r[config.idField]) === String(recordId));
+    if (recordIndex === -1) {
+      recordIndex = records.findIndex(r => String(r.Entrepreneur_ID || r.Youth_ID || "") === String(recordId));
+    }
+    const record = recordIndex !== -1 ? records[recordIndex] : null;
     if (!record) {
       App.showToast("Record not found.", "error");
       return;
@@ -951,8 +1033,9 @@ const Forms = (function() {
     if (container) {
       let html = "";
       config.columns.forEach(col => {
-        const val = record[col.key] !== undefined && record[col.key] !== null ? record[col.key] : "";
-        const isReadonly = col.key === config.idField;
+        let val = getRecordColValue(record, col, recordIndex);
+        if (val === "-") val = "";
+        const isReadonly = col.key === config.idField || col.isSerial;
         html += `
           <div class="form-group" style="margin-bottom: 10px;">
             <label class="form-label" style="font-size: 12px; font-weight: 600;">${col.label}</label>
@@ -1282,37 +1365,29 @@ const Forms = (function() {
       title: "Entrepreneurs / उद्यमिता विकास",
       apiAction: "addEntrepreneur",
       headers: [
-        "Stage", "Youth_ID", "Name", "Father_Name", "Mobile", "Block", "Village",
-        "Business_Type", "Business_Idea", "Business_Category", "Identification_Date",
-        "Business_Plan_Status", "DPR_Status", "Business_Status", "Establishment_Date",
-        "Loan_Required", "Loan_Applied", "Loan_Approved", "Loan_Amount", "Loan_Scheme",
-        "Bank_Name", "Account_Number", "IFSC_Code", "Remarks"
+        "S.NO", "BLOCK", "NAME", "FATHER NAME", "VILLAGE", "BLOCK",
+        "MOBILE NO.", "BUSINESS", "LONE AMOUNT", "UDHYAM REGISTRATION",
+        "BANK DOCUMENTS", "PAN CARD", "ADHAR CARD", "VOTER CARD",
+        "QUOTATION", "REMARK", "UPDATES"
       ],
       sample: {
-        Stage: "Stage 1",
-        Youth_ID: "YH-2026-0001",
-        Name: "Ramesh Kumar",
-        Father_Name: "Suresh Kumar",
-        Mobile: "9406123456",
-        Block: "Dantewada",
-        Village: "Chitalanka",
-        Business_Type: "Dairy Farming",
-        Business_Idea: "Dairy Farm Unit",
-        Business_Category: "Animal Husbandry",
-        Identification_Date: "2026-10-05",
-        Business_Plan_Status: "Prepared",
-        DPR_Status: "Approved",
-        Business_Status: "Established",
-        Establishment_Date: "2026-10-05",
-        Loan_Required: "Yes",
-        Loan_Applied: "Yes",
-        Loan_Approved: "Yes",
-        Loan_Amount: 100000,
-        Loan_Scheme: "PMEGP",
-        Bank_Name: "State Bank of India",
-        Account_Number: "34871239841",
-        IFSC_Code: "SBIN0000356",
-        Remarks: "Loan disbursed"
+        "S.NO": 1,
+        "BLOCK": "Dantewada",
+        "NAME": "Ramesh Kumar",
+        "FATHER NAME": "Suresh Kumar",
+        "VILLAGE": "Chitalanka",
+        "BLOCK": "Dantewada",
+        "MOBILE NO.": "9406123456",
+        "BUSINESS": "Dairy Farming Unit",
+        "LONE AMOUNT": 100000,
+        "UDHYAM REGISTRATION": "Available",
+        "BANK DOCUMENTS": "Submitted",
+        "PAN CARD": "Available",
+        "ADHAR CARD": "Verified",
+        "VOTER CARD": "Available",
+        "QUOTATION": "Submitted",
+        "REMARK": "Loan application under process",
+        "UPDATES": "Sanction pending at bank branch"
       }
     },
     navgurukul: {
@@ -1501,7 +1576,20 @@ const Forms = (function() {
     career_interest: ["careerinterest", "interest", "sector", "रुचि"],
     date: ["date", "eventdate", "campdate", "दिनांक"],
     registration_date: ["registrationdate", "regdate", "date", "पंजीयनदिनांक", "दिनांक"],
-    remarks: ["remarks", "remark", "note", "notes", "टिप्पणी"]
+    remarks: ["remarks", "remark", "note", "notes", "टिप्पणी"],
+    s_no: ["sno", "s_no", "srno", "serialno", "slno", "s_n", "क्र"],
+    business: ["business", "businessidea", "businesstype", "businessname", "unitname", "व्यवसाय", "उद्यम"],
+    loan_amount: ["loanamount", "loneamount", "loan", "ऋणराशि", "लोनराशि"],
+    lone_amount: ["loneamount", "loanamount", "loan", "ऋणराशि", "लोनराशि"],
+    udyam_registration: ["udyamregistration", "udhyamregistration", "udyamreg", "udyam", "उद्यमपंजीयन"],
+    udhyam_registration: ["udhyamregistration", "udyamregistration", "udyamreg", "udyam", "उद्यमपंजीयन"],
+    bank_documents: ["bankdocuments", "bankdocs", "bankdocument", "बैंकदस्तावेज"],
+    pan_card: ["pancard", "pan", "पैनकार्ड", "पैन"],
+    aadhar_card: ["aadharcard", "adharcard", "aadhar", "aadhaarnumber", "आधारकार्ड", "आधार"],
+    adhar_card: ["adharcard", "aadharcard", "aadhar", "aadhaarnumber", "आधारकार्ड", "आधार"],
+    voter_card: ["votercard", "voterid", "voter", "मतदातापरिचयपत्र", "वोटरकार्ड"],
+    quotation: ["quotation", "quote", "कोटेशन"],
+    updates: ["updates", "update", "loanupdates", "statusupdate", "अद्यतन"]
   };
 
   function formatExcelValue(val, key) {

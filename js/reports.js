@@ -118,7 +118,7 @@ const ReportsModule = (function() {
         sheetName = "Entrepreneurs";
         reportTitle = "Entrepreneurship & Self-Employment Report";
         headers = ["ID", "Youth ID", "Name", "Mobile", "Block", "Business Idea", "Scheme", "Loan Status", "Amount (₹)"];
-        rowMapper = r => [r.Entrepreneur_ID || "", r.Youth_ID || "", r.Name || "", r.Mobile || "", r.Block || "", r.Business_Idea || "", r.Loan_Scheme || "", r.Loan_Status || "", r.Loan_Amount ? "₹" + Number(r.Loan_Amount).toLocaleString("en-IN") : "-"];
+        rowMapper = r => [r.Entrepreneur_ID || "", r.Youth_ID || "", r.Name || "", r.Mobile || "", r.Block || "", r.Business || r.Business_Idea || "", r.Loan_Scheme || "", r.Loan_Status || "", (r.Loan_Amount || r.Lone_Amount) ? "₹" + Number(r.Loan_Amount || r.Lone_Amount).toLocaleString("en-IN") : "-"];
       } else if (reportType === "navgurukul") {
         sheetName = "NavGurukul";
         reportTitle = "NavGurukul Fellowship Status Report";

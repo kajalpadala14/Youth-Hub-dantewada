@@ -24,6 +24,7 @@ const App = (function() {
   let currentUser = null;
 
   function init() {
+    try { localStorage.removeItem("YH_RANGDE_CUSTOM_DATA"); } catch (e) {}
     checkAuth();
     setupNavigation();
     setupGlobalSearch();
@@ -362,6 +363,9 @@ const App = (function() {
             const el = document.getElementById("tblEntrepreneurs") ? document.getElementById("tblEntrepreneurs").closest(".form-card") : null;
             if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
           }, 150);
+        } else if (subView === "rangde") {
+          switchView("rangde");
+          return;
         } else if (subView === "loan") {
           setTimeout(() => {
             const el = document.getElementById("tblEntrepreneurs") ? document.getElementById("tblEntrepreneurs").closest(".form-card") : null;
@@ -527,13 +531,70 @@ const App = (function() {
     // Save API URL
     const btnSaveUrl = document.getElementById("btnSaveApiUrl");
     const inputUrl = document.getElementById("settingApiUrl");
+    const statusBadge = document.getElementById("backendStatusBadge");
     if (inputUrl) inputUrl.value = API.getApiUrl();
 
     if (btnSaveUrl) {
       btnSaveUrl.addEventListener("click", () => {
-        const url = inputUrl ? inputUrl.value : "";
+        const url = inputUrl ? inputUrl.value.trim() : "";
         API.setApiUrl(url);
-        showToast("Apps Script Web App URL updated.", "success");
+        showToast("Google Apps Script Web App URL saved successfully.", "success");
+      });
+    }
+
+    // Test Backend Connection
+    const btnTestUrl = document.getElementById("btnTestApiUrl");
+    if (btnTestUrl) {
+      btnTestUrl.addEventListener("click", async () => {
+        btnTestUrl.disabled = true;
+        btnTestUrl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Testing Connection...';
+        if (statusBadge) {
+          statusBadge.style.display = "block";
+          statusBadge.innerHTML = '<div style="background: #EFF6FF; border: 1px solid #BFDBFE; color: #1E40AF; padding: 10px 14px; border-radius: 6px; font-size: 13px;"><i class="fas fa-spinner fa-spin"></i> Pinging Google Apps Script backend...</div>';
+        }
+
+        const startTime = Date.now();
+        try {
+          const res = await API.call("ping");
+          const latency = Date.now() - startTime;
+          if (res && res.success) {
+            if (statusBadge) {
+              statusBadge.innerHTML = `
+                <div style="background: #DCFCE7; border: 1px solid #86EFAC; color: #166534; padding: 10px 14px; border-radius: 6px; font-size: 13px; display: flex; align-items: center; justify-content: space-between;">
+                  <div>
+                    <i class="fas fa-check-circle" style="color: #16A34A; margin-right: 6px;"></i>
+                    <strong>Connected & Operational!</strong> Server responded in <strong>${latency} ms</strong>.
+                  </div>
+                  <span style="font-size: 11px; background: #16A34A; color: #fff; padding: 2px 8px; border-radius: 10px;">ONLINE</span>
+                </div>
+              `;
+            }
+            showToast(`Backend connection successful (${latency} ms)!`, "success");
+          } else {
+            if (statusBadge) {
+              statusBadge.innerHTML = `
+                <div style="background: #FEE2E2; border: 1px solid #FCA5A5; color: #991B1B; padding: 10px 14px; border-radius: 6px; font-size: 13px;">
+                  <i class="fas fa-exclamation-triangle" style="color: #DC2626; margin-right: 6px;"></i>
+                  <strong>Connection Failed:</strong> ${res.message || "Invalid response from server"}. Please ensure Web App permissions are set to 'Anyone'.
+                </div>
+              `;
+            }
+            showToast("Connection failed: " + (res.message || "Unknown error"), "error");
+          }
+        } catch (e) {
+          if (statusBadge) {
+            statusBadge.innerHTML = `
+              <div style="background: #FEE2E2; border: 1px solid #FCA5A5; color: #991B1B; padding: 10px 14px; border-radius: 6px; font-size: 13px;">
+                <i class="fas fa-times-circle" style="color: #DC2626; margin-right: 6px;"></i>
+                <strong>Network Error:</strong> ${e.message}
+              </div>
+            `;
+          }
+          showToast("Network error testing connection: " + e.message, "error");
+        } finally {
+          btnTestUrl.disabled = false;
+          btnTestUrl.innerHTML = '<i class="fas fa-bolt"></i> Test Connection';
+        }
       });
     }
 
@@ -551,6 +612,36 @@ const App = (function() {
         } finally {
           btnSetupDb.disabled = false;
           btnSetupDb.innerHTML = '<i class="fas fa-database"></i> Initialize Google Sheets Database';
+        }
+      });
+    }
+
+    // Clear Rang De Local Cache & Reset Data
+    const btnClearCache = document.getElementById("btnClearRangDeCache");
+    if (btnClearCache) {
+      btnClearCache.addEventListener("click", () => {
+        localStorage.removeItem("YH_RANGDE_CUSTOM_DATA");
+        showToast("रंग दे लोकल कैश रीसेट कर दिया गया है। (Rang De cache reset)", "success");
+        if (typeof Forms !== "undefined" && Forms.loadTabTable) {
+          Forms.loadTabTable("rangde");
+        }
+      });
+    }
+
+    // Populate Sample Data
+    const btnCreateSample = document.getElementById("btnCreateSampleData");
+    if (btnCreateSample) {
+      btnCreateSample.addEventListener("click", async () => {
+        btnCreateSample.disabled = true;
+        btnCreateSample.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Populating...';
+        try {
+          const res = await API.call("createSampleData");
+          showToast(res.message || "Sample data loaded successfully!", res.success ? "success" : "error");
+        } catch (e) {
+          showToast("Error: " + e.message, "error");
+        } finally {
+          btnCreateSample.disabled = false;
+          btnCreateSample.innerHTML = '<i class="fas fa-magic"></i> Populate Realistic Sample Data';
         }
       });
     }

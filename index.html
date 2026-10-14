@@ -166,6 +166,10 @@
               <i class="fas fa-lightbulb sub-icon"></i>
               <span class="sub-label">Entrepreneurs Identified / चिन्हांकित</span>
             </a>
+            <a class="nav-sub-item" data-view="rangde" data-tooltip="Rang De Loan / रंग दे ऋण योजना">
+              <i class="fas fa-hand-holding-dollar sub-icon"></i>
+              <span class="sub-label">Rang De Loan / रंग दे ऋण</span>
+            </a>
             <a class="nav-sub-item" data-view="entrepreneurship" data-subview="loan" data-tooltip="Loan Process / ऋण प्रक्रिया">
               <i class="fas fa-file-invoice-dollar sub-icon"></i>
               <span class="sub-label">Loan Process / ऋण प्रक्रिया</span>
@@ -201,11 +205,11 @@
           </div>
         </a>
 
-        <a class="nav-item" data-view="rehabilitation" data-tooltip="Rehabilitation / आत्मसमर्पण एवं पुनर्वास">
+        <a class="nav-item" data-view="rehabilitation" data-tooltip="Rehabilitation Counselling / पुनर्वास काउंसलिंग">
           <span class="nav-icon"><i class="fas fa-hand-holding-heart"></i></span>
           <div class="nav-label">
-            <span class="nav-label-en">Rehabilitation</span>
-            <span class="nav-label-hi">आत्मसमर्पण एवं पुनर्वास</span>
+            <span class="nav-label-en">Rehab Counselling</span>
+            <span class="nav-label-hi">पुनर्वास काउंसलिंग</span>
           </div>
         </a>
 
@@ -222,6 +226,14 @@
           <div class="nav-label">
             <span class="nav-label-en">Govt Assistance</span>
             <span class="nav-label-hi">शासन से सहयोग (मांग)</span>
+          </div>
+        </a>
+
+        <a class="nav-item" data-view="rangde" data-tooltip="Rang De Loan / रंग दे ऋण योजना">
+          <span class="nav-icon"><i class="fas fa-hand-holding-dollar"></i></span>
+          <div class="nav-label">
+            <span class="nav-label-en">Rang De Loan</span>
+            <span class="nav-label-hi">रंग दे ऋण योजना</span>
           </div>
         </a>
 
@@ -253,9 +265,13 @@
               <i class="fas fa-location-dot sub-icon"></i>
               <span class="sub-label">GP-wise Report / पंचायतवार</span>
             </a>
-            <a class="nav-sub-item" data-view="reports" data-report-type="rehabilitation" data-tooltip="Rehabilitation Report / पुनर्वास रिपोर्ट">
+            <a class="nav-sub-item" data-view="reports" data-report-type="rehabilitation" data-tooltip="Rehabilitation Counselling Report / पुनर्वास काउंसलिंग रिपोर्ट">
               <i class="fas fa-hand-holding-heart sub-icon"></i>
-              <span class="sub-label">Rehabilitation / पुनर्वास रिपोर्ट</span>
+              <span class="sub-label">Rehab Counselling / पुनर्वास</span>
+            </a>
+            <a class="nav-sub-item" data-view="reports" data-report-type="rangde" data-tooltip="Rang De Loan Report / रंग दे ऋण रिपोर्ट">
+              <i class="fas fa-hand-holding-dollar sub-icon"></i>
+              <span class="sub-label">Rang De Loan / रंग दे ऋण</span>
             </a>
             <a class="nav-sub-item" data-view="reports" data-report-type="monthly" data-tooltip="Monthly Report / माहवार रिपोर्ट">
               <i class="fas fa-calendar-days sub-icon"></i>
@@ -305,7 +321,13 @@
           </div>
         </a>
 
-        <!-- Settings & Database removed from navigation for now -->
+        <a class="nav-item" data-view="settings" data-tooltip="Backend & Sheets Setup / बैकएंड सेटअप">
+          <span class="nav-icon"><i class="fas fa-database"></i></span>
+          <div class="nav-label">
+            <span class="nav-label-en">Backend &amp; Database</span>
+            <span class="nav-label-hi">गूगल शीट्स बैकएंड सेटअप</span>
+          </div>
+        </a>
       </nav>
 
       <!-- Sidebar User Profile Footer -->
@@ -356,6 +378,10 @@
 
           <button class="btn-header" onclick="App.switchView('gallery')" title="Track Progress Photo Gallery">
             <i class="fas fa-images"></i> Progress Gallery
+          </button>
+
+          <button class="btn-header" onclick="App.switchView('settings')" title="Backend & Database Connection">
+            <i class="fas fa-network-wired text-emerald"></i> Backend Status
           </button>
         </div>
       </header>
@@ -584,8 +610,18 @@
               <div class="kpi-icon"><i class="fas fa-hand-holding-heart"></i></div>
               <div class="kpi-details">
                 <div class="kpi-value" id="kpiRehabilitation">0</div>
-                <div class="kpi-label">Rehabilitation</div>
-                <div class="kpi-sub">आत्मसमर्पण एवं पुनर्वास</div>
+                <div class="kpi-label">Rehab Counselling</div>
+                <div class="kpi-sub">पुनर्वास काउंसलिंग</div>
+              </div>
+            </div>
+
+            <!-- 14. Rang De Loan -->
+            <div class="kpi-card teal" onclick="App.switchView('rangde')">
+              <div class="kpi-icon"><i class="fas fa-hand-holding-dollar"></i></div>
+              <div class="kpi-details">
+                <div class="kpi-value" id="kpiRangDe">0</div>
+                <div class="kpi-label">Rang De Loan</div>
+                <div class="kpi-sub">रंग दे ऋण लिंकेज</div>
               </div>
             </div>
           </div>
@@ -2120,18 +2156,38 @@
                 <div class="form-body">
                   <div class="form-grid">
                     <div class="form-group">
-                      <label class="form-label">Youth ID <span class="required">*</span></label>
-                      <input type="text" name="Youth_ID" id="elYouthId" class="form-control" required>
+                      <label class="form-label">NAME / नाम <span class="required">*</span></label>
+                      <input type="text" name="Name" id="elYouthName" class="form-control" placeholder="e.g. MOHAN THAKUR" required>
                     </div>
 
                     <div class="form-group">
-                      <label class="form-label">Youth Name</label>
-                      <input type="text" name="Youth_Name" id="elYouthName" class="form-control">
+                      <label class="form-label">ADDRESS / पता / ग्राम <span class="required">*</span></label>
+                      <input type="text" name="Address" id="elAddress" class="form-control" placeholder="e.g. RONJE / BARSOOR" required>
                     </div>
 
                     <div class="form-group">
-                      <label class="form-label">Employer Name / Company <span class="required">*</span></label>
-                      <input type="text" name="Employer_Name" class="form-control" placeholder="e.g. Bastar Fresh / NMDC Agency" required>
+                      <label class="form-label">MOBILE NO. / मोबाइल नं. <span class="required">*</span></label>
+                      <input type="tel" name="Mobile" id="elMobile" class="form-control" placeholder="e.g. 9617780736" maxlength="10">
+                    </div>
+
+                    <div class="form-group col-span-3">
+                      <label class="form-label">REMARK / नियुक्ति विवरण (संस्थान / पद) <span class="required">*</span></label>
+                      <input type="text" name="Remarks" id="elRemarks" class="form-control" placeholder="e.g. SBI MITRA / DANEXX / CLOTH SHOP" required>
+                    </div>
+
+                    <!-- Optional Additional Information -->
+                    <div class="form-group col-span-3" style="margin-top: 6px; padding-top: 10px; border-top: 1px dashed #CBD5E1;">
+                      <span style="font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Additional Details (Optional / अतिरिक्त विवरण)</span>
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">Youth ID</label>
+                      <input type="text" name="Youth_ID" id="elYouthId" class="form-control" placeholder="Auto or YH-...">
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">Employer Name / Company</label>
+                      <input type="text" name="Employer_Name" class="form-control" placeholder="e.g. DANEXX / NMDC">
                     </div>
 
                     <div class="form-group">
@@ -2150,21 +2206,6 @@
                     </div>
 
                     <div class="form-group">
-                      <label class="form-label">Employment Type</label>
-                      <select name="Employment_Type" class="form-control">
-                        <option value="Full Time">Full Time</option>
-                        <option value="Part Time">Part Time</option>
-                        <option value="Contractual">Contractual</option>
-                        <option value="Apprentice">Apprentice</option>
-                      </select>
-                    </div>
-
-                    <div class="form-group">
-                      <label class="form-label">Job Location</label>
-                      <input type="text" name="Location" class="form-control" placeholder="e.g. Dantewada / Raipur">
-                    </div>
-
-                    <div class="form-group">
                       <label class="form-label">Placement Status</label>
                       <select name="Status" class="form-control">
                         <option value="Placed">Placed / नियोजित</option>
@@ -2172,18 +2213,13 @@
                         <option value="Joined">Joined / कार्यभार ग्रहण</option>
                       </select>
                     </div>
-
-                    <div class="form-group col-span-3">
-                      <label class="form-label">Remarks / Offer Letter Reference</label>
-                      <input type="text" name="Remarks" class="form-control" placeholder="Offer reference, EPF/ESI details">
-                    </div>
                   </div>
                 </div>
 
                 <div class="slide-over-footer form-footer">
                   <button type="button" class="btn btn-secondary" onclick="Forms.closeDrawer()">Cancel</button>
                   <button type="reset" class="btn btn-secondary">Clear</button>
-                  <button type="submit" class="btn btn-success"><i class="fas fa-check-circle"></i> Save Employment Linked Record</button>
+                  <button type="submit" class="btn btn-success"><i class="fas fa-check-circle"></i> Save Placement Record</button>
                 </div>
               </form>
             </div>
@@ -2338,9 +2374,15 @@
                 </div>
               </div>
               <div class="table-header-toolbar">
+                <div class="table-scheme-filters" style="display: flex; gap: 5px; align-items: center; margin-right: 4px;">
+                  <button type="button" class="btn-tb-secondary active" onclick="Forms.filterByLoanScheme('all', this)" style="padding: 4px 10px; font-size: 11px; border-radius: 16px; cursor: pointer;">All / सभी</button>
+                  <button type="button" class="btn-tb-secondary" onclick="Forms.filterByLoanScheme('Rang De', this)" style="padding: 4px 10px; font-size: 11px; border-radius: 16px; color: #4338CA; border-color: #C7D2FE; font-weight: 700; cursor: pointer;"><i class="fas fa-hand-holding-dollar text-purple"></i> Rang De Loan</button>
+                  <button type="button" class="btn-tb-secondary" onclick="Forms.filterByLoanScheme('PMEGP', this)" style="padding: 4px 10px; font-size: 11px; border-radius: 16px; cursor: pointer;">PMEGP</button>
+                  <button type="button" class="btn-tb-secondary" onclick="Forms.filterByLoanScheme('MUDRA', this)" style="padding: 4px 10px; font-size: 11px; border-radius: 16px; cursor: pointer;">MUDRA</button>
+                </div>
                 <div class="table-search-box">
                   <i class="fas fa-search table-search-icon"></i>
-                  <input type="text" class="table-search-input" id="searchTblEntrepreneurs" placeholder="Search entrepreneurs...">
+                  <input type="text" class="table-search-input" id="searchTblEntrepreneurs" placeholder="Search entrepreneurs, Rang De, PMEGP...">
                 </div>
                 <span class="table-count-badge" id="countTblEntrepreneurs">0 records</span>
                 <div class="table-actions">
@@ -2352,6 +2394,9 @@
                   </button>
                   <button type="button" class="btn-tb-bulk btn-table-bulk-upload" onclick="Forms.openBulkUploadModal('entrepreneurship')" title="Bulk Upload Excel">
                     <i class="fas fa-file-excel"></i> <span>Bulk Upload</span>
+                  </button>
+                  <button type="button" class="btn-tb-secondary" onclick="Forms.openRangDeDrawer()" title="Add Rang De Loan Entry" style="background: #EEF2FF; color: #4338CA; border-color: #C7D2FE; font-weight: 600;">
+                    <i class="fas fa-hand-holding-dollar"></i> <span>+ Rang De Loan</span>
                   </button>
                   <button type="button" class="btn-tb-primary btn-open-drawer" onclick="Forms.openDrawer('formEntrepreneur')">
                     <i class="fas fa-plus"></i> <span>Add Entrepreneur</span>
@@ -2505,19 +2550,21 @@
                     </div>
 
                     <div class="form-group">
-                      <label class="form-label">Bank Name</label>
-                      <input type="text" name="Bank_Name" class="form-control" placeholder="e.g. SBI Geedam / CRGB">
+                      <label class="form-label">Bank Name / ऋण प्रदाता संस्था</label>
+                      <input type="text" name="Bank_Name" id="entBankName" class="form-control" placeholder="e.g. Rang De / SBI Geedam / CRGB">
                     </div>
 
                     <div class="form-group">
-                      <label class="form-label">Loan Scheme</label>
-                      <select name="Loan_Scheme" class="form-control">
-                        <option value="PMEGP">PMEGP</option>
+                      <label class="form-label">Loan Scheme / ऋण योजना <span class="required">*</span></label>
+                      <select name="Loan_Scheme" id="entLoanScheme" class="form-control" onchange="Forms.handleLoanSchemeChange(this.value)">
+                        <option value="Rang De">Rang De Loan (रंग दे ऋण)</option>
+                        <option value="PMEGP">PMEGP (पीएमईजीपी)</option>
                         <option value="MUDRA (Shishu)">MUDRA (Shishu - Up to ₹50k)</option>
                         <option value="MUDRA (Kishore)">MUDRA (Kishore - ₹50k to ₹5L)</option>
                         <option value="MUDRA (Tarun)">MUDRA (Tarun - ₹5L to ₹10L)</option>
-                        <option value="CMMY">CMMY</option>
-                        <option value="Self Financed">Self Financed</option>
+                        <option value="CMMY">CMMY (मुख्यमंत्री युवा स्वरोजगार)</option>
+                        <option value="Self Financed">Self Financed (स्ववित्तीय)</option>
+                        <option value="Other">Other / अन्य</option>
                       </select>
                     </div>
 
@@ -3067,8 +3114,8 @@
                 </div>
                 <div class="table-header-text">
                   <h3 class="table-header-title">
-                    Rehabilitation &amp; Surrender Monitoring Records
-                    <span class="table-header-sub-hi">/ आत्मसमर्पण एवं पुनर्वास रिकॉर्ड्स</span>
+                    Rehabilitation Counselling
+                    <span class="table-header-sub-hi">/ पुनर्वास काउंसलिंग</span>
                   </h3>
                   <p class="table-header-desc">Monitoring assistance packages, livelihood linkage, and welfare tracking for surrendered youth</p>
                 </div>
@@ -3090,7 +3137,7 @@
                     <i class="fas fa-file-excel"></i> <span>Bulk Upload</span>
                   </button>
                   <button type="button" class="btn-tb-primary btn-open-drawer" onclick="Forms.openDrawer('formRehabilitation')">
-                    <i class="fas fa-plus"></i> <span>Add Rehabilitation</span>
+                    <i class="fas fa-plus"></i> <span>Add Rehabilitation Counselling</span>
                   </button>
                 </div>
               </div>
@@ -3107,7 +3154,7 @@
           <div class="slide-over-drawer" id="drawer_formRehabilitation">
             <div class="slide-over-header">
               <div>
-                <h3><i class="fas fa-hand-holding-heart"></i> Rehabilitation Data Entry / आत्मसमर्पण एवं पुनर्वास</h3>
+                <h3><i class="fas fa-hand-holding-heart"></i> Rehabilitation Counselling Entry / पुनर्वास काउंसलिंग</h3>
                 <p>Track surrendered youth financial packages, livelihood linkages &amp; rehabilitation status</p>
               </div>
               <div style="display: flex; gap: 8px; align-items: center;">
@@ -3698,6 +3745,184 @@
         </section>
 
         <!-- ==========================================
+             VIEW 13C: RANG DE LOAN MODULE
+        =========================================== -->
+        <section class="page-section" id="view_rangde">
+          <!-- Main Table Card: Rang De Records -->
+          <div class="form-card">
+            <div class="form-header table-card-header">
+              <div class="table-header-info">
+                <div class="table-header-icon-box bg-purple-subtle">
+                  <i class="fas fa-hand-holding-dollar text-purple"></i>
+                </div>
+                <div class="table-header-text">
+                  <h3 class="table-header-title">
+                    Rang De Micro Loan Records
+                    <span class="table-header-sub-hi">/ रंग दे ऋण योजना रिकॉर्ड्स</span>
+                  </h3>
+                  <p class="table-header-desc">Social investment &amp; peer-to-peer micro-credit linkages for Dantewada rural youth, SHGs &amp; entrepreneurs</p>
+                </div>
+              </div>
+              <div class="table-header-toolbar">
+                <div class="table-search-box">
+                  <i class="fas fa-search table-search-icon"></i>
+                  <input type="text" class="table-search-input" id="searchTblRangDe" placeholder="Search Rang De records...">
+                </div>
+                <span class="table-count-badge" id="countTblRangDe">0 records</span>
+                <div class="table-actions">
+                  <button type="button" class="btn-tb-secondary" onclick="Forms.loadTabTable('rangde')" title="Refresh Data">
+                    <i class="fas fa-sync-alt"></i> <span>Refresh</span>
+                  </button>
+                  <button type="button" class="btn-tb-secondary btn-table-export-csv" onclick="Forms.exportTableCSV('rangde')" title="Export to CSV">
+                    <i class="fas fa-file-csv text-emerald"></i> <span>Export CSV</span>
+                  </button>
+                  <button type="button" class="btn-tb-bulk btn-table-bulk-upload" onclick="Forms.openBulkUploadModal('rangde')" title="Bulk Upload Excel">
+                    <i class="fas fa-file-excel"></i> <span>Bulk Upload</span>
+                  </button>
+                  <button type="button" class="btn-tb-primary btn-open-drawer" onclick="Forms.openDrawer('formRangDe')">
+                    <i class="fas fa-plus"></i> <span>Add Rang De Entry</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table class="data-table" id="tblRangDe">
+                <thead></thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Slide-Over Drawer: Add Rang De Form -->
+          <div class="slide-over-drawer" id="drawer_formRangDe">
+            <div class="slide-over-header">
+              <div>
+                <h3><i class="fas fa-hand-holding-dollar"></i> Rang De Loan Application Entry / रंग दे ऋण प्रविष्टि</h3>
+                <p>Register youth/SHG micro-enterprise loan applications under Rang De social credit scheme</p>
+              </div>
+              <div style="display: flex; gap: 8px; align-items: center;">
+                <button type="button" class="btn btn-secondary btn-search-youth" data-prefix="rd" style="font-size: 11px; padding: 4px 8px; background: rgba(255,255,255,0.15); color: #fff; border-color: rgba(255,255,255,0.3);">
+                  <i class="fas fa-search"></i> Find Youth
+                </button>
+                <button type="button" class="btn-drawer-close" onclick="Forms.closeDrawer()" title="Close">&times;</button>
+              </div>
+            </div>
+            <div class="slide-over-body">
+              <form id="formRangDe">
+                <div class="form-body">
+                  <!-- Section 1: Core Rang De Register Parameters -->
+                  <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 14px 16px; margin-bottom: 16px;">
+                    <div style="font-size: 13px; font-weight: 700; color: #1E293B; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                      <i class="fas fa-list-check text-purple"></i> Rang De Beneficiary Details (रंग दे लाभार्थी विवरण)
+                    </div>
+                    <div class="form-grid">
+                      <div class="form-group">
+                        <label class="form-label">NAME (आवेदक का नाम) <span class="required">*</span></label>
+                        <input type="text" name="Name" id="rdYouthName" class="form-control" required placeholder="NAME (उदा. SHANKAR JHURRI)">
+                      </div>
+
+                      <div class="form-group">
+                        <label class="form-label">ADDRESS (पता / ग्राम) <span class="required">*</span></label>
+                        <input type="text" name="Address" id="rdAddress" class="form-control" required placeholder="ADDRESS (उदा. MOFALNAR / BARSOOR)">
+                      </div>
+
+                      <div class="form-group">
+                        <label class="form-label">MOBILE NO. (मोबाइल नंबर) <span class="required">*</span></label>
+                        <input type="tel" name="Mobile" id="rdMobile" class="form-control" required placeholder="10-digit mobile" maxlength="10">
+                      </div>
+
+                      <div class="form-group">
+                        <label class="form-label">ACTIVITY (कार्य / व्यवसाय गतिविधि) <span class="required">*</span></label>
+                        <input type="text" name="Activity" id="rdActivity" class="form-control" required placeholder="ACTIVITY (उदा. KIRANA SHOP, SILAI DUKAN, CAFÉ, DAIRY FARMING)">
+                      </div>
+
+                      <div class="form-group">
+                        <label class="form-label">AMOUNT / AMONT (ऋण राशि ₹) <span class="required">*</span></label>
+                        <input type="number" name="Amount" id="rdAmount" class="form-control" required placeholder="AMOUNT (₹) उदा. 50000">
+                      </div>
+
+                      <div class="form-group">
+                        <label class="form-label">2ND (द्वितीय ऋण / 2nd Installment ₹)</label>
+                        <input type="number" name="Second_Amount" id="rdSecondAmount" class="form-control" placeholder="2ND (₹) उदा. 30000 (यदि लागू हो)">
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Section 2: Administrative & Master Tracking (Optional) -->
+                  <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px; padding: 14px 16px;">
+                    <div style="font-size: 13px; font-weight: 700; color: #475569; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                      <i class="fas fa-sliders text-muted"></i> Administrative &amp; Tracking Info (वैकल्पिक प्रशासनिक विवरण)
+                    </div>
+                    <div class="form-grid">
+                      <div class="form-group">
+                        <label class="form-label">Loan ID <span class="required">*</span></label>
+                        <input type="text" name="Loan_ID" class="form-control" value="Auto-generated (e.g. RD-2026-00001)" readonly>
+                      </div>
+
+                      <div class="form-group">
+                        <label class="form-label">Youth ID (Optional Master Link)</label>
+                        <input type="text" name="Youth_ID" id="rdYouthId" class="form-control" placeholder="e.g. YH-2026-00001">
+                      </div>
+
+                      <div class="form-group">
+                        <label class="form-label">Father / Husband Name (पिता/पति का नाम)</label>
+                        <input type="text" name="Father_Name" id="rdParent" class="form-control" placeholder="पिता/पति का नाम">
+                      </div>
+
+                      <div class="form-group">
+                        <label class="form-label">Block (विकासखंड)</label>
+                        <select name="Block" id="rdBlock" class="form-control" data-block-select data-gp-target="rdGP">
+                          <option value="">-- Select Block --</option>
+                          <option value="Dantewada">Dantewada (दंतेवाड़ा)</option>
+                          <option value="Geedam">Geedam (गीदम)</option>
+                          <option value="Kuakonda">Kuakonda (कुआकोंडा)</option>
+                          <option value="Katekalyan">Katekalyan (कटेकल्याण)</option>
+                        </select>
+                      </div>
+
+                      <div class="form-group">
+                        <label class="form-label">Gram Panchayat (ग्राम पंचायत)</label>
+                        <select name="GP" id="rdGP" class="form-control">
+                          <option value="">-- Select Gram Panchayat --</option>
+                        </select>
+                      </div>
+
+                      <div class="form-group">
+                        <label class="form-label">Village / Para (ग्राम / पारा)</label>
+                        <input type="text" name="Village" id="rdVillage" class="form-control" placeholder="ग्राम / पारा">
+                      </div>
+
+                      <div class="form-group">
+                        <label class="form-label">Loan Status (ऋण स्थिति)</label>
+                        <select name="Loan_Status" class="form-control">
+                          <option value="Sanctioned" selected>Sanctioned (ऋण स्वीकृत)</option>
+                          <option value="Disbursed">Disbursed (ऋण वितरित)</option>
+                          <option value="Applied">Applied (आवेदन प्राप्त)</option>
+                          <option value="Repaying">Repaying (किस्त नियमित)</option>
+                          <option value="Closed">Closed (ऋण चुकता)</option>
+                        </select>
+                      </div>
+
+                      <div class="form-group">
+                        <label class="form-label">Remarks (रिमार्क / संस्था)</label>
+                        <input type="text" name="Remarks" class="form-control" value="RANG DE" placeholder="RANG DE">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="slide-over-footer form-footer">
+                  <button type="button" class="btn btn-secondary" onclick="Forms.closeDrawer()">Cancel</button>
+                  <button type="button" class="btn btn-secondary btn-save-add-another" data-form="formRangDe">Save &amp; Add Another</button>
+                  <button type="reset" class="btn btn-secondary">Clear</button>
+                  <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Save Rang De Entry</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
              VIEW 14: REPORTS & EXPORTS
         =========================================== -->
         <section class="page-section" id="view_reports">
@@ -3722,7 +3947,8 @@
                 <option value="navgurukul">NavGurukul Fellowship Status</option>
                 <option value="training_activity">Trainings Conducted Report</option>
                 <option value="mobilization">Mobilization Events Report</option>
-                <option value="rehabilitation">Rehabilitation &amp; Surrender Report</option>
+                <option value="rehabilitation">Rehabilitation Counselling Report</option>
+                <option value="rangde">Rang De Micro Loan Report</option>
               </select>
 
               <input type="text" id="reportTableSearch" class="form-control" style="width: 220px; padding: 5px 10px;" placeholder="Search in report table...">
@@ -4046,11 +4272,11 @@
              VIEW 16: SETTINGS & DATABASE SETUP
         =========================================== -->
         <section class="page-section" id="view_settings">
-          <div class="form-card">
+          <div class="form-card" style="margin-bottom: 24px;">
             <div class="form-header">
               <div>
-                <h3>System Settings & Google Sheets Database Operations</h3>
-                <p>Setup, cloud connectivity, and database maintenance</p>
+                <h3><i class="fas fa-network-wired text-primary"></i> Backend &amp; Google Sheets Cloud Connection / बैकएंड कनेक्टिविटी</h3>
+                <p>Connect and synchronize with your Google Spreadsheet database via Google Apps Script Web App</p>
               </div>
             </div>
 
@@ -4058,34 +4284,79 @@
               <div class="form-grid two-cols">
                 <!-- Apps Script Web App URL -->
                 <div class="form-group col-span-2">
-                  <label class="form-label">Google Apps Script Web App URL</label>
-                  <div style="display: flex; gap: 8px;">
-                    <input type="url" id="settingApiUrl" class="form-control" placeholder="https://script.google.com/macros/s/AKfycb.../exec">
-                    <button type="button" class="btn btn-primary" id="btnSaveApiUrl">Save URL</button>
+                  <label class="form-label">Google Apps Script Web App URL (वेब ऍप यूआरएल) <span class="required">*</span></label>
+                  <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                    <input type="url" id="settingApiUrl" class="form-control" style="flex: 1; min-width: 280px;" placeholder="https://script.google.com/macros/s/AKfycb.../exec">
+                    <button type="button" class="btn btn-primary" id="btnSaveApiUrl"><i class="fas fa-save"></i> Save URL</button>
+                    <button type="button" class="btn btn-secondary" id="btnTestApiUrl" style="background: #0284C7; color: #fff;"><i class="fas fa-bolt"></i> Test Connection</button>
                   </div>
-                  <small style="color: #64748B; margin-top: 4px;">
-                    Required when running outside Google Apps Script (e.g. GitHub Pages or local preview). Leave blank if served directly from Apps Script Web App.
+                  <div id="backendStatusBadge" style="margin-top: 10px; display: none;"></div>
+                  <small style="color: #64748B; margin-top: 6px; display: block;">
+                    Paste your deployed Google Apps Script Web App URL ending with <code>/exec</code>.
                   </small>
                 </div>
 
                 <!-- Database Setup Button -->
-                <div class="form-group">
-                  <label class="form-label">Initialize Google Sheets Database (16 Sheets)</label>
-                  <p style="font-size: 12px; color: #64748B; margin-bottom: 8px;">Creates all 16 required sheets with formatted headers and default settings.</p>
-                  <button type="button" class="btn btn-secondary" id="btnSetupDatabase" style="background: #0B2545; color: #fff;">
+                <div class="form-group" style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 16px;">
+                  <label class="form-label" style="font-weight: 700; color: #0B2545;">1. Initialize Google Sheets (16 Sheets)</label>
+                  <p style="font-size: 12px; color: #64748B; margin-bottom: 12px;">Creates all 16 required tables (including <strong>RangDe_Loan</strong>) with formatted headers and auto-freeze.</p>
+                  <button type="button" class="btn btn-secondary" id="btnSetupDatabase" style="background: #0B2545; color: #fff; width: 100%;">
                     <i class="fas fa-database"></i> Initialize Google Sheets Database
                   </button>
                 </div>
 
+                <!-- Clear Local Cache & Reset Rang De Data Button -->
+                <div class="form-group" style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 16px;">
+                  <label class="form-label" style="font-weight: 700; color: #DC2626;">2. Clear Local Cache (रंग दे कैश रीसेट)</label>
+                  <p style="font-size: 12px; color: #64748B; margin-bottom: 12px;">Clears any offline cached records and forces a fresh load from your Google Sheet.</p>
+                  <button type="button" class="btn btn-secondary" id="btnClearRangDeCache" style="background: #DC2626; color: #fff; width: 100%;">
+                    <i class="fas fa-trash-alt"></i> Clear Rang De Local Cache
+                  </button>
+                </div>
+
                 <!-- Populate Sample Data Button -->
-                <div class="form-group">
-                  <label class="form-label">Load Realistic Sample Data</label>
-                  <p style="font-size: 12px; color: #64748B; margin-bottom: 8px;">Populates 10 Youth, 5 Mobilization, 5 M-Forms, 5 My Bharat, 4 Counselling, 3 Skill, 2 Employment, 2 Entrepreneurs, 2 NavGurukul, and 2 Training events.</p>
+                <div class="form-group col-span-2" style="background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 8px; padding: 16px;">
+                  <label class="form-label" style="font-weight: 700; color: #92400E;">Load Realistic Sample Data</label>
+                  <p style="font-size: 12px; color: #B45309; margin-bottom: 12px;">Populates 10 Youth, 5 Mobilization, 5 M-Forms, 5 My Bharat, 4 Counselling, 3 Skill, 2 Employment, 2 Entrepreneurs, 2 NavGurukul, and 2 Training events across Dantewada blocks.</p>
                   <button type="button" class="btn btn-secondary" id="btnCreateSampleData" style="background: #D97706; color: #fff;">
                     <i class="fas fa-magic"></i> Populate Realistic Sample Data
                   </button>
                 </div>
               </div>
+            </div>
+          </div>
+
+          <!-- Step-by-Step Backend Connection Guide -->
+          <div class="form-card">
+            <div class="form-header">
+              <div>
+                <h3><i class="fas fa-book-open text-purple"></i> How to Connect / Update Google Sheets Backend (सरल निर्देश)</h3>
+                <p>Follow these 4 simple steps to connect any Google Sheet to this system</p>
+              </div>
+            </div>
+            <div class="form-body" style="font-size: 13px; line-height: 1.6; color: #334155;">
+              <ol style="padding-left: 20px; display: flex; flex-direction: column; gap: 12px;">
+                <li>
+                  <strong>Step 1: Open Google Spreadsheet &amp; Apps Script Editor</strong><br>
+                  अपनी Google Spreadsheet खोलें और मेन्यू बार में <code>Extensions (एक्सटेंशन) &gt; Apps Script (ऍप्स स्क्रिप्ट)</code> पर क्लिक करें।
+                </li>
+                <li>
+                  <strong>Step 2: Paste the Updated Code</strong><br>
+                  इस प्रोजेक्ट की फ़ाइल <code>AppsScript/Code.gs</code> का पूरा कोड कॉपी करके Apps Script एडिटर में पेस्ट करें और <code>Ctrl + S</code> दबाकर सेव करें।
+                </li>
+                <li>
+                  <strong>Step 3: Deploy as Web App (वेब ऍप के रूप में परिनियोजित करें)</strong><br>
+                  शीर्ष दाएं कोने में <code>Deploy (डिप्लॉय) &gt; Manage deployments (डिप्लॉयमेंट प्रबंधित करें)</code> (या New deployment) पर क्लिक करें:<br>
+                  • <strong>Select type:</strong> Web app<br>
+                  • <strong>Execute as:</strong> Me (मेरा खाता)<br>
+                  • <strong>Who has access:</strong> Anyone (कोई भी)<br>
+                  • <strong>Deploy</strong> पर क्लिक करें और <strong>Web App URL</strong> को कॉपी कर लें।
+                </li>
+                <li>
+                  <strong>Step 4: Paste &amp; Initialize in this System</strong><br>
+                  ऊपर दिए गए <strong>"Google Apps Script Web App URL"</strong> बॉक्स में यूआरएल पेस्ट करें, <strong>"Save URL"</strong> दबाएं, फिर <strong>"Test Connection"</strong> और <strong>"Initialize Google Sheets Database"</strong> पर क्लिक करें। सभी 16 शीट्स तुरंत तैयार हो जाएंगी!
+                </li>
+              </ol>
             </div>
           </div>
         </section>
@@ -4169,13 +4440,39 @@
       <div class="modal-body" style="padding: 20px;">
         <input type="hidden" id="bulkUploadModuleKey">
 
+        <!-- Target Module Selection -->
+        <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px 16px; margin-bottom: 14px;">
+          <label for="bulkUploadModuleSelect" style="font-weight: 700; font-size: 13px; color: #1E293B; display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+            <i class="fas fa-layer-group text-primary"></i> Target Sheet / लक्ष्य मॉड्यूल:
+          </label>
+          <select id="bulkUploadModuleSelect" class="form-control" style="font-weight: 600; font-size: 13px; background: #FFFFFF; border: 1px solid #CBD5E1;">
+            <option value="youth_master">1. Youth Master / युवा मास्टर रजिस्टर</option>
+            <option value="mobilization">2. Mobilization / मोबिलाइजेशन</option>
+            <option value="mform">3. M-Form / एम-फॉर्म</option>
+            <option value="mybharat">4. My Bharat / माई भारत</option>
+            <option value="counselling">5. Career Counselling / करियर काउंसलिंग</option>
+            <option value="skill_training">6. Skill Training / कौशल प्रशिक्षण</option>
+            <option value="emp_registered">7. Employment Registered / रोजगार पंजीयन</option>
+            <option value="emp_linked">8. Employment Linked / रोजगार लिंकेज</option>
+            <option value="education">9. Higher Education / उच्च शिक्षा</option>
+            <option value="entrepreneurship">10. Entrepreneurs (PMEGP) / उद्यमिता विकास</option>
+            <option value="navgurukul">11. NavGurukul / नवगुरुकुल</option>
+            <option value="trainings">12. Trainings Conducted / प्रशिक्षण</option>
+            <option value="activities">13. Youth Hub Activities / गतिविधियां</option>
+            <option value="rehabilitation">14. Rehabilitation Counselling / पुनर्वास</option>
+            <option value="iim_raipur">15. IIM Raipur Entrepreneurship / आईआईएम रायपुर</option>
+            <option value="shasan_sahyog">16. Shasan Sahyog / शासन से सहयोग</option>
+            <option value="rangde">17. Rang De Micro Loans / रंग दे ऋण योजना</option>
+          </select>
+        </div>
+
         <!-- Step 1: Download Sample Template -->
         <div style="background: #F8FAFC; border: 1px dashed #CBD5E1; border-radius: 8px; padding: 14px 18px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
           <div>
             <div style="font-weight: 600; font-size: 13px; color: #1E293B;">
-              <i class="fas fa-download text-primary"></i> Step 1: Download Sample Template / एक्सेल प्रारूप
+              <i class="fas fa-download text-primary"></i> Step 1: Download Sample Template / एक्सेल प्रारूप डाउनलोड करें
             </div>
-            <div style="font-size: 11.5px; color: #64748B;">Download pre-formatted Excel file with accurate column headers & sample data</div>
+            <div style="font-size: 11.5px; color: #64748B;">Download pre-formatted Excel file with accurate column headers &amp; sample data</div>
           </div>
           <button type="button" class="btn btn-secondary" id="btnDownloadSampleTemplate" style="font-size: 12px; padding: 6px 12px;">
             <i class="fas fa-file-excel text-emerald"></i> Download Template (.xlsx)
@@ -4319,6 +4616,7 @@
   <script src="js/env.js"></script>
   <script src="js/api.js"></script>
   <script src="js/pmegp_data.js"></script>
+  <script src="js/rangde_data.js"></script>
   <script src="js/dashboard.js"></script>
   <script src="js/forms.js"></script>
   <script src="js/reports.js"></script>

@@ -107,8 +107,14 @@ const ReportsModule = (function() {
       } else if (reportType === "employment") {
         sheetName = "Employment_Linked";
         reportTitle = "Employment Linkage & Placement Report";
-        headers = ["Link ID", "Youth ID", "Name", "Employer", "Job Role", "Placement Date", "Salary (₹)", "Status"];
-        rowMapper = r => [r.Emp_Link_ID || "", r.Youth_ID || "", r.Youth_Name || "", r.Employer_Name || "", r.Job_Role || "", r.Placement_Date || "", r.Salary ? "₹" + Number(r.Salary).toLocaleString("en-IN") : "-", r.Status || ""];
+        headers = ["SR. NO.", "NAME", "ADDRESS", "MOBILE NO.", "REMARK"];
+        rowMapper = (r, idx) => [
+          r["SR. NO."] || r["S.NO"] || r.S_No || (idx + 1),
+          r.NAME || r.Name || r.Youth_Name || "-",
+          r.ADDRESS || r.Address || r.Village || r.Location || "-",
+          r["MOBILE NO."] || r.Mobile || r.Mobile_Number || "-",
+          r.REMARK || r.Remarks || r.Job_Role || r.Employer_Name || "-"
+        ];
       } else if (reportType === "skill_training") {
         sheetName = "Skill_Training";
         reportTitle = "Skill Training & Certification Report";
@@ -136,7 +142,7 @@ const ReportsModule = (function() {
         rowMapper = r => [r.Activity_ID || "", r.Date || "", r.Activity_Name || "", r.Block || "", r.Gram_Panchayat || "", r.Mobilization_Source || "", r.Total_Mobilized || "0"];
       } else if (reportType === "rehabilitation") {
         sheetName = "Rehabilitation";
-        reportTitle = "Rehabilitation & Surrender Monitoring Report";
+        reportTitle = "Rehabilitation Counselling Report";
         headers = ["Rehab ID", "Youth ID", "Name", "Guardian", "Mobile", "Block", "Gram Panchayat", "Surrender Date", "Status", "Assistance Type", "Amount (₹)", "Scheme Linked", "Employment"];
         rowMapper = r => [
           r.Rehab_ID || "",
@@ -153,11 +159,41 @@ const ReportsModule = (function() {
           r.Scheme_Linked || "",
           r.Employment_Status || ""
         ];
+      } else if (reportType === "rangde") {
+        sheetName = "RangDe_Loan";
+        reportTitle = "Rang De Beneficiary Report";
+        headers = ["SR. NO.", "NAME", "ADDRESS", "MOBILE NO.", "ACTIVITY", "AMOUNT (₹)", "2ND (₹)"];
+        rowMapper = (r, idx) => {
+          const amt = r.AMOUNT || r.AMONT || r.Amount || r.Loan_Amount;
+          const sec = r["2ND"] || r["2nd"] || r.Second_Amount;
+          return [
+            r["SR. NO."] || r["S.NO"] || r.S_No || (idx + 1),
+            r.NAME || r.Name || "-",
+            r.ADDRESS || r.Address || r.Village || "-",
+            r["MOBILE NO."] || r.Mobile || "-",
+            r.ACTIVITY || r.Activity || r.Business || "-",
+            (amt && !isNaN(amt) && String(amt).trim() !== "") ? "₹" + Number(amt).toLocaleString("en-IN") : (amt || "-"),
+            (sec && !isNaN(sec) && String(sec).trim() !== "") ? "₹" + Number(sec).toLocaleString("en-IN") : (sec || "-")
+          ];
+        };
       }
 
       // Fetch live records directly from connected Google Sheet
       const res = await API.call("getTableRecords", { sheetName });
       let recordList = res && (res.records || res.data);
+
+      if (reportType === "rangde") {
+        let validSheetRecords = [];
+        if (Array.isArray(recordList)) {
+          validSheetRecords = recordList.filter(r => {
+            const keys = Object.keys(r).filter(k => k.trim() !== "" && k !== "S.NO" && k !== "SR. NO." && k !== "SR.NO." && k !== "S_No" && k !== "Loan_ID");
+            return keys.length > 0 && keys.some(k => String(r[k] || "").trim().length > 0);
+          });
+        }
+        recordList = validSheetRecords;
+
+        try { localStorage.removeItem("YH_RANGDE_CUSTOM_DATA"); } catch (e) {}
+      }
 
       // Apply Block & GP Filters if active
       if (Array.isArray(recordList)) {
@@ -171,7 +207,7 @@ const ReportsModule = (function() {
         }
       }
 
-      if (res && res.success && Array.isArray(recordList)) {
+      if (Array.isArray(recordList) && recordList.length > 0) {
         currentReportData = {
           title: reportTitle,
           headers: headers,
@@ -503,11 +539,11 @@ const ReportsModule = (function() {
               </div>
             </div>
 
-            <!-- Step 10: Rehabilitation & Surrender -->
+            <!-- Step 10: Rehabilitation Counselling -->
             <div class="timeline-step">
               <div class="timeline-dot ${(res.profile.rehabilitation && res.profile.rehabilitation.length) ? "active" : ""}"></div>
               <div class="timeline-content">
-                <div class="timeline-title">10. Rehabilitation &amp; Surrender Support (आत्मसमर्पण एवं पुनर्वास)</div>
+                <div class="timeline-title">10. Rehabilitation Counselling (पुनर्वास काउंसलिंग)</div>
                 <div class="timeline-desc">
                   ${(res.profile.rehabilitation && res.profile.rehabilitation.length) ? 
                     res.profile.rehabilitation.map(rh => `Status: <span class="badge success">${rh.Rehabilitation_Status}</span> | Assistance: <strong>${rh.Assistance_Type}</strong> (${rh.Assistance_Amount ? '₹' + Number(rh.Assistance_Amount).toLocaleString('en-IN') : 'N/A'})<br>Scheme: ${rh.Scheme_Linked || 'N/A'} | Employment: ${rh.Employment_Status || 'N/A'}`).join("<br><br>") : 

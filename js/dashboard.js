@@ -86,7 +86,7 @@ const DashboardModule = (function() {
       }
 
       // Live Sheet Data: Fetch all core tables directly from Google Sheets
-      const [ymRes, mobRes, mfRes, mbRes, couRes, sklRes, erRes, elRes, eduRes, entRes, ngRes, trgRes, rehRes] = await Promise.all([
+      const [ymRes, mobRes, mfRes, mbRes, couRes, sklRes, erRes, elRes, eduRes, entRes, ngRes, trgRes, rehRes, rdRes] = await Promise.all([
         API.call("getTableRecords", { sheetName: "Youth_Master" }),
         API.call("getTableRecords", { sheetName: "Mobilization" }),
         API.call("getTableRecords", { sheetName: "M_Form" }),
@@ -99,7 +99,8 @@ const DashboardModule = (function() {
         API.call("getTableRecords", { sheetName: "Entrepreneurs" }),
         API.call("getTableRecords", { sheetName: "NavGurukul" }),
         API.call("getTableRecords", { sheetName: "Trainings" }),
-        API.call("getTableRecords", { sheetName: "Rehabilitation" })
+        API.call("getTableRecords", { sheetName: "Rehabilitation" }),
+        API.call("getTableRecords", { sheetName: "RangDe_Loan" })
       ]);
 
       let ymList = (ymRes && (ymRes.data || ymRes.records)) || [];
@@ -115,6 +116,18 @@ const DashboardModule = (function() {
       let ngList = (ngRes && (ngRes.data || ngRes.records)) || [];
       let trgList = (trgRes && (trgRes.data || trgRes.records)) || [];
       let rehList = (rehRes && (rehRes.data || rehRes.records)) || [];
+      let rdList = (rdRes && (rdRes.data || rdRes.records)) || [];
+
+      // Filter out ghost rows with only empty string keys or empty cells
+      if (Array.isArray(rdList)) {
+        rdList = rdList.filter(r => {
+          const keys = Object.keys(r).filter(k => k.trim() !== "" && k !== "S.NO" && k !== "SR. NO." && k !== "SR.NO." && k !== "S_No" && k !== "Loan_ID");
+          return keys.length > 0 && keys.some(k => String(r[k] || "").trim().length > 0);
+        });
+      }
+      try {
+        localStorage.removeItem("YH_RANGDE_CUSTOM_DATA");
+      } catch (e) {}
 
       if (filters.block && filters.block !== "All") {
         const b = filters.block.toLowerCase();
@@ -132,6 +145,10 @@ const DashboardModule = (function() {
         ngList = fBlock(ngList);
         trgList = fBlock(trgList);
         rehList = fBlock(rehList);
+        rdList = rdList.filter(item => {
+          const rowLoc = String(item.Block || item.BLOCK || item.Address || item.ADDRESS || item.Village || "").toLowerCase();
+          return rowLoc.includes(b);
+        });
       }
 
       if (filters.gramPanchayat && filters.gramPanchayat !== "All") {
@@ -145,6 +162,10 @@ const DashboardModule = (function() {
         ngList = fGP(ngList);
         trgList = fGP(trgList);
         rehList = fGP(rehList);
+        rdList = rdList.filter(item => {
+          const rowGp = String(item.Gram_Panchayat || item.GP || item.Village || item.Address || "").toLowerCase();
+          return rowGp.includes(gp);
+        });
       }
 
       const totalMob = mobList.reduce((acc, m) => acc + (Number(m.Total_Mobilized) || 0), 0) || ymList.length;
@@ -162,7 +183,8 @@ const DashboardModule = (function() {
         entrepreneursEstablished: entList.filter(e => String(e.Stage || "").toLowerCase() === "established").length,
         navgurukul: ngList.length,
         trainingConducted: trgList.length,
-        rehabilitation: rehList.length
+        rehabilitation: rehList.length,
+        rangde: rdList.length
       };
 
       updateKpiCards(computedKpis);
@@ -197,6 +219,7 @@ const DashboardModule = (function() {
     setCardValue("kpiNavgurukul", formatNumber(kpis.navgurukul || 0));
     setCardValue("kpiTrainings", formatNumber(kpis.trainingConducted || 0));
     setCardValue("kpiRehabilitation", formatNumber(kpis.rehabilitation !== undefined ? kpis.rehabilitation : (kpis.totalRehabilitated || 0)));
+    setCardValue("kpiRangDe", formatNumber(kpis.rangde !== undefined ? kpis.rangde : 0));
   }
 
   /**

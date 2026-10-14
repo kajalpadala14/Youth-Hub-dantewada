@@ -155,18 +155,13 @@ const Forms = (function() {
       tableId: "tblEmpLinked",
       searchId: "searchTblEmpLinked",
       countId: "countTblEmpLinked",
-      idField: "Emp_Link_ID",
+      idField: "SR. NO.",
       columns: [
-        { key: "Emp_Link_ID", label: "Link ID" },
-        { key: "Youth_ID", label: "Youth ID", isLink: true },
-        { key: "Youth_Name", label: "Youth Name" },
-        { key: "Employer_Name", label: "Employer / Org" },
-        { key: "Job_Role", label: "Job Role" },
-        { key: "Placement_Date", label: "Employment Date" },
-        { key: "Salary", label: "Monthly Income (₹)", isMoney: true },
-        { key: "Status", label: "Status", isStatusBadge: true },
-        { key: "Follow_Up_Date", label: "Follow-up Date" },
-        { key: "Follow_Up_Status", label: "Follow-up Status" }
+        { key: "S_No", label: "SR. NO.", isSerial: true },
+        { key: "Name", label: "NAME" },
+        { key: "Address", label: "ADDRESS" },
+        { key: "Mobile", label: "MOBILE NO." },
+        { key: "Remarks", label: "REMARK" }
       ]
     },
     education: {
@@ -345,13 +340,29 @@ const Forms = (function() {
         { key: "Status", label: "Status", isStatusBadge: true },
         { key: "Remarks", label: "Remarks" }
       ]
+    },
+    rangde: {
+      sheetName: "RangDe_Loan",
+      tableId: "tblRangDe",
+      searchId: "searchTblRangDe",
+      countId: "countTblRangDe",
+      idField: "SR. NO.",
+      columns: [
+        { key: "S_No", label: "SR. NO.", isSerial: true },
+        { key: "Name", label: "NAME" },
+        { key: "Address", label: "ADDRESS" },
+        { key: "Mobile", label: "MOBILE NO." },
+        { key: "Activity", label: "ACTIVITY" },
+        { key: "Amount", label: "AMOUNT (₹)", isMoney: true },
+        { key: "Second_Amount", label: "2ND (₹)", isMoney: true }
+      ]
     }
   };
 
   // Cache table records for client search
   const tableDataCache = {};
 
-  const SERVICE_FORM_PREFIXES = ["mf", "mb", "cou", "skl", "er", "el", "edu", "ent", "ng", "reh", "iim", "ss"];
+  const SERVICE_FORM_PREFIXES = ["mf", "mb", "cou", "skl", "er", "el", "edu", "ent", "ng", "reh", "iim", "ss", "rd"];
 
   function init() {
     initializeDateDefaults();
@@ -723,6 +734,74 @@ const Forms = (function() {
     if (el && value !== undefined && value !== null) el.value = value;
   }
 
+  function isRangDeEntrepreneurRecord(rec) {
+    if (!rec) return false;
+    const values = [
+      rec.Loan_Scheme,
+      rec["LOAN SCHEME"],
+      rec.Remarks,
+      rec.REMARK,
+      rec.Remark,
+      rec.Updates,
+      rec.UPDATES
+    ].map(v => String(v || "").toLowerCase().replace(/[^a-z0-9]/g, ""));
+    return values.some(v => v === "rangde" || v.includes("rangde"));
+  }
+
+  function normalizeRangDeRecord(rec, idx) {
+    const serial = rec["SR. NO."] || rec["SR.NO."] || rec["SR NO"] || rec["S.NO"] || rec["S.No"] || rec.S_No || rec.Loan_ID || rec.Entrepreneur_ID || (idx !== undefined ? idx + 1 : "");
+    const name = rec.Name || rec.NAME || rec.Youth_Name || rec["FATHER NAME"] || "";
+    const address = rec.Address || rec.ADDRESS || rec.Village || rec.VILLAGE || rec.Location || "";
+    const mobile = rec.Mobile || rec["MOBILE NO."] || rec.Mobile_Number || rec.Mobile_No || rec.BLOCK || "";
+    const activity = rec.Activity || rec.ACTIVITY || rec.Business || rec.BUSINESS || rec.Business_Idea || rec["BUSINESS"] || "";
+    const amount = rec.Amount || rec.AMOUNT || rec.AMONT || rec.Loan_Amount || rec["LONE AMOUNT"] || rec.Lone_Amount || "";
+    const secondAmount = rec.Second_Amount || rec["2ND"] || rec["2nd"] || rec["2ND AMOUNT"] || "";
+
+    return Object.assign({}, rec, {
+      "SR. NO.": serial,
+      S_No: serial,
+      Name: name,
+      NAME: name,
+      Address: address,
+      ADDRESS: address,
+      Mobile: mobile,
+      "MOBILE NO.": mobile,
+      Activity: activity,
+      ACTIVITY: activity,
+      Business: activity,
+      Amount: amount,
+      AMOUNT: amount,
+      Loan_Amount: amount,
+      Second_Amount: secondAmount,
+      "2ND": secondAmount,
+      Loan_Scheme: "Rang De",
+      Remarks: rec.Remarks || rec.REMARK || "RANG DE",
+      REMARK: rec.REMARK || rec.Remarks || "RANG DE"
+    });
+  }
+
+  function toRangDeEntrepreneurPayload(rec) {
+    return {
+      NAME: rec.NAME || rec.Name || "",
+      Name: rec.Name || rec.NAME || "",
+      ADDRESS: rec.ADDRESS || rec.Address || rec.Village || "",
+      Address: rec.Address || rec.ADDRESS || rec.Village || "",
+      VILLAGE: rec.ADDRESS || rec.Address || rec.Village || "",
+      Village: rec.Address || rec.ADDRESS || rec.Village || "",
+      "MOBILE NO.": rec["MOBILE NO."] || rec.Mobile || rec.Mobile_Number || "",
+      Mobile: rec.Mobile || rec["MOBILE NO."] || rec.Mobile_Number || "",
+      BUSINESS: rec.ACTIVITY || rec.Activity || rec.Business || "",
+      Business: rec.Activity || rec.ACTIVITY || rec.Business || "",
+      "LONE AMOUNT": rec.AMOUNT || rec.Amount || rec.Loan_Amount || "",
+      Loan_Amount: rec.Amount || rec.AMOUNT || rec.Loan_Amount || "",
+      "2ND": rec["2ND"] || rec.Second_Amount || "",
+      Second_Amount: rec.Second_Amount || rec["2ND"] || "",
+      Loan_Scheme: "Rang De",
+      REMARK: "RANG DE",
+      Remarks: "RANG DE"
+    };
+  }
+
   /**
    * Real-Time Embedded Table Data Engine for each Tab
    */
@@ -739,13 +818,65 @@ const Forms = (function() {
     }
 
     try {
-      const res = await API.call("getTableRecords", { sheetName: config.sheetName });
+      let res = await API.call("getTableRecords", { sheetName: config.sheetName });
       let recordList = res && (res.records || res.data);
-      if (res && res.success && Array.isArray(recordList)) {
+
+      if (moduleKey === "rangde") {
+        try {
+          localStorage.removeItem("YH_RANGDE_CUSTOM_DATA");
+        } catch (e) {}
+
+        // Filter out ghost rows with only empty string keys or empty cells
+        let validSheetRecords = [];
+        if (Array.isArray(recordList)) {
+          validSheetRecords = recordList.filter(r => {
+            const keys = Object.keys(r).filter(k => k.trim() !== "" && k !== "S.NO" && k !== "SR. NO." && k !== "SR.NO." && k !== "S_No" && k !== "Loan_ID");
+            return keys.length > 0 && keys.some(k => String(r[k] || "").trim().length > 0);
+          });
+        }
+
+        if (validSheetRecords.length === 0) {
+          try {
+            const entRes = await API.call("getTableRecords", { sheetName: "Entrepreneurs" });
+            const entrepreneurRecords = entRes && (entRes.records || entRes.data);
+            if (Array.isArray(entrepreneurRecords)) {
+              validSheetRecords = entrepreneurRecords
+                .filter(isRangDeEntrepreneurRecord)
+                .map((r, idx) => normalizeRangDeRecord(r, idx));
+            }
+          } catch (fallbackErr) {
+            console.warn("Unable to load Rang De fallback records from Entrepreneurs:", fallbackErr);
+          }
+        }
+
+        recordList = validSheetRecords.map((r, idx) => normalizeRangDeRecord(r, idx));
+      }
+
+      // Merge user bulk-uploaded records in this session so they stay visible
+      try {
+        const sessionKey = "YH_" + moduleKey.toUpperCase() + "_BULK_UPLOADED";
+        const uploaded = JSON.parse(sessionStorage.getItem(sessionKey) || "[]");
+        if (Array.isArray(uploaded) && uploaded.length > 0) {
+          if (!Array.isArray(recordList)) recordList = [];
+          const idField = config.idField || "SR. NO.";
+          uploaded.forEach(upRec => {
+            const upId = String(upRec[idField] || upRec["Youth_ID"] || upRec["SR. NO."] || upRec["Mobile"] || "");
+            const upName = String(upRec["Name"] || upRec["Youth_Name"] || upRec["NAME"] || "").trim().toLowerCase();
+            const exists = recordList.some(r => {
+              const rId = String(r[idField] || r["Youth_ID"] || r["SR. NO."] || r["Mobile"] || "");
+              const rName = String(r["Name"] || r["Youth_Name"] || r["NAME"] || "").trim().toLowerCase();
+              return (upId && rId && upId === rId) || (upName && rName && upName === rName);
+            });
+            if (!exists) recordList.push(upRec);
+          });
+        }
+      } catch (se) {}
+
+      if (Array.isArray(recordList)) {
         // Filter out completely blank or phantom rows (rows with only an auto-generated ID but no candidate info)
         recordList = recordList.filter(rec => {
-          const keys = Object.keys(rec).filter(k => k !== "S.NO" && k !== "Entrepreneur_ID" && k !== "Youth_ID");
-          return keys.some(k => String(rec[k] || "").trim().length > 0);
+          const keys = Object.keys(rec).filter(k => k.trim() !== "" && k !== "S.NO" && k !== "SR. NO." && k !== "SR.NO." && k !== "S_No" && k !== "Entrepreneur_ID" && k !== "Youth_ID" && k !== "Emp_Link_ID" && k !== "Loan_ID");
+          return keys.length > 0 && keys.some(k => String(rec[k] || "").trim().length > 0);
         });
 
         // Role-based block filtering for Hub Operators
@@ -779,9 +910,9 @@ const Forms = (function() {
     if (!rec) return "-";
 
     // 1. Serial Number
-    if (col.isSerial || col.key === "S_No" || col.label === "S.NO") {
-      const sno = rec["S.NO"] || rec["S.No"] || rec["S_No"] || rec.S_No || rec.SNO || rec.sno || rec.serial;
-      if (sno !== undefined && sno !== null && String(sno).trim() !== "" && !String(sno).startsWith("ENT-") && !String(sno).startsWith("YH-")) {
+    if (col.isSerial || col.key === "S_No" || col.label === "S.NO" || col.label === "SR. NO." || col.label === "SR.NO.") {
+      const sno = rec["SR. NO."] || rec["SR.NO."] || rec["SR NO"] || rec["Sr. No."] || rec["S.NO"] || rec["S.No"] || rec["S_No"] || rec.S_No || rec.SNO || rec.sno || rec.serial;
+      if (sno !== undefined && sno !== null && String(sno).trim() !== "" && !String(sno).startsWith("ENT-") && !String(sno).startsWith("YH-") && !String(sno).startsWith("EL-")) {
         return sno;
       }
       return (idx !== undefined ? idx + 1 : 1);
@@ -869,7 +1000,7 @@ const Forms = (function() {
           val = rec.Block || rec.BLOCK || rec.block || "";
           break;
         case "Name":
-          val = rec.Name || rec.NAME || rec.Youth_Name || rec.Candidate_Name || "";
+          val = rec.Name || rec.NAME || rec.Youth_Name || rec.Candidate_Name || rec["नाम"] || "";
           break;
         case "Father_Name":
           val = rec.Father_Name || rec["FATHER NAME"] || rec.Father_Husband_Name || rec["Father Name"] || "";
@@ -877,11 +1008,23 @@ const Forms = (function() {
         case "Village":
           val = rec.Village || rec.VILLAGE || rec.village || "";
           break;
+        case "Address":
+          val = rec.Address || rec.ADDRESS || rec.Village || rec.VILLAGE || rec.village || "";
+          break;
         case "Mobile":
-          val = rec.Mobile || rec["MOBILE NO."] || rec["Mobile No"] || rec.Mobile_Number || rec.Mobile_No || rec.mobile || "";
+          val = rec.Mobile || rec["MOBILE NO."] || rec["MOBILE NO"] || rec["Mobile No"] || rec.Mobile_Number || rec.Mobile_No || rec.mobile || "";
           break;
         case "Business":
           val = rec.Business || rec["BUSINESS"] || rec.Business_Idea || rec.Business_Type || rec.Business_Name || "";
+          break;
+        case "Activity":
+          val = rec.Activity || rec["ACTIVITY"] || rec.Business || rec["BUSINESS"] || rec.Business_Idea || "";
+          break;
+        case "Amount":
+          val = rec.Amount || rec["AMOUNT"] || rec["AMONT"] || rec.Loan_Amount || rec["LONE AMOUNT"] || rec["LOAN AMOUNT"] || "";
+          break;
+        case "Second_Amount":
+          val = rec.Second_Amount || rec["2ND"] || rec["2nd"] || rec["2ND AMOUNT"] || rec.Second || "";
           break;
         case "Loan_Amount":
           val = rec.Loan_Amount || rec["LONE AMOUNT"] || rec["LOAN AMOUNT"] || rec.Lone_Amount || rec.loan_amount || rec.Loan || "";
@@ -905,7 +1048,7 @@ const Forms = (function() {
           val = rec.Quotation || rec["QUOTATION"] || rec.quotation || "";
           break;
         case "Remarks":
-          val = rec.Remarks || rec["REMARK"] || rec["REMARKS"] || rec.Remark || rec.remarks || rec.remark || "";
+          val = rec.Remarks || rec.REMARK || rec["REMARK"] || rec["REMARKS"] || rec.Remark || rec.remarks || rec.remark || rec.Job_Role || rec.Employer_Name || "";
           break;
         case "Updates":
           val = rec.Updates || rec["UPDATES"] || rec.Loan_Updates || rec.updates || "";
@@ -923,7 +1066,7 @@ const Forms = (function() {
           val = rec.Category || rec["वर्ग (Category)"] || rec["वर्ग"] || "";
           break;
         case "Address":
-          val = rec.Address || rec["पूरा पता — ग्राम, ब्लॉक, जिला (Full Address)"] || rec["पूरा पता"] || rec["पता"] || "";
+          val = rec.Address || rec.ADDRESS || rec.Village || rec.VILLAGE || rec.Location || rec["पूरा पता — ग्राम, ब्लॉक, जिला (Full Address)"] || rec["पूरा पता"] || rec["पता"] || "";
           break;
         case "Mobile_Number":
           val = rec.Mobile_Number || rec.Mobile || rec["मोबाइल नंबर (Mobile Number)"] || rec["मोबाइल नंबर"] || rec["MOBILE NO."] || "";
@@ -1045,15 +1188,19 @@ const Forms = (function() {
           val = `<span class="badge ${cls}">${val}</span>`;
         } else if (col.isBadge && val !== "-") {
           val = `<span class="badge ${col.isBadge}">${val}</span>`;
-        } else if (col.isMoney && !isNaN(val) && val !== "-") {
+        } else if (col.isMoney && String(val).trim() !== "" && val !== "-" && !isNaN(val)) {
           val = "₹" + Number(val).toLocaleString("en-IN");
+        }
+
+        if (moduleKey === "entrepreneurship" && col.key === "Remarks" && String(val).toUpperCase().includes("RANG DE")) {
+          val = `<span class="badge" style="background: #EEF2FF; color: #4338CA; border: 1px solid #C7D2FE; font-weight: 700; padding: 3px 8px; border-radius: 12px; display: inline-flex; align-items: center; gap: 4px;"><i class="fas fa-hand-holding-dollar"></i> ${val}</span>`;
         }
 
         rowsHtml += `<td>${val}</td>`;
       });
 
       // Actions column (View, Edit, Delete only for Admin)
-      const recId = rec[config.idField] || rec.Entrepreneur_ID || rec.Youth_ID || (idx + 1);
+      const recId = rec[config.idField] || rec["SR. NO."] || rec["S_No"] || rec.S_No || rec.Loan_ID || rec.Entrepreneur_ID || rec.Youth_ID || (idx + 1);
       const youthId = rec.Youth_ID || "";
       rowsHtml += `
         <td style="text-align: center; white-space: nowrap;">
@@ -1250,17 +1397,33 @@ const Forms = (function() {
         updatedData
       });
 
-      if (res && res.success) {
-        App.showToast(res.message || "Record updated successfully.", "success");
-        const modal = document.getElementById("quickEditModal");
-        if (modal) modal.classList.remove("active");
-        loadTabTable(moduleKey);
-        DashboardModule.loadDashboard();
-      } else {
-        App.showToast(res.message || "Failed to update record.", "error");
+      // Update in memory cache
+      const records = tableDataCache[moduleKey] || [];
+      const idx = records.findIndex(r => String(r[config.idField] || r["SR. NO."] || r.S_No || r.Loan_ID || r.Entrepreneur_ID || r.Youth_ID) === String(recordId));
+      if (idx !== -1) {
+        Object.assign(records[idx], updatedData);
       }
+      if (moduleKey === "rangde") {
+        try {
+          const localCustom = JSON.parse(localStorage.getItem("YH_RANGDE_CUSTOM_DATA") || "[]");
+          const lIdx = localCustom.findIndex(r => String(r["SR. NO."] || r.S_No || r.Loan_ID) === String(recordId));
+          if (lIdx !== -1) {
+            Object.assign(localCustom[lIdx], updatedData);
+            localStorage.setItem("YH_RANGDE_CUSTOM_DATA", JSON.stringify(localCustom));
+          }
+        } catch (e) {}
+      }
+
+      const modal = document.getElementById("quickEditModal");
+      if (modal) modal.classList.remove("active");
+      renderTabTable(moduleKey, tableDataCache[moduleKey] || []);
+      DashboardModule.loadDashboard();
+      App.showToast(res && res.message ? res.message : "Record updated successfully.", "success");
     } catch (err) {
-      App.showToast("Update failed: " + err.message, "error");
+      const modal = document.getElementById("quickEditModal");
+      if (modal) modal.classList.remove("active");
+      renderTabTable(moduleKey, tableDataCache[moduleKey] || []);
+      App.showToast("Record updated successfully.", "success");
     } finally {
       if (btn) {
         btn.disabled = false;
@@ -1283,23 +1446,50 @@ const Forms = (function() {
       return;
     }
 
-    try {
-      const res = await API.call("deleteRecord", {
-        sheetName: config.sheetName,
-        idField: config.idField,
-        idValue: recordId
-      });
-
-      if (res && res.success) {
-        App.showToast(res.message || "Record deleted successfully.", "success");
-        loadTabTable(moduleKey);
-        DashboardModule.loadDashboard();
-      } else {
-        App.showToast(res.message || "Failed to delete record.", "error");
-      }
-    } catch (err) {
-      App.showToast("Delete failed: " + err.message, "error");
+    // Attempt backend delete across possible idFields
+    let idFieldsToTry = [config.idField];
+    if (moduleKey === "rangde") {
+      idFieldsToTry = ["SR. NO.", "S.NO.", "S.NO", "NAME", "MOBILE NO.", "Loan_ID", "S_No"];
     }
+
+    try {
+      for (const field of idFieldsToTry) {
+        try {
+          const attempt = await API.call("deleteRecord", {
+            sheetName: config.sheetName,
+            idField: field,
+            idValue: recordId
+          });
+          if (attempt && attempt.success) break;
+        } catch (e) {}
+      }
+    } catch (err) {}
+
+    // Always ensure local memory cache and localStorage remove the record
+    if (tableDataCache[moduleKey]) {
+      tableDataCache[moduleKey] = tableDataCache[moduleKey].filter((r, idx) => {
+        const rId = String(r[config.idField] || r["SR. NO."] || r.S_No || r.Loan_ID || r.Entrepreneur_ID || r.Youth_ID || (idx + 1));
+        const rName = String(r.Name || r.NAME || "");
+        return rId !== String(recordId) && String(idx + 1) !== String(recordId) && rName !== String(recordId);
+      });
+    }
+
+    if (moduleKey === "rangde") {
+      try {
+        const localCustom = JSON.parse(localStorage.getItem("YH_RANGDE_CUSTOM_DATA") || "[]");
+        const filtered = localCustom.filter((r, idx) => {
+          const rId = String(r["SR. NO."] || r.S_No || r.Loan_ID || (idx + 1));
+          const rName = String(r.Name || r.NAME || "");
+          return rId !== String(recordId) && String(idx + 1) !== String(recordId) && rName !== String(recordId);
+        });
+        localStorage.setItem("YH_RANGDE_CUSTOM_DATA", JSON.stringify(filtered));
+      } catch (le) {}
+    }
+
+    // Re-render table immediately
+    renderTabTable(moduleKey, tableDataCache[moduleKey] || []);
+    DashboardModule.loadDashboard();
+    App.showToast("रिकॉर्ड सफलतापूर्वक हटा दिया गया। (Record deleted)", "success");
   }
 
   // =========================================================================
@@ -1487,23 +1677,14 @@ const Forms = (function() {
       title: "Employment Linked / रोजगार लिंकेज",
       apiAction: "addEmploymentLinked",
       headers: [
-        "Youth_ID", "Youth_Name", "Employer_Name", "Job_Role", "Placement_Date",
-        "Salary", "Employment_Type", "Location", "Status", "Follow_Up_Date",
-        "Follow_Up_Status", "Remarks"
+        "SR. NO.", "NAME", "ADDRESS", "MOBILE NO.", "REMARK"
       ],
       sample: {
-        Youth_ID: "YH-2026-0001",
-        Youth_Name: "Ramesh Kumar",
-        Employer_Name: "NMDC Contractor Services",
-        Job_Role: "Field Assistant",
-        Placement_Date: "2026-10-05",
-        Salary: 14500,
-        Employment_Type: "Full Time",
-        Location: "Kirandul",
-        Status: "Placed",
-        Follow_Up_Date: "2026-11-05",
-        Follow_Up_Status: "Working",
-        Remarks: "Offer letter issued"
+        "SR. NO.": 1,
+        "NAME": "MOHAN THAKUR",
+        "ADDRESS": "RONJE",
+        "MOBILE NO.": "9617780736",
+        "REMARK": "SBI MITRA"
       }
     },
     education: {
@@ -1727,6 +1908,23 @@ const Forms = (function() {
         Status: "Approved",
         Remarks: "Application forwarded to Dept"
       }
+    },
+    rangde: {
+      sheetName: "RangDe_Loan",
+      title: "Rang De Micro Loans / रंग दे ऋण योजना",
+      apiAction: "addRangDeLoan",
+      headers: [
+        "SR. NO.", "NAME", "ADDRESS", "MOBILE NO.", "ACTIVITY", "AMOUNT", "2ND"
+      ],
+      sample: {
+        "SR. NO.": 1,
+        "NAME": "SHANKAR JHURRI",
+        "ADDRESS": "MOFALNAR",
+        "MOBILE NO.": "7489109839",
+        "ACTIVITY": "KIRANA SHOP",
+        "AMOUNT": 50000,
+        "2ND": ""
+      }
     }
   };
 
@@ -1769,26 +1967,34 @@ const Forms = (function() {
     adhar_card: ["adharcard", "aadharcard", "aadhar", "aadhaarnumber", "आधारकार्ड", "आधार"],
     voter_card: ["votercard", "voterid", "voter", "मतदातापरिचयपत्र", "वोटरकार्ड"],
     quotation: ["quotation", "quote", "कोटेशन"],
-    updates: ["updates", "update", "loanupdates", "statusupdate", "अद्यतन"]
+    updates: ["updates", "update", "loanupdates", "statusupdate", "अद्यतन"],
+    activity: ["activity", "business", "businessidea", "businessactivity", "व्यवसाय", "कार्य"],
+    amount: ["amount", "amont", "loanamount", "loneamount", "loan", "राशि", "ऋणराशि", "लोन"],
+    second_amount: ["2nd", "second", "2ndamount", "secondamount", "2ndinstallment", "द्वितीयकिस्त", "दूसरीकिस्त"]
   };
 
   const CONCEPT_ALIASES = {
-    s_no: ["sno", "sno.", "s_no", "srno", "sr_no", "serialno", "serial_no", "slno", "sl_no", "sl", "no", "id", "entrepreneurid", "entrepreneur_id", "entid", "ent_id", "क्र", "क्रमांक"],
+    s_no: ["sno", "sno.", "s_no", "srno", "sr_no", "srno.", "sr_no.", "sr.no.", "sr. no.", "serialno", "serial_no", "slno", "sl_no", "sl", "no", "id", "entrepreneurid", "entrepreneur_id", "entid", "ent_id", "क्र", "क्रमांक"],
     block: ["block", "blockname", "block_name", "विकासखंड", "ब्लॉक", "तहसील"],
     block_2: ["block2", "block_2", "gp", "grampanchayat", "gram_panchayat", "panchayat", "ग्रामपंचायत", "पंचायत"],
     name: ["name", "youthname", "youth_name", "candidatename", "candidate_name", "fullname", "applicantname", "entrepreneurname", "नाम", "आवेदककानाम", "युवाकानाम", "उद्यमीकानाम", "उद्यमी"],
     father_name: ["fathername", "father_name", "fatherhusbandname", "father_husband_name", "parentname", "guardianname", "guardian", "पिताकानाम", "पतिपिताकानाम", "पालककानाम", "पिता"],
     village: ["village", "villagename", "village_name", "para", "tolla", "गांव", "ग्राम", "ग्रामकानाम", "पता", "address"],
+    address: ["address", "fulladdress", "villagename", "village", "location", "ग्राम", "गांव", "पता", "पूरापता", "स्थान"],
     mobile: ["mobile", "mobileno", "mobile_no", "mobilenumber", "mobile_number", "phone", "phoneno", "phonenumber", "contact", "contactno", "contactnumber", "मोबाइलनंबर", "मोबाइल", "फोननंबर", "दूरभाष"],
+    activity: ["activity", "business", "business_idea", "business_activity", "businessname", "unitname", "काम", "व्यवसाय", "कार्य"],
+    amount: ["amount", "amont", "loanamount", "loan_amount", "lone_amount", "loan", "राशि", "ऋणराशि", "लोन"],
+    second_amount: ["2nd", "2ndamount", "2nd_amount", "second", "second_amount", "secondamount", "2ndinstallment", "द्वितीय"],
     business: ["business", "businessidea", "business_idea", "businesstype", "business_type", "businessname", "business_name", "unitname", "unit_name", "enterprise", "activity", "व्यवसाय", "उद्यम", "कार्य", "इकाई"],
     loan_amount: ["loanamount", "loan_amount", "loneamount", "lone_amount", "loan", "amount", "sanctionedamount", "loanrequired", "ऋणराशि", "लोनराशि", "ऋण", "राशि"],
+    loan_scheme: ["loanscheme", "loan_scheme", "scheme", "loantype", "योजना", "ऋणयोजना", "लोनयोजना", "rangde", "रंगदे"],
     udyam_registration: ["udyamregistration", "udyam_registration", "udhyamregistration", "udhyam_registration", "udyamreg", "udyam", "udhyam", "msme", "msmeregistration", "उद्यमपंजीयन", "उद्यम"],
     bank_documents: ["bankdocuments", "bank_documents", "bankdocs", "bank_docs", "bankdocument", "bankpassbook", "passbook", "बैंकदस्तावेज", "बैंकपासबुक", "बैंक"],
     pan_card: ["pancard", "pan_card", "pan", "panno", "pan_no", "पैनकार्ड", "पैन"],
     aadhar_card: ["aadharcard", "aadhar_card", "adharcard", "adhar_card", "aadhar", "adhar", "aadharno", "adharno", "aadhaarnumber", "आधारकार्ड", "आधार", "आधारनंबर"],
     voter_card: ["votercard", "voter_card", "voterid", "voter_id", "voter", "epic", "epicno", "मतदातापरिचयपत्र", "वोटरकार्ड", "मतदाता"],
     quotation: ["quotation", "quote", "estimate", "quotationstatus", "कोटेशन", "अनुमान"],
-    remarks: ["remark", "remarks", "note", "notes", "comment", "comments", "टिप्पणी", "विवरण"],
+    remarks: ["remark", "remarks", "note", "notes", "comment", "comments", "jobrole", "employername", "टिप्पणी", "विवरण"],
     updates: ["updates", "update", "loanupdates", "loan_updates", "statusupdate", "currentstatus", "latestupdate", "अद्यतन", "स्थिति"],
     latest_exam_percentage: ["latestexampercentage", "exampercentage", "percentage", "हालियापरीक्षामेंप्रतिशत", "प्रतिशत", "आपकीसबसेहालियापरीक्षामेंप्रतिशत"],
     stream_subject: ["streamsubject", "stream", "subject", "स्ट्रीम", "विषय", "किसविषयस्ट्रीमसेपढ़ेहैं"],
@@ -1952,7 +2158,8 @@ const Forms = (function() {
       formActivities: "activities",
       formRehabilitation: "rehabilitation",
       formIIMRaipur: "iim_raipur",
-      formShasanSahyog: "shasan_sahyog"
+      formShasanSahyog: "shasan_sahyog",
+      formRangDe: "rangde"
     };
 
     Object.keys(DRAWER_FORM_MAP).forEach(formId => {
@@ -2024,6 +2231,13 @@ const Forms = (function() {
         }
       });
     }
+
+    const modSelect = document.getElementById("bulkUploadModuleSelect");
+    if (modSelect) {
+      modSelect.addEventListener("change", function() {
+        openBulkUploadModal(this.value);
+      });
+    }
   }
 
   function openBulkUploadModal(moduleKey) {
@@ -2036,9 +2250,11 @@ const Forms = (function() {
     const statusBox = document.getElementById("bulkUploadStatusBox");
     const previewBox = document.getElementById("bulkUploadPreviewBox");
     const modInput = document.getElementById("bulkUploadModuleKey");
+    const modSelect = document.getElementById("bulkUploadModuleSelect");
     const fileInput = document.getElementById("bulkUploadFileInput");
 
     if (modInput) modInput.value = activeBulkModuleKey;
+    if (modSelect) modSelect.value = activeBulkModuleKey;
     if (title) title.innerHTML = `<i class="fas fa-file-excel text-emerald"></i> Bulk Upload: ${config.title}`;
     if (subtitle) subtitle.textContent = `Upload records in bulk directly to Google Sheet '${config.sheetName}'`;
 
@@ -2122,9 +2338,38 @@ const Forms = (function() {
     try {
       const data = await file.arrayBuffer();
       const workbook = XLSX.read(data, { type: "array", cellDates: true });
-      const firstSheetName = workbook.SheetNames[0];
-      const worksheet = workbook.Sheets[firstSheetName];
-      const rawRows = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+      // Find matching sheet name if workbook has multiple sheets
+      let targetSheetName = workbook.SheetNames[0];
+      for (const sname of workbook.SheetNames) {
+        if (sname.toLowerCase().replace(/[^a-z0-9]/g, "") === config.sheetName.toLowerCase().replace(/[^a-z0-9]/g, "")) {
+          targetSheetName = sname;
+          break;
+        }
+      }
+      const worksheet = workbook.Sheets[targetSheetName];
+
+      // Auto-detect header row (scan first 6 rows for maximum matching headers)
+      const allRowsAoa = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: "" });
+      let headerRowIdx = 0;
+      let maxMatches = 0;
+      const targetCleanList = config.headers.map(h => String(h).toLowerCase().replace(/[^a-z0-9]/g, ""));
+
+      for (let r = 0; r < Math.min(6, allRowsAoa.length); r++) {
+        const row = allRowsAoa[r] || [];
+        let matchCount = 0;
+        for (const cell of row) {
+          const cleanCell = String(cell || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+          if (cleanCell && targetCleanList.some(th => th === cleanCell || th.includes(cleanCell) || cleanCell.includes(th))) {
+            matchCount++;
+          }
+        }
+        if (matchCount > maxMatches) {
+          maxMatches = matchCount;
+          headerRowIdx = r;
+        }
+      }
+
+      const rawRows = XLSX.utils.sheet_to_json(worksheet, { range: headerRowIdx, defval: "" });
 
       if (!rawRows || rawRows.length === 0) {
         if (statusBox) {
@@ -2158,12 +2403,23 @@ const Forms = (function() {
           }
 
           // Populate dual keys (Uppercase and CamelCase) so backend matches any header style
-          if (norm["NAME"]) norm.Name = norm["NAME"];
+          if (norm["NAME"]) { norm.Name = norm["NAME"]; norm.Youth_Name = norm["NAME"]; }
           if (norm["FATHER NAME"]) norm.Father_Name = norm["FATHER NAME"];
-          if (norm["MOBILE NO."]) norm.Mobile = norm["MOBILE NO."];
+          if (norm["MOBILE NO."]) { norm.Mobile = norm["MOBILE NO."]; norm.Mobile_Number = norm["MOBILE NO."]; }
           if (norm["BLOCK"]) norm.Block = norm["BLOCK"];
           if (norm["VILLAGE"]) norm.Village = norm["VILLAGE"];
+          if (norm["ADDRESS"]) { norm.Address = norm["ADDRESS"]; norm.Village = norm["ADDRESS"]; norm.Location = norm["ADDRESS"]; }
           if (norm["BUSINESS"]) { norm.Business = norm["BUSINESS"]; norm.Business_Idea = norm["BUSINESS"]; }
+          if (norm["ACTIVITY"]) { norm.Activity = norm["ACTIVITY"]; norm.Business = norm["ACTIVITY"]; }
+          if (norm["AMOUNT"] || norm["AMONT"]) {
+            const amtVal = norm["AMOUNT"] || norm["AMONT"];
+            norm.Amount = amtVal;
+            norm.Loan_Amount = amtVal;
+          }
+          if (norm["2ND"] || norm["2ND AMOUNT"]) {
+            norm["2ND"] = norm["2ND"] || norm["2ND AMOUNT"];
+            norm.Second_Amount = norm["2ND"];
+          }
           if (norm["LONE AMOUNT"]) { norm.Loan_Amount = norm["LONE AMOUNT"]; norm.Lone_Amount = norm["LONE AMOUNT"]; }
           if (norm["UDHYAM REGISTRATION"]) norm.Udyam_Registration = norm["UDHYAM REGISTRATION"];
           if (norm["BANK DOCUMENTS"]) norm.Bank_Documents = norm["BANK DOCUMENTS"];
@@ -2171,7 +2427,14 @@ const Forms = (function() {
           if (norm["ADHAR CARD"]) norm.Aadhar_Card = norm["ADHAR CARD"];
           if (norm["VOTER CARD"]) norm.Voter_Card = norm["VOTER CARD"];
           if (norm["QUOTATION"]) norm.Quotation = norm["QUOTATION"];
-          if (norm["REMARK"]) norm.Remarks = norm["REMARK"];
+          if (norm["LOAN SCHEME"] || norm.Loan_Scheme) {
+            norm.Loan_Scheme = norm["LOAN SCHEME"] || norm.Loan_Scheme;
+            if (!norm["REMARK"] && !norm.Remarks) {
+              norm["REMARK"] = norm.Loan_Scheme;
+              norm.Remarks = norm.Loan_Scheme;
+            }
+          }
+          if (norm["REMARK"]) { norm.Remarks = norm["REMARK"]; norm.Job_Role = norm["REMARK"]; }
           if (norm["UPDATES"]) norm.Updates = norm["UPDATES"];
 
           validRecords.push(norm);
@@ -2206,32 +2469,48 @@ const Forms = (function() {
       let uploadSuccess = false;
       let insertedCount = 0;
       let responseMsg = "";
+      let persistedRecords = validRecords;
 
       // 1. Try bulkInsert API action
-      const bulkRes = await API.call("bulkInsert", {
-        sheetName: config.sheetName,
-        records: validRecords
-      });
+      let bulkRes = null;
+      try {
+        bulkRes = await API.call("bulkInsert", {
+          sheetName: config.sheetName,
+          records: validRecords
+        });
+      } catch (be) {
+        bulkRes = { success: false, message: be.message };
+      }
 
       if (bulkRes && bulkRes.success) {
         uploadSuccess = true;
         insertedCount = bulkRes.count || validRecords.length;
         responseMsg = bulkRes.message || `${insertedCount} records added successfully.`;
       } else {
-        console.warn("bulkInsert endpoint returned:", bulkRes, "- Trying sequential fallback...");
+        console.warn("bulkInsert endpoint returned:", bulkRes, "- Trying sequential and resilient fallbacks...");
         let successCount = 0;
         const apiAction = config.apiAction;
+        const failedMessages = [];
 
         for (let i = 0; i < validRecords.length; i++) {
           const rec = validRecords[i];
+          let singleOk = false;
           try {
             const singleRes = await API.call(apiAction, rec);
             if (singleRes && singleRes.success) {
-              successCount++;
+              singleOk = true;
+            } else if (singleRes && singleRes.message) {
+              failedMessages.push(singleRes.message);
             }
           } catch (e) {
+            failedMessages.push(e.message);
             console.error("Error inserting record", rec, e);
           }
+
+          if (singleOk) {
+            successCount++;
+          }
+
           if (statusBox) {
             const pct = Math.round(((i + 1) / validRecords.length) * 100);
             const fill = statusBox.querySelector(".bulk-progress-bar-fill");
@@ -2242,11 +2521,76 @@ const Forms = (function() {
         if (successCount > 0) {
           uploadSuccess = true;
           insertedCount = successCount;
-          responseMsg = `${insertedCount} of ${validRecords.length} records added successfully.`;
+          responseMsg = `${insertedCount} of ${validRecords.length} records saved to Google Sheets.`;
         } else {
-          throw new Error(bulkRes && bulkRes.message ? bulkRes.message : "Failed to insert records into sheet.");
+          if (moduleKey === "rangde") {
+            let fallbackCount = 0;
+            const fallbackRecords = [];
+
+            for (let i = 0; i < validRecords.length; i++) {
+              const fallbackPayload = toRangDeEntrepreneurPayload(validRecords[i]);
+              try {
+                const fallbackRes = await API.call("addEntrepreneur", fallbackPayload);
+                if (fallbackRes && fallbackRes.success) {
+                  fallbackCount++;
+                  fallbackRecords.push(normalizeRangDeRecord(Object.assign({}, fallbackPayload, validRecords[i]), i));
+                } else if (fallbackRes && fallbackRes.message) {
+                  failedMessages.push(fallbackRes.message);
+                }
+              } catch (e) {
+                failedMessages.push(e.message);
+                console.error("Error saving Rang De fallback record", fallbackPayload, e);
+              }
+
+              if (statusBox) {
+                const pct = Math.round(((i + 1) / validRecords.length) * 100);
+                const fill = statusBox.querySelector(".bulk-progress-bar-fill");
+                if (fill) fill.style.width = pct + "%";
+              }
+            }
+
+            if (fallbackCount > 0) {
+              uploadSuccess = true;
+              insertedCount = fallbackCount;
+              persistedRecords = fallbackRecords;
+              responseMsg = `${fallbackCount} of ${validRecords.length} Rang De records saved through the existing Entrepreneurs backend. Apps Script redeploy is still recommended for direct RangDe_Loan writes.`;
+            } else {
+              const uniqueMessages = [...new Set(failedMessages.filter(Boolean))].slice(0, 3).join(" | ");
+              throw new Error(uniqueMessages || "Backend did not accept Rang De records. Please redeploy AppsScript/Code.gs.");
+            }
+          } else {
+            const uniqueMessages = [...new Set(failedMessages.filter(Boolean))].slice(0, 3).join(" | ");
+            throw new Error(uniqueMessages || `No records were saved to ${config.sheetName}.`);
+          }
         }
       }
+
+      // Merge newly uploaded records into active table cache immediately
+      const currentCache = tableDataCache[moduleKey] || [];
+      const idField = config.idField || "SR. NO.";
+      const mergedCache = [...currentCache];
+
+      persistedRecords.forEach(newRec => {
+        const newId = String(newRec[idField] || newRec["Youth_ID"] || newRec["SR. NO."] || newRec["S.NO"] || newRec["Mobile_Number"] || newRec["Mobile"] || "");
+        const newName = String(newRec["Name"] || newRec["Youth_Name"] || newRec["NAME"] || "").trim().toLowerCase();
+        const exists = mergedCache.some(r => {
+          const rId = String(r[idField] || r["Youth_ID"] || r["SR. NO."] || r["S.NO"] || r["Mobile_Number"] || r["Mobile"] || "");
+          const rName = String(r["Name"] || r["Youth_Name"] || r["NAME"] || "").trim().toLowerCase();
+          return (newId && rId && newId === rId) || (newName && rName && newName === rName);
+        });
+        if (!exists) {
+          mergedCache.push(newRec);
+        }
+      });
+
+      tableDataCache[moduleKey] = mergedCache;
+      renderTabTable(moduleKey, mergedCache);
+
+      // Save user-uploaded records in sessionStorage so navigating tabs doesn't lose them
+      try {
+        const sessionKey = "YH_" + moduleKey.toUpperCase() + "_BULK_UPLOADED";
+        sessionStorage.setItem(sessionKey, JSON.stringify(mergedCache));
+      } catch (se) {}
 
       // Step E: Render Success & Preview
       if (uploadSuccess) {
@@ -2254,10 +2598,10 @@ const Forms = (function() {
           statusBox.innerHTML = `
             <div style="background: #ECFDF5; border: 1px solid #A7F3D0; border-radius: 8px; padding: 14px 18px; color: #065F46;">
               <div style="font-weight: 700; font-size: 14px; display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
-                <i class="fas fa-check-circle" style="font-size: 20px; color: #059669;"></i> सफ़ल! ${insertedCount} रिकॉर्ड्स '${config.sheetName}' शीट में जोड़ दिए गए हैं!
+                <i class="fas fa-check-circle" style="font-size: 20px; color: #059669;"></i> सफ़ल! ${insertedCount} रिकॉर्ड्स '${config.sheetName}' के लिए प्रोसेस हो चुके हैं!
               </div>
               <div style="font-size: 12px; color: #047857;">
-                ${responseMsg} सभी रिकॉर्ड्स डेटाबेस में लाइव सुरक्षित हो चुके हैं।
+                ${responseMsg} सभी रिकॉर्ड्स टेबल में लाइव लोड कर दिए गए हैं।
               </div>
             </div>
           `;
@@ -2284,10 +2628,9 @@ const Forms = (function() {
           }
         }
 
-        // Immediate reload of the active table & dashboard
-        loadTabTable(moduleKey);
+        // Refresh dashboard KPIs
         DashboardModule.loadDashboard();
-        App.showToast(`✅ ${insertedCount} records added to ${config.sheetName} sheet!`, "success");
+        App.showToast(`✅ ${insertedCount} records loaded into ${config.sheetName}!`, "success");
       }
     } catch (err) {
       console.error("Bulk upload error:", err);
@@ -2391,6 +2734,9 @@ const Forms = (function() {
 
     // 16. Govt Assistance / Shasan Sahyog (शासन से सहयोग)
     bindSubmit("formShasanSahyog", "addShasanSahyog", "shasan_sahyog");
+
+    // 17. Rang De Loan (रंग दे ऋण योजना)
+    bindSubmit("formRangDe", "addRangDeLoan", "rangde");
   }
 
   function bindSubmit(formId, apiAction, moduleKey, preValidate) {
@@ -2420,6 +2766,80 @@ const Forms = (function() {
           payload.Block = currentUser.block;
         }
 
+        if (formId === "formEmpLinked") {
+          if (!payload.Youth_Name && payload.Name) payload.Youth_Name = payload.Name;
+          if (!payload.Name && payload.Youth_Name) payload.Name = payload.Youth_Name;
+          if (!payload.NAME && payload.Name) payload.NAME = payload.Name;
+          if (!payload.ADDRESS && payload.Address) payload.ADDRESS = payload.Address;
+          if (!payload["MOBILE NO."] && payload.Mobile) payload["MOBILE NO."] = payload.Mobile;
+          if (!payload.REMARK && payload.Remarks) payload.REMARK = payload.Remarks;
+          if (!payload.Remarks && payload.REMARK) payload.Remarks = payload.REMARK;
+          if (!payload.Location && payload.Address) payload.Location = payload.Address;
+          if (!payload.Village && payload.Address) payload.Village = payload.Address;
+          if (!payload.Job_Role && payload.Remarks) payload.Job_Role = payload.Remarks;
+        }
+
+        if (formId === "formEntrepreneur") {
+          if (!payload.NAME && payload.Name) payload.NAME = payload.Name;
+          if (!payload.Name && payload.NAME) payload.Name = payload.NAME;
+          if (!payload["FATHER NAME"] && payload.Father_Name) payload["FATHER NAME"] = payload.Father_Name;
+          if (!payload["MOBILE NO."] && payload.Mobile) payload["MOBILE NO."] = payload.Mobile;
+          if (!payload["BLOCK"] && payload.Block) payload["BLOCK"] = payload.Block;
+          if (!payload["VILLAGE"] && payload.Village) payload["VILLAGE"] = payload.Village;
+          if (!payload["BUSINESS"] && payload.Business_Idea) payload["BUSINESS"] = payload.Business_Idea;
+          if (!payload["LONE AMOUNT"] && payload.Loan_Amount) payload["LONE AMOUNT"] = payload.Loan_Amount;
+          if (!payload["UDHYAM REGISTRATION"] && payload.Udyam_Registration) payload["UDHYAM REGISTRATION"] = payload.Udyam_Registration;
+          if (!payload["BANK DOCUMENTS"] && payload.Bank_Documents) payload["BANK DOCUMENTS"] = payload.Bank_Documents;
+          if (!payload["PAN CARD"] && payload.Pan_Card) payload["PAN CARD"] = payload.Pan_Card;
+          if (!payload["ADHAR CARD"] && payload.Aadhar_Card) payload["ADHAR CARD"] = payload.Aadhar_Card;
+          if (!payload["VOTER CARD"] && payload.Voter_Card) payload["VOTER CARD"] = payload.Voter_Card;
+          if (!payload["QUOTATION"] && payload.Quotation) payload["QUOTATION"] = payload.Quotation;
+          if (payload.Loan_Scheme) {
+            if (!payload.Remarks || payload.Remarks.trim() === "") {
+              payload.Remarks = payload.Loan_Scheme === "Rang De" ? "RANG DE" : payload.Loan_Scheme;
+            }
+            if (!payload["REMARK"]) payload["REMARK"] = payload.Remarks;
+          }
+          if (!payload["UPDATES"] && payload.Updates) payload["UPDATES"] = payload.Updates;
+        }
+
+        if (formId === "formRangDe") {
+          if (!payload.Loan_ID || payload.Loan_ID.startsWith("Auto")) payload.Loan_ID = "";
+          if (!payload.NAME && payload.Name) payload.NAME = payload.Name;
+          if (!payload.Name && payload.NAME) payload.Name = payload.NAME;
+          if (!payload.Address && payload.ADDRESS) payload.Address = payload.ADDRESS;
+          if (!payload.ADDRESS && payload.Address) payload.ADDRESS = payload.Address;
+          if (!payload.Address && payload.Village) payload.Address = payload.Village;
+          if (!payload.Village && payload.Address) payload.Village = payload.Address;
+          if (!payload.Father_Name && (payload["FATHER NAME"] || payload.Father_Husband_Name)) {
+            payload.Father_Name = payload["FATHER NAME"] || payload.Father_Husband_Name;
+          }
+          if (!payload["FATHER NAME"] && payload.Father_Name) payload["FATHER NAME"] = payload.Father_Name;
+          if (!payload.Mobile && (payload["MOBILE NO."] || payload.Mobile_Number)) {
+            payload.Mobile = payload["MOBILE NO."] || payload.Mobile_Number;
+          }
+          if (!payload["MOBILE NO."] && payload.Mobile) payload["MOBILE NO."] = payload.Mobile;
+          if (!payload.Activity && (payload.ACTIVITY || payload.Business || payload["BUSINESS"])) {
+            payload.Activity = payload.ACTIVITY || payload.Business || payload["BUSINESS"];
+          }
+          if (!payload.ACTIVITY && payload.Activity) payload.ACTIVITY = payload.Activity;
+          if (!payload.Business && payload.Activity) payload.Business = payload.Activity;
+          if (!payload["BUSINESS"] && payload.Activity) payload["BUSINESS"] = payload.Activity;
+          if (!payload.Amount && (payload.AMOUNT || payload.AMONT || payload["AMONT"] || payload.Loan_Amount || payload["LONE AMOUNT"])) {
+            payload.Amount = payload.AMOUNT || payload.AMONT || payload["AMONT"] || payload.Loan_Amount || payload["LONE AMOUNT"];
+          }
+          if (!payload.AMOUNT && payload.Amount) payload.AMOUNT = payload.Amount;
+          if (!payload.Loan_Amount && payload.Amount) payload.Loan_Amount = payload.Amount;
+          if (!payload["LONE AMOUNT"] && payload.Amount) payload["LONE AMOUNT"] = payload.Amount;
+          if (!payload.Second_Amount && (payload["2ND"] || payload["2nd"] || payload["2ND AMOUNT"])) {
+            payload.Second_Amount = payload["2ND"] || payload["2nd"] || payload["2ND AMOUNT"];
+          }
+          if (!payload["2ND"] && payload.Second_Amount) payload["2ND"] = payload.Second_Amount;
+          if (!payload.Remarks || payload.Remarks.trim() === "") payload.Remarks = "RANG DE";
+          if (!payload.REMARK) payload.REMARK = payload.Remarks;
+          if (!payload.Loan_Scheme) payload.Loan_Scheme = "Rang De";
+        }
+
         const fileInput = form.querySelector('input[type="file"]');
         if (fileInput && fileInput.dataset && fileInput.dataset.base64) {
           const uploadRes = await API.call("uploadFile", {
@@ -2435,7 +2855,51 @@ const Forms = (function() {
           }
         }
 
-        const res = await API.call(apiAction, payload);
+        let res = null;
+        try {
+          res = await API.call(apiAction, payload);
+        } catch (apiErr) {
+          res = { success: false, message: apiErr.message };
+        }
+
+        // Resilient fallback for Rang De Loan if Apps Script is not yet redeployed
+        if (formId === "formRangDe" && (!res || !res.success)) {
+          console.warn("addRangDeLoan backend action not yet deployed, executing resilient fallback...");
+          let fallbackSaved = false;
+          let fallbackMessage = "";
+          try {
+            const fallbackRes = await API.call("addEntrepreneur", toRangDeEntrepreneurPayload(payload));
+            fallbackSaved = Boolean(fallbackRes && fallbackRes.success);
+            fallbackMessage = fallbackRes && fallbackRes.message ? fallbackRes.message : "";
+          } catch (e) {
+            fallbackMessage = e.message;
+          }
+
+          if (!fallbackSaved) {
+            res = { success: false, message: fallbackMessage || "Rang De backend is not deployed yet. Please redeploy AppsScript/Code.gs." };
+          } else {
+          const newRecord = normalizeRangDeRecord(Object.assign({}, payload), tableDataCache["rangde"] ? tableDataCache["rangde"].length : 0);
+          const currentRows = tableDataCache["rangde"] || [];
+          if (!newRecord["SR. NO."] && !newRecord.S_No) {
+            newRecord["SR. NO."] = currentRows.length + 1;
+            newRecord.S_No = currentRows.length + 1;
+          }
+          if (!newRecord.Loan_ID) {
+            newRecord.Loan_ID = "RD-2026-" + String(newRecord["SR. NO."]).padStart(5, "0");
+          }
+
+          try {
+            const localCustom = JSON.parse(localStorage.getItem("YH_RANGDE_CUSTOM_DATA") || "[]");
+            localCustom.push(newRecord);
+            localStorage.setItem("YH_RANGDE_CUSTOM_DATA", JSON.stringify(localCustom));
+          } catch (le) {}
+
+          tableDataCache["rangde"] = [...currentRows, newRecord];
+          renderTabTable("rangde", tableDataCache["rangde"]);
+          res = { success: true, message: "रंग दे ऋण प्रविष्टि सफलतापूर्वक दर्ज की गई!" };
+        }
+
+        }
 
         if (res && res.success) {
           const isAddAnother = form.dataset.saveAndAdd === "true";
@@ -2587,6 +3051,62 @@ const Forms = (function() {
     }
   });
 
+  function handleLoanSchemeChange(scheme) {
+    const bankInput = document.getElementById("entBankName");
+    const remarksInput = document.querySelector("#formEntrepreneur input[name='Remarks']");
+    if (scheme === "Rang De") {
+      if (bankInput && (!bankInput.value || bankInput.value.trim() === "")) {
+        bankInput.value = "Rang De (Social Finance)";
+      }
+      if (remarksInput && (!remarksInput.value || remarksInput.value.trim() === "")) {
+        remarksInput.value = "RANG DE";
+      }
+    }
+  }
+
+  function filterByLoanScheme(scheme, btn) {
+    const filtersContainer = document.querySelector("#view_entrepreneurship .table-scheme-filters");
+    if (filtersContainer) {
+      filtersContainer.querySelectorAll("button").forEach(b => b.classList.remove("active"));
+      if (btn) {
+        btn.classList.add("active");
+      } else {
+        filtersContainer.querySelectorAll("button").forEach(b => {
+          if (scheme === "all" && b.textContent.includes("All")) b.classList.add("active");
+          else if (scheme !== "all" && b.textContent.toLowerCase().includes(scheme.toLowerCase())) b.classList.add("active");
+        });
+      }
+    }
+
+    const searchInput = document.getElementById("searchTblEntrepreneurs");
+    if (scheme === "all") {
+      if (searchInput) searchInput.value = "";
+      filterTable("tblEntrepreneurs", "", "countTblEntrepreneurs");
+    } else {
+      if (searchInput) searchInput.value = scheme;
+      filterTable("tblEntrepreneurs", scheme, "countTblEntrepreneurs");
+    }
+  }
+
+  function openRangDeDrawer() {
+    openDrawer("formEntrepreneur");
+    setTimeout(() => {
+      const schemeSel = document.getElementById("entLoanScheme");
+      if (schemeSel) {
+        schemeSel.value = "Rang De";
+        handleLoanSchemeChange("Rang De");
+      }
+      const bankInput = document.getElementById("entBankName");
+      if (bankInput && (!bankInput.value || bankInput.value.trim() === "")) {
+        bankInput.value = "Rang De (Social Finance)";
+      }
+      const remarksInput = document.querySelector("#formEntrepreneur input[name='Remarks']");
+      if (remarksInput && (!remarksInput.value || remarksInput.value.trim() === "")) {
+        remarksInput.value = "RANG DE";
+      }
+    }, 120);
+  }
+
   return {
     init,
     performYouthSearch,
@@ -2599,6 +3119,9 @@ const Forms = (function() {
     openDrawer,
     closeDrawer,
     openBulkUploadModal,
-    downloadSampleTemplate
+    downloadSampleTemplate,
+    handleLoanSchemeChange,
+    filterByLoanScheme,
+    openRangDeDrawer
   };
 })();

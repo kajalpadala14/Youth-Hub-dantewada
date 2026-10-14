@@ -49,9 +49,7 @@ const SHEETS_SCHEMA = {
     "Qualification", "Preferred_Job", "Registration_Status", "Remarks"
   ],
   Employment_Linked: [
-    "Emp_Link_ID", "Youth_ID", "Youth_Name", "Employer_Name", "Job_Role",
-    "Placement_Date", "Salary", "Employment_Type", "Location", "Status",
-    "Follow_Up_Date", "Follow_Up_Status", "Remarks"
+    "SR. NO.", "NAME", "ADDRESS", "MOBILE NO.", "REMARK"
   ],
   Education: [
     "Education_ID", "Youth_ID", "Youth_Name", "Current_Qualification",
@@ -103,6 +101,13 @@ const SHEETS_SCHEMA = {
     "Demand_ID", "Name", "Father_Husband_Name", "DOB", "Address", "Village",
     "Block", "District", "Mobile_Number", "Assistance_Required", "Status", "Remarks"
   ],
+  RangDe_Loan: [
+    "SR. NO.", "NAME", "ADDRESS", "MOBILE NO.", "ACTIVITY", "AMOUNT", "2ND",
+    "Loan_ID", "Youth_ID", "Father_Name", "Block", "GP", "Village",
+    "Business", "Application_Date", "Loan_Status",
+    "Repayment_Status", "Tenure_Months", "Udyam_Registration", "Bank_Account",
+    "Updates", "Remarks"
+  ],
   Progress_Gallery: [
     "Gallery_ID", "Title", "Category", "Date", "Block", "Gram_Panchayat",
     "Participants", "Progress_Status", "Photo_URL", "Description", "Tags",
@@ -122,7 +127,7 @@ const ID_PREFIXES = {
   Counselling: { prefix: "COU-2026-", idField: "Counselling_ID" },
   Skill_Training: { prefix: "SKL-2026-", idField: "Training_Record_ID" },
   Employment_Registered: { prefix: "ER-2026-", idField: "Emp_Reg_ID" },
-  Employment_Linked: { prefix: "EL-2026-", idField: "Emp_Link_ID" },
+  Employment_Linked: { prefix: "", idField: "SR. NO." },
   Education: { prefix: "EDU-2026-", idField: "Education_ID" },
   Entrepreneurs: { prefix: "ENT-2026-", idField: "Entrepreneur_ID" },
   NavGurukul: { prefix: "NG-2026-", idField: "Candidate_ID" },
@@ -131,6 +136,7 @@ const ID_PREFIXES = {
   Rehabilitation: { prefix: "REH-2026-", idField: "Rehab_ID" },
   IIM_Raipur: { prefix: "IIM-2026-", idField: "IIM_ID" },
   Shasan_Sahyog: { prefix: "SS-2026-", idField: "Demand_ID" },
+  RangDe_Loan: { prefix: "", idField: "SR. NO." },
   Progress_Gallery: { prefix: "GAL-2026-", idField: "Gallery_ID" },
   Users: { prefix: "USR-", idField: "User_ID" }
 };
@@ -161,15 +167,16 @@ function setupDatabase() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
 
   Object.keys(SHEETS_SCHEMA).forEach(sheetName => {
-    let sheet = ss.getSheetByName(sheetName);
+    let sheet = findSheet(ss, sheetName);
     if (!sheet) {
       sheet = ss.insertSheet(sheetName);
     }
 
     const headers = SHEETS_SCHEMA[sheetName];
-    // Check if headers already exist
+    const { headerRowIndex, headers: existingHeaders } = detectHeaderRow(sheet);
     const existingLastCol = sheet.getLastColumn();
-    if (existingLastCol === 0 || sheet.getLastRow() === 0) {
+
+    if (existingLastCol === 0 || sheet.getLastRow() === 0 || existingHeaders.length === 0 || (existingHeaders.length === 1 && String(existingHeaders[0]).trim() === "")) {
       sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
       
       // Formatting header row
@@ -181,11 +188,13 @@ function setupDatabase() {
       sheet.setFrozenRows(1);
     } else {
       // Append any newly added columns if sheet already exists
-      const existingHeaders = sheet.getRange(1, 1, 1, existingLastCol).getValues()[0];
-      const missingHeaders = headers.filter(h => !existingHeaders.includes(h));
+      const missingHeaders = headers.filter(h => {
+        const cleanH = String(h).replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
+        return !existingHeaders.some(eh => String(eh).replace(/[^a-zA-Z0-9]/g, "").toLowerCase() === cleanH);
+      });
       if (missingHeaders.length > 0) {
-        sheet.getRange(1, existingLastCol + 1, 1, missingHeaders.length).setValues([missingHeaders]);
-        const newHeaderRange = sheet.getRange(1, existingLastCol + 1, 1, missingHeaders.length);
+        sheet.getRange(headerRowIndex, existingLastCol + 1, 1, missingHeaders.length).setValues([missingHeaders]);
+        const newHeaderRange = sheet.getRange(headerRowIndex, existingLastCol + 1, 1, missingHeaders.length);
         newHeaderRange.setBackground("#0B2545");
         newHeaderRange.setFontColor("#FFFFFF");
         newHeaderRange.setFontWeight("bold");
@@ -507,6 +516,7 @@ function handleAction(action, payload) {
     addRehabilitation: "Rehabilitation",
     addIIMRaipur: "IIM_Raipur",
     addShasanSahyog: "Shasan_Sahyog",
+    addRangDeLoan: "RangDe_Loan",
     addProgressGallery: "Progress_Gallery",
     addUser: "Users"
   };
@@ -602,8 +612,73 @@ function handleLogin(ss, payload) {
   return { success: false, message: "Invalid email or password." };
 }
 
+function findSheet(ss, sheetName) {
+  if (!ss) return null;
+  let sheet = ss.getSheetByName(sheetName);
+  if (sheet) return sheet;
+
+  const aliases = {
+    "RangDe_Loan": ["RangDe_Loan", "Rang De Loan", "Rang De", "RangDe", "Rang_De", "RangDeLoan", "रंग दे", "रंग दे ऋण", "रंगदे"],
+    "Youth_Master": ["Youth_Master", "Youth Master", "YouthMaster"],
+    "Entrepreneurs": ["Entrepreneurs", "Entrepreneur", "PMEGP"],
+    "Rehabilitation": ["Rehabilitation", "Rehab", "Rehabilitation Counselling", "Rehab Counselling"]
+  };
+
+  const list = aliases[sheetName] || [sheetName];
+  for (let i = 0; i < list.length; i++) {
+    sheet = ss.getSheetByName(list[i]);
+    if (sheet) return sheet;
+  }
+
+  // Case-insensitive / whitespace-free fallback
+  const cleanTarget = String(sheetName).replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
+  const allSheets = ss.getSheets();
+  for (let s = 0; s < allSheets.length; s++) {
+    const curSheet = allSheets[s];
+    const cleanName = curSheet.getName().replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
+    if (cleanName === cleanTarget) return curSheet;
+  }
+
+  // If searching for RangDe_Loan and a sheet has "rang" in name
+  if (cleanTarget.includes("rang")) {
+    for (let s = 0; s < allSheets.length; s++) {
+      if (allSheets[s].getName().toLowerCase().includes("rang")) return allSheets[s];
+    }
+  }
+
+  // If only 1 sheet exists in workbook, fallback to it
+  if (allSheets.length === 1) return allSheets[0];
+
+  return null;
+}
+
+function detectHeaderRow(sheet) {
+  const lastRow = sheet.getLastRow();
+  const lastCol = sheet.getLastColumn();
+  if (lastRow === 0 || lastCol === 0) return { headerRowIndex: 1, headers: [] };
+
+  const scanRows = Math.min(3, lastRow);
+  const rows = sheet.getRange(1, 1, scanRows, lastCol).getValues();
+
+  for (let r = 0; r < rows.length; r++) {
+    const nonEmpty = rows[r].filter(v => v !== null && String(v).trim().length > 0);
+    // If this row has at least 2 non-empty cells, it is the header row
+    if (nonEmpty.length >= 2) {
+      return {
+        headerRowIndex: r + 1, // 1-indexed row number
+        headers: rows[r].map(v => String(v || "").trim())
+      };
+    }
+  }
+
+  return {
+    headerRowIndex: 1,
+    headers: rows[0].map(v => String(v || "").trim())
+  };
+}
+
 function getSheetRecords(ss, sheetName) {
-  const sheet = ss.getSheetByName(sheetName);
+  const sheet = findSheet(ss, sheetName);
   if (!sheet) return { success: false, message: `Sheet '${sheetName}' does not exist.` };
 
   const lastRow = sheet.getLastRow();
@@ -612,20 +687,56 @@ function getSheetRecords(ss, sheetName) {
     return { success: true, sheetName, records: [] };
   }
 
-  const values = sheet.getRange(1, 1, lastRow, lastCol).getValues();
-  const headers = values[0];
+  const { headerRowIndex, headers } = detectHeaderRow(sheet);
+  if (headers.length === 0 || lastRow <= headerRowIndex) {
+    return { success: true, sheetName, records: [] };
+  }
+
+  const dataStartRow = headerRowIndex + 1;
+  const numDataRows = lastRow - headerRowIndex;
+  const values = sheet.getRange(dataStartRow, 1, numDataRows, lastCol).getValues();
   const records = [];
 
-  for (let i = values.length - 1; i >= 1; i--) {
+  for (let i = values.length - 1; i >= 0; i--) {
     const row = values[i];
+    // Skip completely blank rows
+    const hasData = row.some(v => v !== null && String(v).trim().length > 0);
+    if (!hasData) continue;
+
     const item = {};
     for (let c = 0; c < headers.length; c++) {
+      const h = headers[c];
+      if (!h) continue;
       let val = row[c];
       if (val instanceof Date) {
         val = Utilities.formatDate(val, Session.getScriptTimeZone() || "GMT+5:30", "yyyy-MM-dd");
       }
-      item[headers[c]] = val;
+      item[h] = val;
     }
+
+    // Auto-map dual aliases for seamless frontend compatibility
+    if (sheetName === "RangDe_Loan" || sheet.getName().toLowerCase().includes("rang")) {
+      if (!item.Name && item["NAME"]) item.Name = item["NAME"];
+      if (!item.NAME && item.Name) item.NAME = item.Name;
+      if (!item.Address && item["ADDRESS"]) item.Address = item["ADDRESS"];
+      if (!item.ADDRESS && item.Address) item.ADDRESS = item.Address;
+      if (!item.Address && item.Village) item.Address = item.Village;
+      if (!item.Mobile && item["MOBILE NO."]) item.Mobile = item["MOBILE NO."];
+      if (!item["MOBILE NO."] && item.Mobile) item["MOBILE NO."] = item.Mobile;
+      if (!item.Activity && (item["ACTIVITY"] || item.Business)) item.Activity = item["ACTIVITY"] || item.Business;
+      if (!item.ACTIVITY && item.Activity) item.ACTIVITY = item.Activity;
+      if (!item.Business && item.Activity) item.Business = item.Activity;
+      if (!item.Amount && (item["AMOUNT"] || item["AMONT"] || item.Loan_Amount)) {
+        item.Amount = item["AMOUNT"] || item["AMONT"] || item.Loan_Amount;
+      }
+      if (!item.AMOUNT && item.Amount) item.AMOUNT = item.Amount;
+      if (!item.Loan_Amount && item.Amount) item.Loan_Amount = item.Amount;
+      if (!item.Second_Amount && (item["2ND"] || item["2nd"])) item.Second_Amount = item["2ND"] || item["2nd"];
+      if (!item["2ND"] && item.Second_Amount) item["2ND"] = item.Second_Amount;
+      if (!item.Loan_ID && item["SR. NO."]) item.Loan_ID = "RD-2026-" + String(item["SR. NO."]).padStart(5, "0");
+      if (!item["SR. NO."] && item.Loan_ID) item["SR. NO."] = item.Loan_ID;
+    }
+
     records.push(item);
   }
 
@@ -633,13 +744,15 @@ function getSheetRecords(ss, sheetName) {
 }
 
 function insertRecord(ss, sheetName, payload) {
-  let sheet = ss.getSheetByName(sheetName);
+  let sheet = findSheet(ss, sheetName);
   if (!sheet) {
     setupDatabase();
-    sheet = ss.getSheetByName(sheetName);
+    sheet = findSheet(ss, sheetName) || ss.getSheetByName(sheetName);
   }
 
-  const headers = SHEETS_SCHEMA[sheetName];
+  const { headerRowIndex, headers: existingHeaders } = detectHeaderRow(sheet);
+  const schemaHeaders = SHEETS_SCHEMA[sheetName] || [];
+  const targetHeaders = (existingHeaders && existingHeaders.length > 0 && existingHeaders.filter(Boolean).length >= 2) ? existingHeaders : schemaHeaders;
   const config = ID_PREFIXES[sheetName];
 
   // Handle field aliases and backward compatibility
@@ -672,6 +785,9 @@ function insertRecord(ss, sheetName, payload) {
     if (!payload.Loan_Amount && (payload["LONE AMOUNT"] || payload.Lone_Amount)) {
       payload.Loan_Amount = payload["LONE AMOUNT"] || payload.Lone_Amount;
     }
+    if (!payload.Loan_Scheme && (payload["LOAN SCHEME"] || payload.LoanScheme || payload.Scheme)) {
+      payload.Loan_Scheme = payload["LOAN SCHEME"] || payload.LoanScheme || payload.Scheme;
+    }
     if (!payload.Udyam_Registration && (payload["UDHYAM REGISTRATION"] || payload.Udhyam_Registration)) {
       payload.Udyam_Registration = payload["UDHYAM REGISTRATION"] || payload.Udhyam_Registration;
     }
@@ -683,17 +799,67 @@ function insertRecord(ss, sheetName, payload) {
     if (!payload.Voter_Card && payload["VOTER CARD"]) payload.Voter_Card = payload["VOTER CARD"];
     if (!payload.Quotation && payload["QUOTATION"]) payload.Quotation = payload["QUOTATION"];
     if (!payload.Remarks && (payload["REMARK"] || payload.Remark)) payload.Remarks = payload["REMARK"] || payload.Remark;
+    if (!payload["REMARK"]) {
+      if (payload.Loan_Scheme) {
+        payload["REMARK"] = payload.Loan_Scheme === "Rang De" ? "RANG DE" : payload.Loan_Scheme;
+      } else if (payload.Remarks) {
+        payload["REMARK"] = payload.Remarks;
+      }
+    }
+    if (!payload.Remarks && payload["REMARK"]) payload.Remarks = payload["REMARK"];
     if (!payload.Updates && payload["UPDATES"]) payload.Updates = payload["UPDATES"];
+  }
+
+  if (sheetName === "Employment_Linked") {
+    if (!payload.Name && (payload.NAME || payload.Youth_Name)) payload.Name = payload.NAME || payload.Youth_Name;
+    if (!payload.NAME && payload.Name) payload.NAME = payload.Name;
+    if (!payload.Youth_Name && payload.Name) payload.Youth_Name = payload.Name;
+    if (!payload.Address && (payload.ADDRESS || payload.Village || payload.Location)) payload.Address = payload.ADDRESS || payload.Village || payload.Location;
+    if (!payload.ADDRESS && payload.Address) payload.ADDRESS = payload.Address;
+    if (!payload.Location && payload.Address) payload.Location = payload.Address;
+    if (!payload.Village && payload.Address) payload.Village = payload.Address;
+    if (!payload.Mobile && (payload["MOBILE NO."] || payload.Mobile_Number || payload.Mobile_No)) payload.Mobile = payload["MOBILE NO."] || payload.Mobile_Number || payload.Mobile_No;
+    if (!payload["MOBILE NO."] && payload.Mobile) payload["MOBILE NO."] = payload.Mobile;
+    if (!payload.Remarks && (payload.REMARK || payload.Remark || payload.Job_Role || payload.Employer_Name)) payload.Remarks = payload.REMARK || payload.Remark || payload.Job_Role || payload.Employer_Name;
+    if (!payload.REMARK && payload.Remarks) payload.REMARK = payload.Remarks;
+    if (!payload.Job_Role && payload.Remarks) payload.Job_Role = payload.Remarks;
+    if (!payload["SR. NO."] && (payload["S.NO"] || payload.S_No || payload.SR_NO)) {
+      payload["SR. NO."] = payload["SR. NO."] || payload["S.NO"] || payload.S_No || payload.SR_NO;
+    }
+  }
+
+  if (sheetName === "RangDe_Loan") {
+    if (!payload.Name && payload.NAME) payload.Name = payload.NAME;
+    if (!payload.Father_Name && (payload["FATHER NAME"] || payload.Father_Husband_Name)) {
+      payload.Father_Name = payload["FATHER NAME"] || payload.Father_Husband_Name;
+    }
+    if (!payload.Mobile && (payload["MOBILE NO."] || payload.Mobile_Number)) {
+      payload.Mobile = payload["MOBILE NO."] || payload.Mobile_Number;
+    }
+    if (!payload.Address && (payload.ADDRESS || payload.Village)) {
+      payload.Address = payload.ADDRESS || payload.Village;
+    }
+    if (!payload.Activity && (payload.ACTIVITY || payload.Business || payload["BUSINESS"])) {
+      payload.Activity = payload.ACTIVITY || payload.Business || payload["BUSINESS"];
+    }
+    if (!payload.Business && payload.Activity) payload.Business = payload.Activity;
+    if (!payload.Amount && (payload.AMOUNT || payload.AMONT || payload["AMONT"] || payload.Loan_Amount || payload["LONE AMOUNT"])) {
+      payload.Amount = payload.AMOUNT || payload.AMONT || payload["AMONT"] || payload.Loan_Amount || payload["LONE AMOUNT"];
+    }
+    if (!payload.Loan_Amount && payload.Amount) payload.Loan_Amount = payload.Amount;
+    if (!payload.Second_Amount && (payload["2ND"] || payload["2nd"] || payload["2ND AMOUNT"])) {
+      payload.Second_Amount = payload["2ND"] || payload["2nd"] || payload["2ND AMOUNT"];
+    }
+    if (!payload["2ND"] && payload.Second_Amount) payload["2ND"] = payload.Second_Amount;
+    if (!payload.Remarks && (payload["REMARK"] || payload.Remark)) payload.Remarks = payload["REMARK"] || payload.Remark;
+    if (!payload.Remarks) payload.Remarks = "RANG DE";
   }
 
   // Generate ID if missing
   if (config && (!payload[config.idField] || String(payload[config.idField]).trim() === "")) {
     const nextNum = Math.max(1, sheet.getLastRow());
-    payload[config.idField] = config.prefix + ("0000" + nextNum).slice(-4);
+    payload[config.idField] = (config.idField === "SR. NO." || config.idField === "S.NO") ? nextNum : (config.prefix + ("0000" + nextNum).slice(-4));
   }
-
-  const existingHeaders = (sheet.getLastRow() >= 1 && sheet.getLastColumn() >= 1) ? sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0] : null;
-  const targetHeaders = (existingHeaders && existingHeaders.length > 0 && String(existingHeaders[0]).trim() !== "") ? existingHeaders : headers;
 
   const rowData = targetHeaders.map(header => {
     let val = payload[header];
@@ -723,22 +889,21 @@ function bulkInsertRecords(ss, sheetName, records) {
     return { success: false, message: "No records provided for bulk insert." };
   }
 
-  let sheet = ss.getSheetByName(sheetName);
+  let sheet = findSheet(ss, sheetName);
   if (!sheet) {
     setupDatabase();
-    sheet = ss.getSheetByName(sheetName);
+    sheet = findSheet(ss, sheetName) || ss.getSheetByName(sheetName);
   }
   if (!sheet) {
     return { success: false, message: `Sheet '${sheetName}' does not exist.` };
   }
 
-  const headers = SHEETS_SCHEMA[sheetName];
-  if (!headers) {
-    return { success: false, message: `Unknown schema for sheet '${sheetName}'.` };
-  }
+  const { headerRowIndex, headers: existingHeaders } = detectHeaderRow(sheet);
+  const schemaHeaders = SHEETS_SCHEMA[sheetName] || [];
+  const targetHeaders = (existingHeaders && existingHeaders.length > 0 && existingHeaders.filter(Boolean).length >= 2) ? existingHeaders : schemaHeaders;
 
   const config = ID_PREFIXES[sheetName];
-  let lastRow = Math.max(1, sheet.getLastRow());
+  let lastRow = Math.max(headerRowIndex, sheet.getLastRow());
 
   const rowsToAppend = [];
   for (let i = 0; i < records.length; i++) {
@@ -774,6 +939,9 @@ function bulkInsertRecords(ss, sheetName, records) {
       if (!record.Loan_Amount && (record["LONE AMOUNT"] || record.Lone_Amount)) {
         record.Loan_Amount = record["LONE AMOUNT"] || record.Lone_Amount;
       }
+      if (!record.Loan_Scheme && (record["LOAN SCHEME"] || record.LoanScheme || record.Scheme)) {
+        record.Loan_Scheme = record["LOAN SCHEME"] || record.LoanScheme || record.Scheme;
+      }
       if (!record.Udyam_Registration && (record["UDHYAM REGISTRATION"] || record.Udhyam_Registration)) {
         record.Udyam_Registration = record["UDHYAM REGISTRATION"] || record.Udhyam_Registration;
       }
@@ -785,17 +953,67 @@ function bulkInsertRecords(ss, sheetName, records) {
       if (!record.Voter_Card && record["VOTER CARD"]) record.Voter_Card = record["VOTER CARD"];
       if (!record.Quotation && record["QUOTATION"]) record.Quotation = record["QUOTATION"];
       if (!record.Remarks && (record["REMARK"] || record.Remark)) record.Remarks = record["REMARK"] || record.Remark;
+      if (!record["REMARK"]) {
+        if (record.Loan_Scheme) {
+          record["REMARK"] = record.Loan_Scheme === "Rang De" ? "RANG DE" : record.Loan_Scheme;
+        } else if (record.Remarks) {
+          record["REMARK"] = record.Remarks;
+        }
+      }
+      if (!record.Remarks && record["REMARK"]) record.Remarks = record["REMARK"];
       if (!record.Updates && record["UPDATES"]) record.Updates = record["UPDATES"];
+    }
+
+    if (sheetName === "Employment_Linked") {
+      if (!record.Name && (record.NAME || record.Youth_Name)) record.Name = record.NAME || record.Youth_Name;
+      if (!record.NAME && record.Name) record.NAME = record.Name;
+      if (!record.Youth_Name && record.Name) record.Youth_Name = record.Name;
+      if (!record.Address && (record.ADDRESS || record.Village || record.Location)) record.Address = record.ADDRESS || record.Village || record.Location;
+      if (!record.ADDRESS && record.Address) record.ADDRESS = record.Address;
+      if (!record.Location && record.Address) record.Location = record.Address;
+      if (!record.Village && record.Address) record.Village = record.Address;
+      if (!record.Mobile && (record["MOBILE NO."] || record.Mobile_Number || record.Mobile_No)) record.Mobile = record["MOBILE NO."] || record.Mobile_Number || record.Mobile_No;
+      if (!record["MOBILE NO."] && record.Mobile) record["MOBILE NO."] = record.Mobile;
+      if (!record.Remarks && (record.REMARK || record.Remark || record.Job_Role || record.Employer_Name)) record.Remarks = record.REMARK || record.Remark || record.Job_Role || record.Employer_Name;
+      if (!record.REMARK && record.Remarks) record.REMARK = record.Remarks;
+      if (!record.Job_Role && record.Remarks) record.Job_Role = record.Remarks;
+      if (!record["SR. NO."] && (record["S.NO"] || record.S_No || record.SR_NO)) {
+        record["SR. NO."] = record["SR. NO."] || record["S.NO"] || record.S_No || record.SR_NO;
+      }
+    }
+
+    if (sheetName === "RangDe_Loan") {
+      if (!record.Name && record.NAME) record.Name = record.NAME;
+      if (!record.Father_Name && (record["FATHER NAME"] || record.Father_Husband_Name)) {
+        record.Father_Name = record["FATHER NAME"] || record.Father_Husband_Name;
+      }
+      if (!record.Mobile && (record["MOBILE NO."] || record.Mobile_Number)) {
+        record.Mobile = record["MOBILE NO."] || record.Mobile_Number;
+      }
+      if (!record.Address && (record.ADDRESS || record.Village)) {
+        record.Address = record.ADDRESS || record.Village;
+      }
+      if (!record.Activity && (record.ACTIVITY || record.Business || record["BUSINESS"])) {
+        record.Activity = record.ACTIVITY || record.Business || record["BUSINESS"];
+      }
+      if (!record.Business && record.Activity) record.Business = record.Activity;
+      if (!record.Amount && (record.AMOUNT || record.AMONT || record["AMONT"] || record.Loan_Amount || record["LONE AMOUNT"])) {
+        record.Amount = record.AMOUNT || record.AMONT || record["AMONT"] || record.Loan_Amount || record["LONE AMOUNT"];
+      }
+      if (!record.Loan_Amount && record.Amount) record.Loan_Amount = record.Amount;
+      if (!record.Second_Amount && (record["2ND"] || record["2nd"] || record["2ND AMOUNT"])) {
+        record.Second_Amount = record["2ND"] || record["2nd"] || record["2ND AMOUNT"];
+      }
+      if (!record["2ND"] && record.Second_Amount) record["2ND"] = record.Second_Amount;
+      if (!record.Remarks && (record["REMARK"] || record.Remark)) record.Remarks = record["REMARK"] || record.Remark;
+      if (!record.Remarks) record.Remarks = "RANG DE";
     }
 
     // Auto-generate ID if missing
     if (config && (!record[config.idField] || String(record[config.idField]).trim() === "")) {
       const nextNum = lastRow + i;
-      record[config.idField] = config.prefix + ("0000" + nextNum).slice(-4);
+      record[config.idField] = (config.idField === "SR. NO." || config.idField === "S.NO") ? nextNum : (config.prefix + ("0000" + nextNum).slice(-4));
     }
-
-    const existingHeaders = (sheet.getLastRow() >= 1 && sheet.getLastColumn() >= 1) ? sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0] : null;
-    const targetHeaders = (existingHeaders && existingHeaders.length > 0 && String(existingHeaders[0]).trim() !== "") ? existingHeaders : headers;
 
     const rowData = targetHeaders.map((header, colIdx) => {
       let val = record[header];
@@ -847,8 +1065,6 @@ function bulkInsertRecords(ss, sheetName, records) {
   }
 
   if (rowsToAppend.length > 0) {
-    const existingHeaders = (sheet.getLastRow() >= 1 && sheet.getLastColumn() >= 1) ? sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0] : null;
-    const targetHeaders = (existingHeaders && existingHeaders.length > 0 && String(existingHeaders[0]).trim() !== "") ? existingHeaders : headers;
     sheet.getRange(lastRow + 1, 1, rowsToAppend.length, targetHeaders.length).setValues(rowsToAppend);
   }
 
@@ -882,25 +1098,32 @@ function listUsers(ss) {
 }
 
 function updateRecord(ss, sheetName, idField, idValue, updatedData) {
-  const sheet = ss.getSheetByName(sheetName);
+  const sheet = findSheet(ss, sheetName);
   if (!sheet) return { success: false, message: `Sheet ${sheetName} not found.` };
 
-  const data = sheet.getDataRange().getValues();
-  const headers = data[0];
+  const { headerRowIndex, headers } = detectHeaderRow(sheet);
+  const lastRow = sheet.getLastRow();
+  const lastCol = sheet.getLastColumn();
+  if (lastRow <= headerRowIndex || lastCol === 0) return { success: false, message: `Record ${idValue} not found.` };
+
+  const data = sheet.getRange(headerRowIndex, 1, lastRow - headerRowIndex + 1, lastCol).getValues();
   let idColIdx = headers.indexOf(idField);
   if (idColIdx === -1) {
     idColIdx = headers.findIndex(h => {
       const cleanH = String(h).replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
       const cleanId = String(idField).replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
-      return cleanH === cleanId || cleanH.includes("id") || cleanH === "sno";
+      return cleanH === cleanId || cleanH.includes("id") || cleanH === "sno" || cleanH === "srno";
     });
   }
   if (idColIdx === -1) idColIdx = 0;
 
   let targetRow = -1;
   for (let r = 1; r < data.length; r++) {
-    if (String(data[r][idColIdx]).trim() === String(idValue).trim()) {
-      targetRow = r + 1; // 1-indexed
+    const row = data[r];
+    const matchById = String(row[idColIdx]).trim() === String(idValue).trim();
+    const matchAny = row.some(cell => String(cell).trim() === String(idValue).trim());
+    if (matchById || matchAny) {
+      targetRow = headerRowIndex + r; // 1-indexed absolute sheet row
       break;
     }
   }
@@ -923,24 +1146,31 @@ function updateRecord(ss, sheetName, idField, idValue, updatedData) {
 }
 
 function deleteRecord(ss, sheetName, idField, idValue) {
-  const sheet = ss.getSheetByName(sheetName);
+  const sheet = findSheet(ss, sheetName);
   if (!sheet) return { success: false, message: `Sheet ${sheetName} not found.` };
 
-  const data = sheet.getDataRange().getValues();
-  const headers = data[0];
+  const { headerRowIndex, headers } = detectHeaderRow(sheet);
+  const lastRow = sheet.getLastRow();
+  const lastCol = sheet.getLastColumn();
+  if (lastRow <= headerRowIndex || lastCol === 0) return { success: false, message: `Record not found.` };
+
+  const data = sheet.getRange(headerRowIndex, 1, lastRow - headerRowIndex + 1, lastCol).getValues();
   let idColIdx = headers.indexOf(idField);
   if (idColIdx === -1) {
     idColIdx = headers.findIndex(h => {
       const cleanH = String(h).replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
       const cleanId = String(idField).replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
-      return cleanH === cleanId || cleanH.includes("id") || cleanH === "sno";
+      return cleanH === cleanId || cleanH.includes("id") || cleanH === "sno" || cleanH === "srno";
     });
   }
   if (idColIdx === -1) idColIdx = 0;
 
   for (let r = 1; r < data.length; r++) {
-    if (String(data[r][idColIdx]).trim() === String(idValue).trim()) {
-      sheet.deleteRow(r + 1);
+    const row = data[r];
+    const matchById = String(row[idColIdx]).trim() === String(idValue).trim();
+    const matchAny = row.some(cell => String(cell).trim() === String(idValue).trim());
+    if (matchById || matchAny) {
+      sheet.deleteRow(headerRowIndex + r);
       return { success: true, message: `Record deleted successfully.` };
     }
   }

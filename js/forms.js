@@ -841,8 +841,8 @@ const Forms = (function() {
       address = businessVal;
     }
 
-    if (!activity || activity === address) {
-      activity = "Micro Enterprise (सूक्ष्म स्वरोजगार)";
+    if (activity === address) {
+      activity = "";
     }
 
     return Object.assign({}, rec, {
@@ -1060,41 +1060,16 @@ const Forms = (function() {
           localStorage.removeItem("YH_RANGDE_CUSTOM_DATA");
         } catch (e) {}
 
-        let combinedRangDe = [];
-
-        // 1. Direct RangDe_Loan records from sheet if populated
+        // 100% Live: Load strictly from connected RangDe_Loan Google Sheet tab (Zero mock/synthetic data)
+        let validSheetRecords = [];
         if (Array.isArray(recordList)) {
-          const directRecords = recordList.filter(r => {
+          validSheetRecords = recordList.filter(r => {
             const keys = Object.keys(r).filter(k => k.trim() !== "" && k !== "S.NO" && k !== "SR. NO." && k !== "SR.NO." && k !== "S_No" && k !== "Loan_ID");
             return keys.length > 0 && keys.some(k => String(r[k] || "").trim().length > 0);
           });
-          combinedRangDe.push(...directRecords);
         }
 
-        // 2. Fetch and merge Rang De records from Entrepreneurs sheet
-        try {
-          const entRes = await API.call("getTableRecords", { sheetName: "Entrepreneurs" });
-          const entrepreneurRecords = entRes && (entRes.records || entRes.data);
-          if (Array.isArray(entrepreneurRecords)) {
-            const entRangDe = entrepreneurRecords.filter(isRangDeEntrepreneurRecord);
-            entRangDe.forEach(er => {
-              const erName = String(er.Name || er.NAME || er["FATHER NAME"] || "").trim().toLowerCase();
-              const erMob = String(er.Mobile || er["MOBILE NO."] || er.BLOCK || "").replace(/\D/g, "");
-              const exists = combinedRangDe.some(cr => {
-                const crName = String(cr.Name || cr.NAME || cr["FATHER NAME"] || "").trim().toLowerCase();
-                const crMob = String(cr.Mobile || cr["MOBILE NO."] || cr.BLOCK || "").replace(/\D/g, "");
-                return (erName && crName && erName === crName) || (erMob && crMob && erMob === crMob && erMob.length >= 10);
-              });
-              if (!exists) {
-                combinedRangDe.push(er);
-              }
-            });
-          }
-        } catch (fallbackErr) {
-          console.warn("Unable to load Rang De records from Entrepreneurs sheet:", fallbackErr);
-        }
-
-        recordList = combinedRangDe.map((r, idx) => normalizeRangDeRecord(r, idx));
+        recordList = validSheetRecords.map((r, idx) => normalizeRangDeRecord(r, idx));
       }
 
       // Merge user bulk-uploaded records in this session so they stay visible

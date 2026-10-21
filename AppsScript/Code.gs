@@ -119,6 +119,9 @@ const SHEETS_SCHEMA = {
     "Participants", "Progress_Status", "Photo_URL", "Description", "Tags",
     "Uploaded_By", "Created_At"
   ],
+  Photo_Uploads: [
+    "ID", "Record_ID", "Category", "Photo_Name", "Drive_File_ID", "Drive_URL", "Upload_Date", "Uploaded_By", "Status"
+  ],
   Users: [
     "User_ID", "Name", "Email", "Password_Hash", "Role", "Block", "Youth_Hub", "Status", "Created_At"
   ]
@@ -146,6 +149,7 @@ const ID_PREFIXES = {
   Shasan_Sahyog: { prefix: "SS-2026-", idField: "Demand_ID" },
   RangDe_Loan: { prefix: "", idField: "SR. NO." },
   Progress_Gallery: { prefix: "GAL-2026-", idField: "Gallery_ID" },
+  Photo_Uploads: { prefix: "PHO-2026-", idField: "ID" },
   Users: { prefix: "USR-", idField: "User_ID" }
 };
 
@@ -527,6 +531,8 @@ function handleAction(action, payload) {
     addShasanSahyog: "Shasan_Sahyog",
     addRangDeLoan: "RangDe_Loan",
     addProgressGallery: "Progress_Gallery",
+    addPhotoUpload: "Photo_Uploads",
+    addSuccessPhoto: "Photo_Uploads",
     addUser: "Users"
   };
 
@@ -632,6 +638,9 @@ function findSheet(ss, sheetName) {
     "Entrepreneurs": ["Entrepreneurs", "Entrepreneur", "PMEGP"],
     "Entrepreneurs_Established": ["Entrepreneurs Established", "Entrepreneurs_Established", "Established Entrepreneurs", "Established"],
     "Entrepreneurs Established": ["Entrepreneurs Established", "Entrepreneurs_Established", "Established Entrepreneurs", "Established"],
+    "Photo_Uploads": ["Photo_Uploads", "Photo Uploads", "PhotoUploads", "Progress_Gallery", "Progress Gallery", "Success_Gallery", "Success Gallery"],
+    "Progress_Gallery": ["Progress_Gallery", "Progress Gallery", "Photo_Uploads", "Photo Uploads", "Success_Gallery", "Success Gallery"],
+    "Success_Gallery": ["Photo_Uploads", "Photo Uploads", "Success_Gallery", "Success Gallery", "Progress_Gallery", "Progress Gallery"],
     "Rehabilitation": ["Rehabilitation", "Rehab", "Rehabilitation Counselling", "Rehab Counselling"]
   };
 
@@ -765,6 +774,21 @@ function getSheetRecords(ss, sheetName) {
       if (!item["LONE AMOUNT"] && item.Loan_Amount) item["LONE AMOUNT"] = item.Loan_Amount;
       if (!item.S_No && item["S.NO"]) item.S_No = item["S.NO"];
       if (!item["S.NO"] && item.S_No) item["S.NO"] = item.S_No;
+    }
+
+    if (sheetName === "Photo_Uploads" || sheet.getName().toLowerCase().includes("photo") || sheet.getName().toLowerCase().includes("success")) {
+      if (!item.Title && item.Photo_Name) item.Title = item.Photo_Name;
+      if (!item.Photo_Name && item.Title) item.Photo_Name = item.Title;
+      if (!item.Photo_URL && item.Drive_URL) item.Photo_URL = item.Drive_URL;
+      if (!item.Drive_URL && item.Photo_URL) item.Drive_URL = item.Photo_URL;
+      if (!item.imageUrl && (item.Drive_URL || item.Photo_URL)) item.imageUrl = item.Drive_URL || item.Photo_URL;
+      if (!item.Date && item.Upload_Date) item.Date = item.Upload_Date;
+      if (!item.Upload_Date && item.Date) item.Upload_Date = item.Date;
+      if (!item.Uploaded_By && item.UploadedBy) item.Uploaded_By = item.UploadedBy;
+      if (!item.Progress_Status && item.Status) item.Progress_Status = item.Status;
+      if (!item.Status && item.Progress_Status) item.Status = item.Progress_Status;
+      if (!item.Gallery_ID && item.ID) item.Gallery_ID = item.ID;
+      if (!item.ID && item.Gallery_ID) item.ID = item.Gallery_ID;
     }
 
     records.push(item);
@@ -911,6 +935,16 @@ function insertRecord(ss, sheetName, payload) {
     if (!payload["2ND"] && payload.Second_Amount) payload["2ND"] = payload.Second_Amount;
     if (!payload.Remarks && (payload["REMARK"] || payload.Remark)) payload.Remarks = payload["REMARK"] || payload.Remark;
     if (!payload.Remarks) payload.Remarks = "RANG DE";
+  }
+
+  if (sheetName === "Photo_Uploads" || sheet.getName().toLowerCase().includes("photo") || sheet.getName().toLowerCase().includes("success")) {
+    if (!payload.ID && (payload.Gallery_ID || payload.id)) payload.ID = payload.Gallery_ID || payload.id;
+    if (!payload.Photo_Name && (payload.Title || payload.Photo_Name || payload.name)) payload.Photo_Name = payload.Title || payload.Photo_Name || payload.name;
+    if (!payload.Drive_URL && (payload.Photo_URL || payload.imageUrl || payload.Url)) payload.Drive_URL = payload.Photo_URL || payload.imageUrl || payload.Url;
+    if (!payload.Drive_File_ID && payload.File_ID) payload.Drive_File_ID = payload.File_ID;
+    if (!payload.Upload_Date && (payload.Date || payload.date)) payload.Upload_Date = payload.Date || payload.date;
+    if (!payload.Uploaded_By && (payload.UploadedBy || payload.user)) payload.Uploaded_By = payload.UploadedBy || payload.user;
+    if (!payload.Status && (payload.Progress_Status || payload.status)) payload.Status = payload.Progress_Status || payload.status || "Completed";
   }
 
   // Generate ID if missing
@@ -1093,6 +1127,16 @@ function bulkInsertRecords(ss, sheetName, records) {
       if (!record["2ND"] && record.Second_Amount) record["2ND"] = record.Second_Amount;
       if (!record.Remarks && (record["REMARK"] || record.Remark)) record.Remarks = record["REMARK"] || record.Remark;
       if (!record.Remarks) record.Remarks = "RANG DE";
+    }
+
+    if (sheetName === "Photo_Uploads" || sheet.getName().toLowerCase().includes("photo") || sheet.getName().toLowerCase().includes("success")) {
+      if (!record.ID && (record.Gallery_ID || record.id)) record.ID = record.Gallery_ID || record.id;
+      if (!record.Photo_Name && (record.Title || record.Photo_Name || record.name)) record.Photo_Name = record.Title || record.Photo_Name || record.name;
+      if (!record.Drive_URL && (record.Photo_URL || record.imageUrl || record.Url)) record.Drive_URL = record.Photo_URL || record.imageUrl || record.Url;
+      if (!record.Drive_File_ID && record.File_ID) record.Drive_File_ID = record.File_ID;
+      if (!record.Upload_Date && (record.Date || record.date)) record.Upload_Date = record.Date || record.date;
+      if (!record.Uploaded_By && (record.UploadedBy || record.user)) record.Uploaded_By = record.UploadedBy || record.user;
+      if (!record.Status && (record.Progress_Status || record.status)) record.Status = record.Progress_Status || record.status || "Completed";
     }
 
     // Auto-generate ID if missing

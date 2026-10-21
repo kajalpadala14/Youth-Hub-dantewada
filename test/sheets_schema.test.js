@@ -35,6 +35,7 @@ describe('Database Schema (SHEETS_SCHEMA) Unit Tests', () => {
       'Activities',
       'Rehabilitation',
       'IIM_Raipur',
+      'Photo_Uploads',
     ];
 
     for (const sheet of requiredSheets) {

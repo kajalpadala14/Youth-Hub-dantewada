@@ -345,40 +345,66 @@ const GalleryModule = (function() {
   }
 
   /**
-   * Main loader for Progress Gallery
+   * Main loader for Success Gallery
    */
   async function loadGallery() {
     showGalleryLoading(true);
+    allGalleryItems = [];
+    const idMap = new Set();
 
     // 1. Gather custom items from localStorage
     const customItems = getCustomItems();
 
-    // 2. Fetch live data from Sheets (Progress_Gallery, Mobilization, Trainings, Activities)
+    // 2. Fetch live data from Sheets (Photo_Uploads, Progress_Gallery, Mobilization, Trainings, Activities)
     let liveItems = [];
     try {
-      const [galRes, mobRes, trgRes, actRes] = await Promise.all([
+      const [photoRes, galRes, mobRes, trgRes, actRes] = await Promise.all([
+        API.call("getTableRecords", { sheetName: "Photo_Uploads" }).catch(() => null),
         API.call("getTableRecords", { sheetName: "Progress_Gallery" }).catch(() => null),
         API.call("getTableRecords", { sheetName: "Mobilization" }).catch(() => null),
         API.call("getTableRecords", { sheetName: "Trainings" }).catch(() => null),
         API.call("getTableRecords", { sheetName: "Activities" }).catch(() => null)
       ]);
 
+      // Process dedicated Photo_Uploads records (Primary Google Sheet table for Success Gallery)
+      const photoRecords = (photoRes && (photoRes.records || photoRes.data)) || [];
+      photoRecords.forEach(r => {
+        const photoUrl = r.Drive_URL || r.Photo_URL || r.Photos_URL || r.imageUrl;
+        if (photoUrl) {
+          liveItems.push({
+            id: r.ID || r.Record_ID || r.Gallery_ID || ("PHO-" + Math.floor(Math.random() * 9000)),
+            title: r.Photo_Name || r.Title || "Success Story",
+            category: r.Category || "Skill Training",
+            date: r.Upload_Date || r.Date || new Date().toISOString().split("T")[0],
+            block: r.Block || "Dantewada",
+            gramPanchayat: r.Gram_Panchayat || r.GP || "",
+            participants: Number(r.Participants) || 0,
+            status: r.Status || r.Progress_Status || "Completed",
+            imageUrl: photoUrl,
+            description: r.Description || r.Remarks || r.Photo_Name || "Success gallery milestone photo.",
+            tags: ["Success Story", r.Category || "Achievement"],
+            uploadedBy: r.Uploaded_By || "District Team",
+            createdDate: r.Upload_Date || r.Created_At || r.Date || ""
+          });
+        }
+      });
+
       // Process dedicated Progress_Gallery records if backend has them
       const gRecords = (galRes && (galRes.records || galRes.data)) || [];
       gRecords.forEach(r => {
         if (r.Photo_URL || r.Photos_URL || r.imageUrl) {
           liveItems.push({
-            id: r.Gallery_ID || ("GAL-" + Math.floor(Math.random() * 9000)),
-            title: r.Title || "Progress Milestone",
+            id: r.Gallery_ID || r.ID || ("GAL-" + Math.floor(Math.random() * 9000)),
+            title: r.Title || r.Photo_Name || "Success Milestone",
             category: r.Category || "Skill Training",
-            date: r.Date || new Date().toISOString().split("T")[0],
+            date: r.Date || r.Upload_Date || new Date().toISOString().split("T")[0],
             block: r.Block || "Dantewada",
             gramPanchayat: r.Gram_Panchayat || r.GP || "",
             participants: Number(r.Participants) || 0,
-            status: r.Progress_Status || "Completed",
+            status: r.Progress_Status || r.Status || "Completed",
             imageUrl: r.Photo_URL || r.Photos_URL || r.imageUrl,
-            description: r.Description || r.Remarks || "Field progress milestone.",
-            tags: ["Field Update"],
+            description: r.Description || r.Remarks || "Field success milestone.",
+            tags: ["Success Update"],
             uploadedBy: r.Uploaded_By || "Officer",
             createdDate: r.Created_At || r.Date || ""
           });
@@ -575,10 +601,10 @@ const GalleryModule = (function() {
       grid.innerHTML = `
         <div class="gallery-empty-state" style="grid-column: 1 / -1; text-align: center; padding: 60px 20px; background: #FFFFFF; border-radius: 12px; border: 1px dashed #CBD5E1;">
           <div style="font-size: 48px; color: #94A3B8; margin-bottom: 12px;"><i class="fas fa-images"></i></div>
-          <h3 style="font-size: 18px; color: #1E293B; margin-bottom: 6px;">No Progress Photos Found</h3>
-          <p style="color: #64748B; font-size: 13.5px; max-width: 440px; margin: 0 auto 16px;">There are no photos matching the selected filters. Try changing filters or add a new progress photo.</p>
+          <h3 style="font-size: 18px; color: #1E293B; margin-bottom: 6px;">No Success Photos Found • कोई फ़ोटो नहीं मिली</h3>
+          <p style="color: #64748B; font-size: 13.5px; max-width: 440px; margin: 0 auto 16px;">There are no photos matching the selected filters. Try changing filters or add a new success story photo.</p>
           <button type="button" class="btn btn-primary" onclick="GalleryModule.openAddPhotoDrawer()">
-            <i class="fas fa-plus"></i> Add First Progress Photo
+            <i class="fas fa-plus"></i> Add First Success Photo
           </button>
         </div>
       `;
@@ -868,11 +894,11 @@ const GalleryModule = (function() {
 
     if (submitBtn) {
       submitBtn.disabled = true;
-      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving Progress Photo...';
+      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving Success Photo...';
     }
 
     const newItem = {
-      id: "GAL-" + Date.now().toString().slice(-6),
+      id: "PHO-" + Date.now().toString().slice(-6),
       title,
       category,
       date,
@@ -881,54 +907,72 @@ const GalleryModule = (function() {
       participants,
       status,
       imageUrl,
-      description: description || "Progress milestone documented.",
+      description: description || "Success milestone documented.",
       tags,
-      uploadedBy: (API.getCurrentUser() && API.getCurrentUser().name) || "Youth Hub Team",
+      uploadedBy: (API.getCurrentUser() && API.getCurrentUser().name) || "District Team",
       createdDate: new Date().toISOString().split("T")[0]
     };
 
     try {
+      let driveFileId = "";
       // 1. Try uploading file to Drive if connected
       if (fileInput && fileInput.dataset && fileInput.dataset.base64) {
         try {
           const uploadRes = await API.call("uploadFile", {
             base64Data: fileInput.dataset.base64,
-            fileName: fileInput.dataset.filename || `progress_${newItem.id}.jpg`,
+            fileName: fileInput.dataset.filename || `success_${newItem.id}.jpg`,
             mimeType: fileInput.dataset.mimetype || "image/jpeg",
-            subFolder: "Progress_Gallery"
+            subFolder: "Photo_Uploads"
           });
-          if (uploadRes && uploadRes.success && uploadRes.fileUrl) {
-            newItem.imageUrl = uploadRes.fileUrl;
+          if (uploadRes && uploadRes.success) {
+            if (uploadRes.fileUrl) newItem.imageUrl = uploadRes.fileUrl;
+            if (uploadRes.fileId) driveFileId = uploadRes.fileId;
           }
         } catch (err) {
           console.warn("Drive upload failed, using local base64:", err);
         }
       }
 
-      // 2. Try inserting record into backend
+      // 2. Try inserting record into backend Photo_Uploads sheet
       try {
-        await API.call("addProgressGallery", {
+        const photoUploadPayload = {
+          ID: newItem.id,
+          Record_ID: newItem.id,
           Gallery_ID: newItem.id,
-          Title: newItem.title,
           Category: newItem.category,
+          Photo_Name: newItem.title,
+          Title: newItem.title,
+          Drive_File_ID: driveFileId,
+          Drive_URL: newItem.imageUrl,
+          Photo_URL: newItem.imageUrl,
+          Upload_Date: newItem.date,
           Date: newItem.date,
+          Uploaded_By: newItem.uploadedBy,
+          Status: newItem.status,
+          Progress_Status: newItem.status,
           Block: newItem.block,
           Gram_Panchayat: newItem.gramPanchayat,
           Participants: newItem.participants,
-          Progress_Status: newItem.status,
-          Photo_URL: newItem.imageUrl,
-          Description: newItem.description,
-          Uploaded_By: newItem.uploadedBy,
-          Created_At: newItem.createdDate
-        });
+          Description: newItem.description
+        };
+
+        try {
+          await API.call("addPhotoUpload", photoUploadPayload);
+        } catch (e1) {
+          try {
+            await API.call("addSuccessPhoto", photoUploadPayload);
+          } catch (e2) {
+            await API.call("addProgressGallery", photoUploadPayload);
+          }
+        }
       } catch (e) {
-        console.warn("Backend addProgressGallery not configured yet, stored locally.", e);
+        console.warn("Backend addPhotoUpload failed, stored locally.", e);
       }
 
       // 3. Save to localStorage
       saveCustomItem(newItem);
 
-      App.showToast("Progress photo successfully added to gallery!", "success");
+      App.showToast("Success photo successfully added to gallery!", "success");
       form.reset();
       const previewImg = document.getElementById("galPhotoPreview");
       if (previewImg) {
@@ -943,7 +987,7 @@ const GalleryModule = (function() {
     } finally {
       if (submitBtn) {
         submitBtn.disabled = false;
-        submitBtn.innerHTML = '<i class="fas fa-save"></i> Save Progress Photo';
+        submitBtn.innerHTML = '<i class="fas fa-save"></i> Save Success Photo';
       }
     }
   }

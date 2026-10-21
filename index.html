@@ -60,11 +60,11 @@
           </div>
         </a>
 
-        <a class="nav-item" data-view="gallery" data-tooltip="Progress Gallery / प्रगति गैलरी">
+        <a class="nav-item" data-view="gallery" data-tooltip="Success Gallery / सफलता गैलरी">
           <span class="nav-icon"><i class="fas fa-photo-film"></i></span>
           <div class="nav-label">
-            <span class="nav-label-en">Progress Gallery</span>
-            <span class="nav-label-hi">प्रगति फोटो गैलरी</span>
+            <span class="nav-label-en">Success Gallery</span>
+            <span class="nav-label-hi">सफलता गैलरी</span>
           </div>
         </a>
 
@@ -368,8 +368,8 @@
             <i class="fas fa-address-book"></i> Lookup Youth
           </button>
 
-          <button class="btn-header" onclick="App.switchView('gallery')" title="Track Progress Photo Gallery">
-            <i class="fas fa-images"></i> Progress Gallery
+          <button class="btn-header" onclick="App.switchView('gallery')" title="Success Gallery / सफलता गैलरी">
+            <i class="fas fa-images"></i> Success Gallery
           </button>
 
           <button class="btn-header" onclick="App.switchView('settings')" title="Backend & Database Connection">
@@ -466,12 +466,12 @@
                 <i class="fas fa-photo-film"></i>
               </div>
               <div>
-                <h4 style="font-size: 15px; font-weight: 700; margin: 0; color: #FFFFFF;">Track Field Progress & Milestones • प्रगति फोटो गैलरी</h4>
-                <p style="font-size: 12px; margin: 2px 0 0; color: #BFDBFE;">Visual evidence & milestone tracking of training batches, field mobilization, and micro-enterprises across Dantewada.</p>
+                <h4 style="font-size: 15px; font-weight: 700; margin: 0; color: #FFFFFF;">Success Gallery & Impact Stories • सफलता गैलरी</h4>
+                <p style="font-size: 12px; margin: 2px 0 0; color: #BFDBFE;">Visual impact photos, field milestones & youth success stories across Dantewada.</p>
               </div>
             </div>
             <button type="button" onclick="App.switchView('gallery')" style="background: #FFFFFF; color: #0B2545; font-weight: 700; font-size: 12.5px; border: none; padding: 8px 18px; border-radius: 6px; white-space: nowrap; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.15);">
-              <i class="fas fa-images text-primary" style="color: #2563EB;"></i> Open Progress Gallery &rarr;
+              <i class="fas fa-images text-primary" style="color: #2563EB;"></i> Open Success Gallery &rarr;
             </button>
           </div>
 
@@ -723,7 +723,7 @@
         </section>
 
         <!-- ==========================================
-             VIEW: PROGRESS GALLERY (Track Progress Photos & Milestones)
+             VIEW: SUCCESS GALLERY (Track Success Photos & Milestones)
         =========================================== -->
         <section class="page-section" id="view_gallery">
           <div class="gallery-section-wrap">
@@ -731,7 +731,7 @@
             <!-- Top Header & Action Bar -->
             <div class="gallery-header-bar">
               <div class="gallery-title-box">
-                <h2><i class="fas fa-photo-film"></i> Progress Gallery • फील्ड प्रगति फोटो गैलरी</h2>
+                <h2><i class="fas fa-photo-film"></i> Success Gallery • सफलता गैलरी</h2>
                 <p>Visual tracking of training batches, mobilization camps, micro-enterprises, and youth milestones across Dantewada district</p>
               </div>
               <div class="gallery-header-actions">
@@ -739,7 +739,7 @@
                   <i class="fas fa-sync-alt"></i> <span>Refresh</span>
                 </button>
                 <button type="button" class="btn btn-primary" id="btnOpenAddGalleryDrawer">
-                  <i class="fas fa-camera"></i> <span>Add Progress Photo</span>
+                  <i class="fas fa-camera"></i> <span>Add Success Story / Photo</span>
                 </button>
               </div>
             </div>
@@ -750,7 +750,7 @@
                 <div class="gallery-kpi-icon"><i class="fas fa-images"></i></div>
                 <div class="gallery-kpi-data">
                   <div class="gallery-kpi-num" id="galKpiTotalPhotos">0</div>
-                  <div class="gallery-kpi-label">Progress Photos</div>
+                  <div class="gallery-kpi-label">Success Photos</div>
                   <div class="gallery-kpi-sub">कुल संकलित फोटो</div>
                 </div>
               </div>
@@ -851,7 +851,7 @@
 
               <!-- Results status count -->
               <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: #64748B; padding-top: 4px; border-top: 1px dashed #E2E8F0;">
-                <span id="galleryFilteredCount">Loading progress photos...</span>
+                <span id="galleryFilteredCount">Loading success photos...</span>
                 <span><i class="fas fa-info-circle"></i> Click any card to zoom photo & view details</span>
               </div>
             </div>
@@ -859,7 +859,7 @@
             <!-- Loading Spinner -->
             <div id="galleryLoadingSpinner" style="display: none; justify-content: center; align-items: center; padding: 40px; color: #2563EB; font-weight: 600; gap: 10px;">
               <i class="fas fa-spinner fa-spin fa-2x"></i>
-              <span>Loading progress photo records...</span>
+              <span>Loading success photos & stories...</span>
             </div>
 
             <!-- Photo Grid Container -->
@@ -874,12 +874,12 @@
 
           </div>
 
-          <!-- Slide-Over Drawer: Add Progress Photo Form -->
+          <!-- Slide-Over Drawer: Add Success Story Photo Form -->
           <div class="slide-over-drawer" id="drawer_formGallery">
             <div class="slide-over-header">
               <div>
-                <h3><i class="fas fa-camera"></i> Add Progress Photo • प्रगति फोटो जोड़ें</h3>
-                <p>Upload field progress photo and record milestone achievements</p>
+                <h3><i class="fas fa-camera"></i> Add Success Story & Photo • सफलता की फोटो जोड़ें</h3>
+                <p>Upload success photo and record milestone achievements</p>
               </div>
               <button type="button" class="btn-drawer-close" onclick="GalleryModule.closeAddPhotoDrawer()" title="Close">&times;</button>
             </div>
@@ -941,7 +941,7 @@
                       <label class="form-label">Photograph Upload (File or Image URL) <span class="required">*</span></label>
                       <div class="upload-box" style="margin-bottom: 10px;">
                         <i class="fas fa-cloud-upload-alt upload-box-icon"></i>
-                        <div>Click or drag progress photo to upload (JPEG/PNG)</div>
+                        <div>Click or drag success photo to upload (JPEG/PNG)</div>
                         <input type="file" accept="image/*" data-preview="galPhotoPreview">
                         <img id="galPhotoPreview" data-preview-img class="upload-preview" alt="Preview" style="display: none; max-height: 160px; margin: 10px auto; border-radius: 6px;">
                       </div>
@@ -964,7 +964,7 @@
                 <div class="slide-over-footer form-footer">
                   <button type="button" class="btn btn-secondary" onclick="GalleryModule.closeAddPhotoDrawer()">Cancel</button>
                   <button type="reset" class="btn btn-secondary">Clear</button>
-                  <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Save Progress Photo</button>
+                  <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Save Success Photo</button>
                 </div>
               </form>
             </div>

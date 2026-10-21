@@ -8,145 +8,8 @@
 const GalleryModule = (function() {
   const STORAGE_KEY = "YH_PROGRESS_GALLERY_CUSTOM";
 
-  // Initial curated real progress milestone records for Dantewada district
-  const DEFAULT_MILESTONES = [
-    {
-      id: "GAL-2026-001",
-      title: "Electrician & Solar Technician Practical Training",
-      category: "Skill Training",
-      categoryHi: "कौशल प्रशिक्षण",
-      date: "2026-09-28",
-      block: "Dantewada",
-      gramPanchayat: "Chitalanka",
-      participants: 28,
-      status: "In Progress",
-      statusHi: "जारी",
-      imageUrl: "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=900&q=80",
-      description: "Batch 1 hands-on wiring, circuit safety, and solar panel inverter installation practical sessions at Youth Hub Dantewada workshop.",
-      tags: ["Electrician", "Solar", "Practical Training", "Batch 1"],
-      uploadedBy: "District Skill Coordinator",
-      createdDate: "2026-09-28"
-    },
-    {
-      id: "GAL-2026-002",
-      title: "Gram Panchayat Intensive Youth Mobilization Camp",
-      category: "Mobilization",
-      categoryHi: "मोबिलाइजेशन शिविर",
-      date: "2026-09-24",
-      block: "Geedam",
-      gramPanchayat: "Barsoor",
-      participants: 65,
-      status: "Completed",
-      statusHi: "सम्पन्न",
-      imageUrl: "https://images.unsplash.com/photo-1577495508048-b635879837f1?auto=format&fit=crop&w=900&q=80",
-      description: "Special community mobilization drive organized in Barsoor Gram Panchayat. 42 youth registered on the spot with M-Form completion.",
-      tags: ["Gram Sabha", "Mobilization", "M-Form", "Barsoor"],
-      uploadedBy: "Youth Hub Geedam",
-      createdDate: "2026-09-24"
-    },
-    {
-      id: "GAL-2026-003",
-      title: "Tribal Youth Micro-Enterprise: Tailoring & Apparel Unit",
-      category: "Entrepreneurship",
-      categoryHi: "स्थापित स्वरोजगार",
-      date: "2026-09-20",
-      block: "Katekalyan",
-      gramPanchayat: "Tumakpal",
-      participants: 6,
-      status: "Milestone Achieved",
-      statusHi: "उपलब्धि",
-      imageUrl: "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=900&q=80",
-      description: "Inauguration and commercial launch of women self-help tailoring micro-enterprise supported by PMEGP loan sanction and Youth Hub mentorship.",
-      tags: ["Micro-Enterprise", "Tailoring", "PMEGP", "Women SHG"],
-      uploadedBy: "Livelihood Officer",
-      createdDate: "2026-09-20"
-    },
-    {
-      id: "GAL-2026-004",
-      title: "District Mega Rojgar Mela & Offer Letter Distribution",
-      category: "Activities",
-      categoryHi: "रोजगार मेला व गतिविधि",
-      date: "2026-09-15",
-      block: "Dantewada",
-      gramPanchayat: "Dantewada Rural",
-      participants: 210,
-      status: "Completed",
-      statusHi: "सम्पन्न",
-      imageUrl: "https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&w=900&q=80",
-      description: "14 participating private employers and skill partners conducted interviews at District HQ. 87 youth handed preliminary job offer letters.",
-      tags: ["Rojgar Mela", "Placement", "Offer Letters", "District HQ"],
-      uploadedBy: "जिला रोजगार अधिकारी",
-      createdDate: "2026-09-15"
-    },
-    {
-      id: "GAL-2026-005",
-      title: "Computer Literacy & Digital Coding Batch (NavGurukul)",
-      category: "Skill Training",
-      categoryHi: "कौशल प्रशिक्षण",
-      date: "2026-09-10",
-      block: "Geedam",
-      gramPanchayat: "Javanga",
-      participants: 35,
-      status: "In Progress",
-      statusHi: "जारी",
-      imageUrl: "https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=900&q=80",
-      description: "NavGurukul residential campus orientation and digital software foundation training for shortlisted rural students from across Dantewada.",
-      tags: ["NavGurukul", "Coding", "Software", "Digital"],
-      uploadedBy: "NavGurukul Coordinator",
-      createdDate: "2026-09-10"
-    },
-    {
-      id: "GAL-2026-006",
-      title: "Rehabilitation Livelihood Toolkits Handover Ceremony",
-      category: "Rehabilitation",
-      categoryHi: "आत्मसमर्पण व पुनर्वास",
-      date: "2026-09-05",
-      block: "Kuakonda",
-      gramPanchayat: "Palnar",
-      participants: 12,
-      status: "Milestone Achieved",
-      statusHi: "उपलब्धि",
-      imageUrl: "https://images.unsplash.com/photo-1582213782179-e0d53f98f2ca?auto=format&fit=crop&w=900&q=80",
-      description: "Distribution of masonry, carpentry, and electrical toolkits along with financial assistance cheque disbursal for surrendered youth under district welfare package.",
-      tags: ["Rehabilitation", "Toolkits", "Welfare", "Surrendered Youth"],
-      uploadedBy: "Rehabilitation Cell",
-      createdDate: "2026-09-05"
-    },
-    {
-      id: "GAL-2026-007",
-      title: "Field Counselling & Psychometric Aptitude Camp",
-      category: "Mobilization",
-      categoryHi: "मोबिलाइजेशन व काउंसलिंग",
-      date: "2026-08-28",
-      block: "Kuakonda",
-      gramPanchayat: "Nakulnar",
-      participants: 52,
-      status: "Completed",
-      statusHi: "सम्पन्न",
-      imageUrl: "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=900&q=80",
-      description: "Career counsellors conducted group counselling and mapped vocational aspirations for high school pass-outs in Nakulnar cluster.",
-      tags: ["Counselling", "Nakulnar", "Career Path"],
-      uploadedBy: "District Counsellor",
-      createdDate: "2026-08-28"
-    },
-    {
-      id: "GAL-2026-008",
-      title: "Mushroom Cultivation & Organic Farming Micro-Unit",
-      category: "Entrepreneurship",
-      categoryHi: "स्थापित स्वरोजगार",
-      date: "2026-08-18",
-      block: "Katekalyan",
-      gramPanchayat: "Bengpal",
-      participants: 8,
-      status: "Milestone Achieved",
-      statusHi: "उपलब्धि",
-      imageUrl: "https://images.unsplash.com/photo-1592417817098-8f3d69109853?auto=format&fit=crop&w=900&q=80",
-      description: "Success story: 8 local youths launched cooperative oyster mushroom cultivation following 21-day skill training at KVK Dantewada.",
-      tags: ["Mushroom", "Agri-Business", "Bengpal", "Cooperative"],
-      uploadedBy: "Agri-Skill Mentor",
-      createdDate: "2026-08-18"
-    }
-  ];
+  // Live photo gallery - mock/sample milestone data removed, loaded strictly from Photo_Uploads & Field Activities
+  const DEFAULT_MILESTONES = [];
 
   let currentCategory = "All";
   let currentBlock = "All";
@@ -480,32 +343,20 @@ const GalleryModule = (function() {
       console.warn("Could not fetch remote sheet gallery images:", e);
     }
 
-    // If live items exist in sheet or custom items exist, use only those!
-    // Only fall back to DEFAULT_MILESTONES if sheet has 0 photos and user has 0 custom uploads
-    if (liveItems.length > 0 || customItems.length > 0) {
-      // Prioritize live records from sheet
-      liveItems.forEach(i => {
-        if (!idMap.has(i.id)) {
-          idMap.add(i.id);
-          allGalleryItems.push(i);
-        }
-      });
-      // Plus any user custom additions
-      customItems.forEach(i => {
-        if (!idMap.has(i.id)) {
-          idMap.add(i.id);
-          allGalleryItems.push(i);
-        }
-      });
-    } else {
-      // Sheet has no photo records yet - show pre-populated field milestones
-      DEFAULT_MILESTONES.forEach(i => {
-        if (!idMap.has(i.id)) {
-          idMap.add(i.id);
-          allGalleryItems.push(i);
-        }
-      });
-    }
+    // Populate gallery items: Live records from sheet (Photo_Uploads & Activities) + custom uploads
+    liveItems.forEach(i => {
+      if (!idMap.has(i.id)) {
+        idMap.add(i.id);
+        allGalleryItems.push(i);
+      }
+    });
+    // Plus any user custom additions
+    customItems.forEach(i => {
+      if (!idMap.has(i.id)) {
+        idMap.add(i.id);
+        allGalleryItems.push(i);
+      }
+    });
 
     // Enforce operator block restrictions if applicable
     const currentUser = API.getCurrentUser();

@@ -803,26 +803,47 @@ const Forms = (function() {
 
   function isRangDeEntrepreneurRecord(rec) {
     if (!rec) return false;
-    const values = [
-      rec.Loan_Scheme,
-      rec["LOAN SCHEME"],
-      rec.Remarks,
-      rec.REMARK,
-      rec.Remark,
-      rec.Updates,
-      rec.UPDATES
-    ].map(v => String(v || "").toLowerCase().replace(/[^a-z0-9]/g, ""));
-    return values.some(v => v === "rangde" || v.includes("rangde"));
+    for (const val of Object.values(rec)) {
+      if (typeof val === "string") {
+        const lower = val.toLowerCase().trim();
+        if (lower.includes("rang de") || lower.includes("rangde") || lower === "rang" || lower.includes("रंग दे") || lower.includes("रंगदे")) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   function normalizeRangDeRecord(rec, idx) {
     const serial = rec["SR. NO."] || rec["SR.NO."] || rec["SR NO"] || rec["S.NO"] || rec["S.No"] || rec.S_No || rec.Loan_ID || rec.Entrepreneur_ID || (idx !== undefined ? idx + 1 : "");
-    const name = rec.Name || rec.NAME || rec.Youth_Name || rec["FATHER NAME"] || "";
-    const address = rec.Address || rec.ADDRESS || rec.Village || rec.VILLAGE || rec.Location || "";
-    const mobile = rec.Mobile || rec["MOBILE NO."] || rec.Mobile_Number || rec.Mobile_No || rec.BLOCK || "";
-    const activity = rec.Activity || rec.ACTIVITY || rec.Business || rec.BUSINESS || rec.Business_Idea || rec["BUSINESS"] || "";
-    const amount = rec.Amount || rec.AMOUNT || rec.AMONT || rec.Loan_Amount || rec["LONE AMOUNT"] || rec.Lone_Amount || "";
-    const secondAmount = rec.Second_Amount || rec["2ND"] || rec["2nd"] || rec["2ND AMOUNT"] || "";
+
+    let name = rec.Name || rec.NAME || rec.Youth_Name || "";
+    let mobile = rec.Mobile || rec["MOBILE NO."] || rec.Mobile_Number || rec.Mobile_No || "";
+    let address = rec.Address || rec.ADDRESS || rec.Village || rec.VILLAGE || rec.Location || "";
+    let activity = rec.Activity || rec.ACTIVITY || rec.Business || rec.BUSINESS || rec.Business_Idea || rec["BUSINESS"] || "";
+    let amount = rec.Amount || rec.AMOUNT || rec.AMONT || rec.Loan_Amount || rec["LONE AMOUNT"] || rec.Lone_Amount || "";
+    let secondAmount = rec.Second_Amount || rec["2ND"] || rec["2nd"] || rec["2ND AMOUNT"] || "";
+
+    // Field-shift heuristics from Google Sheet imports
+    const blockVal = String(rec.BLOCK || rec.Block || "").trim();
+    const digitsInBlock = blockVal.replace(/\D/g, "");
+    if (!mobile && digitsInBlock.length >= 10) {
+      mobile = digitsInBlock.slice(-10);
+    }
+
+    const fatherVal = String(rec["FATHER NAME"] || rec.Father_Name || "").trim();
+    if (!name && fatherVal && !/^\d+$/.test(fatherVal)) {
+      name = fatherVal;
+    }
+
+    const businessVal = String(rec.BUSINESS || rec.Business || "").trim();
+    if (!address && businessVal && !businessVal.toLowerCase().includes("shop") && !businessVal.toLowerCase().includes("farm")) {
+      address = businessVal;
+    }
+
+    if (!activity || activity === address) {
+      activity = "Micro Enterprise (सूक्ष्म स्वरोजगार)";
+    }
 
     return Object.assign({}, rec, {
       "SR. NO.": serial,
@@ -851,10 +872,16 @@ const Forms = (function() {
     return {
       NAME: rec.NAME || rec.Name || "",
       Name: rec.Name || rec.NAME || "",
+      "FATHER NAME": rec["FATHER NAME"] || rec.Father_Name || "",
+      Father_Name: rec.Father_Name || rec["FATHER NAME"] || "",
       ADDRESS: rec.ADDRESS || rec.Address || rec.Village || "",
       Address: rec.Address || rec.ADDRESS || rec.Village || "",
-      VILLAGE: rec.ADDRESS || rec.Address || rec.Village || "",
-      Village: rec.Address || rec.ADDRESS || rec.Village || "",
+      VILLAGE: rec.Village || rec.ADDRESS || rec.Address || "",
+      Village: rec.Village || rec.Address || rec.ADDRESS || "",
+      BLOCK: rec.Block || rec.BLOCK || "",
+      Block: rec.Block || rec.BLOCK || "",
+      GP: rec.GP || rec.Gram_Panchayat || "",
+      Gram_Panchayat: rec.GP || rec.Gram_Panchayat || "",
       "MOBILE NO.": rec["MOBILE NO."] || rec.Mobile || rec.Mobile_Number || "",
       Mobile: rec.Mobile || rec["MOBILE NO."] || rec.Mobile_Number || "",
       BUSINESS: rec.ACTIVITY || rec.Activity || rec.Business || "",
@@ -864,6 +891,7 @@ const Forms = (function() {
       "2ND": rec["2ND"] || rec.Second_Amount || "",
       Second_Amount: rec.Second_Amount || rec["2ND"] || "",
       Loan_Scheme: "Rang De",
+      Loan_Status: rec.Loan_Status || "Sanctioned",
       REMARK: "RANG DE",
       Remarks: "RANG DE"
     };
@@ -998,20 +1026,20 @@ const Forms = (function() {
           });
         }
 
-        const identifiedList = allEnt.filter(r => !isEstablishedEntrepreneur(r));
-        const establishedList = dedicatedEst.length > 0 ? dedicatedEst : allEnt.filter(isEstablishedEntrepreneur);
-        const loanList = allEnt.filter(isLoanEntrepreneur);
+        const identifiedList = allEnt.filter(r => !isEstablishedEntrepreneur(r) && !isRangDeEntrepreneurRecord(r));
+        const establishedList = dedicatedEst.length > 0 ? dedicatedEst : allEnt.filter(r => isEstablishedEntrepreneur(r) && !isRangDeEntrepreneurRecord(r));
+        const loanList = allEnt.filter(r => isLoanEntrepreneur(r) && !isRangDeEntrepreneurRecord(r));
 
         tableDataCache["ent_identified"] = identifiedList;
         tableDataCache["ent_established"] = establishedList;
         tableDataCache["ent_loan"] = loanList;
-        tableDataCache["entrepreneurship"] = allEnt;
+        tableDataCache["entrepreneurship"] = allEnt.filter(r => !isRangDeEntrepreneurRecord(r));
 
         // Render all present tables
         if (document.getElementById("tblEntIdentified")) renderTabTable("ent_identified", identifiedList);
         if (document.getElementById("tblEntEstablished")) renderTabTable("ent_established", establishedList);
         if (document.getElementById("tblEntLoan")) renderTabTable("ent_loan", loanList);
-        if (document.getElementById("tblEntrepreneurs")) renderTabTable("entrepreneurship", allEnt);
+        if (document.getElementById("tblEntrepreneurs")) renderTabTable("entrepreneurship", tableDataCache["entrepreneurship"]);
 
         // Update badge counts on top tabs
         const bId = document.getElementById("badgeEntIdentifiedCount");
@@ -1032,30 +1060,41 @@ const Forms = (function() {
           localStorage.removeItem("YH_RANGDE_CUSTOM_DATA");
         } catch (e) {}
 
-        // Filter out ghost rows with only empty string keys or empty cells
-        let validSheetRecords = [];
+        let combinedRangDe = [];
+
+        // 1. Direct RangDe_Loan records from sheet if populated
         if (Array.isArray(recordList)) {
-          validSheetRecords = recordList.filter(r => {
+          const directRecords = recordList.filter(r => {
             const keys = Object.keys(r).filter(k => k.trim() !== "" && k !== "S.NO" && k !== "SR. NO." && k !== "SR.NO." && k !== "S_No" && k !== "Loan_ID");
             return keys.length > 0 && keys.some(k => String(r[k] || "").trim().length > 0);
           });
+          combinedRangDe.push(...directRecords);
         }
 
-        if (validSheetRecords.length === 0) {
-          try {
-            const entRes = await API.call("getTableRecords", { sheetName: "Entrepreneurs" });
-            const entrepreneurRecords = entRes && (entRes.records || entRes.data);
-            if (Array.isArray(entrepreneurRecords)) {
-              validSheetRecords = entrepreneurRecords
-                .filter(isRangDeEntrepreneurRecord)
-                .map((r, idx) => normalizeRangDeRecord(r, idx));
-            }
-          } catch (fallbackErr) {
-            console.warn("Unable to load Rang De fallback records from Entrepreneurs:", fallbackErr);
+        // 2. Fetch and merge Rang De records from Entrepreneurs sheet
+        try {
+          const entRes = await API.call("getTableRecords", { sheetName: "Entrepreneurs" });
+          const entrepreneurRecords = entRes && (entRes.records || entRes.data);
+          if (Array.isArray(entrepreneurRecords)) {
+            const entRangDe = entrepreneurRecords.filter(isRangDeEntrepreneurRecord);
+            entRangDe.forEach(er => {
+              const erName = String(er.Name || er.NAME || er["FATHER NAME"] || "").trim().toLowerCase();
+              const erMob = String(er.Mobile || er["MOBILE NO."] || er.BLOCK || "").replace(/\D/g, "");
+              const exists = combinedRangDe.some(cr => {
+                const crName = String(cr.Name || cr.NAME || cr["FATHER NAME"] || "").trim().toLowerCase();
+                const crMob = String(cr.Mobile || cr["MOBILE NO."] || cr.BLOCK || "").replace(/\D/g, "");
+                return (erName && crName && erName === crName) || (erMob && crMob && erMob === crMob && erMob.length >= 10);
+              });
+              if (!exists) {
+                combinedRangDe.push(er);
+              }
+            });
           }
+        } catch (fallbackErr) {
+          console.warn("Unable to load Rang De records from Entrepreneurs sheet:", fallbackErr);
         }
 
-        recordList = validSheetRecords.map((r, idx) => normalizeRangDeRecord(r, idx));
+        recordList = combinedRangDe.map((r, idx) => normalizeRangDeRecord(r, idx));
       }
 
       // Merge user bulk-uploaded records in this session so they stay visible

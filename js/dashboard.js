@@ -170,6 +170,13 @@ const DashboardModule = (function() {
 
       const totalMob = mobList.reduce((acc, m) => acc + (Number(m.Total_Mobilized) || 0), 0) || ymList.length;
 
+      // Separate Rang De records from general entrepreneurs so KPIs match reality
+      const rangDeInEnt = entList.filter(e => {
+        return Object.values(e).some(v => typeof v === "string" && (v.toLowerCase().includes("rang de") || v.toLowerCase().includes("rangde") || v.toLowerCase().trim() === "rang"));
+      });
+      const pureEntList = entList.filter(e => !rangDeInEnt.includes(e));
+      const finalRangDeList = rdList.length > 0 ? rdList : rangDeInEnt;
+
       const computedKpis = {
         totalMobilized: totalMob,
         mForm: mfList.length,
@@ -179,12 +186,12 @@ const DashboardModule = (function() {
         employmentRegistered: erList.length,
         employmentLinked: elList.length,
         educationLinked: eduList.length,
-        entrepreneursIdentified: entList.length,
-        entrepreneursEstablished: entList.filter(e => String(e.Stage || "").toLowerCase() === "established").length,
+        entrepreneursIdentified: pureEntList.length,
+        entrepreneursEstablished: pureEntList.filter(e => String(e.Stage || "").toLowerCase() === "established").length,
         navgurukul: ngList.length,
         trainingConducted: trgList.length,
         rehabilitation: rehList.length,
-        rangde: rdList.length
+        rangde: finalRangDeList.length
       };
 
       updateKpiCards(computedKpis);

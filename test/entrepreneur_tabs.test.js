@@ -62,4 +62,40 @@ describe('Entrepreneur Tabs (Identified vs Established) Tests', () => {
     assert.equal(fn({ Establishment_Date: '2026-06-01' }), true);
     assert.equal(fn({ Updates: 'स्थापित इकाई - कार्य प्रगति पर' }), true);
   });
+
+  test('Rang De classification and normalization correctly handles live sheet formats and shifted columns', () => {
+    const isRangMatch = formsJs.match(/function isRangDeEntrepreneurRecord\([\s\S]*?\n  \}/);
+    assert.ok(isRangMatch, 'isRangDeEntrepreneurRecord must exist');
+    const isRangFn = new Function('rec', isRangMatch[0] + '\nreturn isRangDeEntrepreneurRecord(rec);');
+
+    // Positive identification
+    assert.equal(isRangFn({ '': 'RANG DE', 'FATHER NAME': 'PILU RAM KASHYAP' }), true);
+    assert.equal(isRangFn({ Remarks: 'RANG DE' }), true);
+    assert.equal(isRangFn({ Loan_Scheme: 'Rang De' }), true);
+    assert.equal(isRangFn({ REMARK: 'रंग दे ऋण' }), true);
+
+    // Negative identification
+    assert.equal(isRangFn({ Stage: 'Identified', Remarks: 'PMEGP' }), false);
+    assert.equal(isRangFn({ Name: 'Amit Kumar', Business: 'Kirana' }), false);
+
+    // Normalization with shifted columns
+    const normMatch = formsJs.match(/function normalizeRangDeRecord\([\s\S]*?\n  \}/);
+    assert.ok(normMatch, 'normalizeRangDeRecord must exist');
+    const normFn = new Function('rec, idx', normMatch[0] + '\nreturn normalizeRangDeRecord(rec, idx);');
+
+    const sampleRow = {
+      'S.NO': 'ENT-2026-0128',
+      'BLOCK': 7587180868,
+      'NAME': '',
+      'FATHER NAME': 'VIMAL KUMAR BAGHEL',
+      'BUSINESS': 'BARSOOR',
+      '': 'RANG DE'
+    };
+
+    const normalized = normFn(sampleRow, 0);
+    assert.equal(normalized.Name, 'VIMAL KUMAR BAGHEL', 'Name should be mapped from FATHER NAME if empty');
+    assert.equal(normalized.Mobile, '7587180868', 'Mobile should be extracted from shifted numeric BLOCK column');
+    assert.equal(normalized.Address, 'BARSOOR', 'Address should be mapped from BUSINESS location');
+    assert.equal(normalized.Remarks, 'RANG DE');
+  });
 });

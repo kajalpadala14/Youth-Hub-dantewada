@@ -868,16 +868,30 @@ const App = (function() {
   function openAddUserDrawer() {
     const drawer = document.getElementById("drawer_formUser");
     const backdrop = document.getElementById("slideOverBackdrop");
-    if (drawer) drawer.classList.add("open");
-    if (backdrop) backdrop.classList.add("open");
+    if (drawer) {
+      drawer.classList.add("active");
+      drawer.classList.add("open");
+    }
+    if (backdrop) {
+      backdrop.classList.add("active");
+      backdrop.classList.add("open");
+    }
+    document.body.classList.add("drawer-open");
     handleRoleChange('new');
   }
 
   function closeAddUserDrawer() {
     const drawer = document.getElementById("drawer_formUser");
     const backdrop = document.getElementById("slideOverBackdrop");
-    if (drawer) drawer.classList.remove("open");
-    if (backdrop) backdrop.classList.remove("open");
+    if (drawer) {
+      drawer.classList.remove("active");
+      drawer.classList.remove("open");
+    }
+    if (backdrop) {
+      backdrop.classList.remove("active");
+      backdrop.classList.remove("open");
+    }
+    document.body.classList.remove("drawer-open");
   }
 
   function handleRoleChange(type) {

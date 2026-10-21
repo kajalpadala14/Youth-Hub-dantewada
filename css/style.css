@@ -1617,7 +1617,8 @@ textarea.form-control {
   transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.slide-over-backdrop.active {
+.slide-over-backdrop.active,
+.slide-over-backdrop.open {
   opacity: 1;
   pointer-events: auto;
 }
@@ -1644,7 +1645,8 @@ body.drawer-open {
   border-left: 1px solid rgba(0, 0, 0, 0.1);
 }
 
-.slide-over-drawer.active {
+.slide-over-drawer.active,
+.slide-over-drawer.open {
   transform: translateX(0);
 }
 

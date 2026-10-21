@@ -685,8 +685,21 @@ const GalleryModule = (function() {
   function openAddPhotoDrawer() {
     const drawer = document.getElementById("drawer_formGallery");
     const backdrop = document.getElementById("slideOverBackdrop");
-    if (drawer) drawer.classList.add("open");
-    if (backdrop) backdrop.classList.add("active");
+    if (drawer) {
+      drawer.classList.add("active");
+      drawer.classList.add("open");
+    }
+    if (backdrop) {
+      backdrop.classList.add("active");
+      backdrop.classList.add("open");
+    }
+    document.body.classList.add("drawer-open");
+
+    // Ensure block options are populated
+    const blockSelect = document.getElementById("galBlock");
+    if (blockSelect && blockSelect.children.length <= 1) {
+      populateBlockFilters();
+    }
 
     // Default date to today
     const dateInput = document.getElementById("galDate");
@@ -697,7 +710,6 @@ const GalleryModule = (function() {
     // Default block for operators
     const currentUser = API.getCurrentUser();
     if (currentUser && currentUser.block && currentUser.block !== "All") {
-      const blockSelect = document.getElementById("galBlock");
       if (blockSelect) {
         blockSelect.value = currentUser.block;
         blockSelect.disabled = true;
@@ -709,8 +721,15 @@ const GalleryModule = (function() {
   function closeAddPhotoDrawer() {
     const drawer = document.getElementById("drawer_formGallery");
     const backdrop = document.getElementById("slideOverBackdrop");
-    if (drawer) drawer.classList.remove("open");
-    if (backdrop) backdrop.classList.remove("active");
+    if (drawer) {
+      drawer.classList.remove("active");
+      drawer.classList.remove("open");
+    }
+    if (backdrop) {
+      backdrop.classList.remove("active");
+      backdrop.classList.remove("open");
+    }
+    document.body.classList.remove("drawer-open");
   }
 
   async function handleAddPhotoSubmit(e) {

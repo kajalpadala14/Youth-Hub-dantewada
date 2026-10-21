@@ -3033,25 +3033,6 @@ body.drawer-open {
   gap: 5px;
 }
 
-.btn-action-role {
-  background: #EFF6FF;
-  color: #1D4ED8;
-  border: 1px solid #BFDBFE;
-  border-radius: 6px;
-  padding: 4px 8px;
-  font-size: 11.5px;
-  font-weight: 600;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  transition: all 0.15s ease;
-}
-
-.btn-action-role:hover {
-  background: #1D4ED8;
-  color: #FFFFFF;
-}
 
 .btn-action-icon {
   background: #F8FAFC;
@@ -3079,4 +3060,79 @@ body.drawer-open {
   color: #DC2626;
   border-color: #FCA5A5;
 }
+
+/* ==========================================================================
+   Module Tab Navigation (e.g. Entrepreneurship Identified vs Established)
+   ========================================================================== */
+.module-tab-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 1.5rem;
+  padding: 6px;
+  background: #F1F5F9;
+  border-radius: 12px;
+  border: 1px solid #E2E8F0;
+  width: fit-content;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.module-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 18px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #64748B;
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.module-tab-btn:hover {
+  color: #1E293B;
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.module-tab-btn.active {
+  background: #FFFFFF;
+  color: #0F172A;
+  border-color: #CBD5E1;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.module-tab-btn .tab-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 12px;
+  background: #E2E8F0;
+  color: #475569;
+}
+
+.module-tab-btn.active .tab-badge {
+  background: #EFF6FF;
+  color: #2563EB;
+}
+
+.module-tab-btn[data-ent-tab="identified"].active {
+  border-left: 3px solid #D97706;
+}
+
+.module-tab-btn[data-ent-tab="established"].active {
+  border-left: 3px solid #0284C7;
+}
+
+.module-tab-btn[data-ent-tab="loan"].active {
+  border-left: 3px solid #7C3AED;
+}
+
 

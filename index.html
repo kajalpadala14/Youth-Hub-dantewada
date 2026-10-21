@@ -166,14 +166,6 @@
               <i class="fas fa-lightbulb sub-icon"></i>
               <span class="sub-label">Entrepreneurs Identified / चिन्हांकित</span>
             </a>
-            <a class="nav-sub-item" data-view="rangde" data-tooltip="Rang De Loan / रंग दे ऋण योजना">
-              <i class="fas fa-hand-holding-dollar sub-icon"></i>
-              <span class="sub-label">Rang De Loan / रंग दे ऋण</span>
-            </a>
-            <a class="nav-sub-item" data-view="entrepreneurship" data-subview="loan" data-tooltip="Loan Process / ऋण प्रक्रिया">
-              <i class="fas fa-file-invoice-dollar sub-icon"></i>
-              <span class="sub-label">Loan Process / ऋण प्रक्रिया</span>
-            </a>
             <a class="nav-sub-item" data-view="entrepreneurship" data-subview="established" data-tooltip="Entrepreneurs Established / स्थापित स्वरोजगार">
               <i class="fas fa-building sub-icon"></i>
               <span class="sub-label">Entrepreneurs Established / स्थापित</span>
@@ -556,7 +548,7 @@
             </div>
 
             <!-- 8. Entrepreneurs Identified -->
-            <div class="kpi-card amber" onclick="App.switchView('entrepreneurship')">
+            <div class="kpi-card amber" onclick="App.switchView('entrepreneurship', 'identified')">
               <div class="kpi-icon"><i class="fas fa-lightbulb"></i></div>
               <div class="kpi-details">
                 <div class="kpi-value" id="kpiEntIdentified">0</div>
@@ -566,7 +558,7 @@
             </div>
 
             <!-- 9. Entrepreneurs Established -->
-            <div class="kpi-card sky" onclick="App.switchView('entrepreneurship')">
+            <div class="kpi-card sky" onclick="App.switchView('entrepreneurship', 'established')">
               <div class="kpi-icon"><i class="fas fa-store-alt"></i></div>
               <div class="kpi-details">
                 <div class="kpi-value" id="kpiEntEstablished">0</div>
@@ -2358,58 +2350,130 @@
              VIEW 10: ENTREPRENEURSHIP
         =========================================== -->
         <section class="page-section" id="view_entrepreneurship">
-          <!-- Main Table Card: Entrepreneur Records -->
-          <div class="form-card">
-            <div class="form-header table-card-header">
-              <div class="table-header-info">
-                <div class="table-header-icon-box bg-amber-subtle">
-                  <i class="fas fa-store-alt"></i>
+          <!-- Top Tab Navigation Bar -->
+          <div class="module-tab-nav">
+            <button type="button" class="module-tab-btn active" data-ent-tab="identified" onclick="Forms.switchEntTab('identified')">
+              <i class="fas fa-lightbulb text-amber"></i>
+              <span>Entrepreneurs Identified / चिन्हांकित उद्यमी</span>
+              <span class="tab-badge" id="badgeEntIdentifiedCount">0</span>
+            </button>
+            <button type="button" class="module-tab-btn" data-ent-tab="established" onclick="Forms.switchEntTab('established')">
+              <i class="fas fa-building text-sky"></i>
+              <span>Entrepreneurs Established / स्थापित स्वरोजगार</span>
+              <span class="tab-badge" id="badgeEntEstablishedCount">0</span>
+            </button>
+          </div>
+
+          <!-- TAB 1: ENTREPRENEURS IDENTIFIED -->
+          <div class="ent-tab-content" id="entTabContent_identified" data-ent-tab="identified">
+            <div class="form-card">
+              <div class="form-header table-card-header">
+                <div class="table-header-info">
+                  <div class="table-header-icon-box bg-amber-subtle">
+                    <i class="fas fa-lightbulb"></i>
+                  </div>
+                  <div class="table-header-text">
+                    <h3 class="table-header-title">
+                      Entrepreneurs Identified Records
+                      <span class="table-header-sub-hi">/ चिन्हांकित उद्यमी रिकॉर्ड्स</span>
+                    </h3>
+                    <p class="table-header-desc">Candidates, prospective entrepreneurs & youth identified for business/enterprise creation</p>
+                  </div>
                 </div>
-                <div class="table-header-text">
-                  <h3 class="table-header-title">
-                    Entrepreneurship Pipeline Records
-                    <span class="table-header-sub-hi">/ उद्यमिता एवं स्वरोजगार रिकॉर्ड्स</span>
-                  </h3>
-                  <p class="table-header-desc">Identified entrepreneurs and established micro-enterprises</p>
+                <div class="table-header-toolbar">
+                  <div class="table-scheme-filters" style="display: flex; gap: 5px; align-items: center; margin-right: 4px;">
+                    <button type="button" class="btn-tb-secondary active" onclick="Forms.filterByLoanScheme('all', this, 'ent_identified')" style="padding: 4px 10px; font-size: 11px; border-radius: 16px; cursor: pointer;">All / सभी</button>
+                    <button type="button" class="btn-tb-secondary" onclick="Forms.filterByLoanScheme('Rang De', this, 'ent_identified')" style="padding: 4px 10px; font-size: 11px; border-radius: 16px; color: #4338CA; border-color: #C7D2FE; font-weight: 700; cursor: pointer;"><i class="fas fa-hand-holding-dollar text-purple"></i> Rang De Loan</button>
+                    <button type="button" class="btn-tb-secondary" onclick="Forms.filterByLoanScheme('PMEGP', this, 'ent_identified')" style="padding: 4px 10px; font-size: 11px; border-radius: 16px; cursor: pointer;">PMEGP</button>
+                    <button type="button" class="btn-tb-secondary" onclick="Forms.filterByLoanScheme('MUDRA', this, 'ent_identified')" style="padding: 4px 10px; font-size: 11px; border-radius: 16px; cursor: pointer;">MUDRA</button>
+                  </div>
+                  <div class="table-search-box">
+                    <i class="fas fa-search table-search-icon"></i>
+                    <input type="text" class="table-search-input" id="searchTblEntIdentified" placeholder="Search identified entrepreneurs...">
+                  </div>
+                  <span class="table-count-badge" id="countTblEntIdentified">0 records</span>
+                  <div class="table-actions">
+                    <button type="button" class="btn-tb-secondary" onclick="Forms.loadTabTable('ent_identified')" title="Refresh Data">
+                      <i class="fas fa-sync-alt"></i> <span>Refresh</span>
+                    </button>
+                    <button type="button" class="btn-tb-secondary btn-table-export-csv" onclick="Forms.exportTableCSV('ent_identified')" title="Export to CSV">
+                      <i class="fas fa-file-csv text-emerald"></i> <span>Export CSV</span>
+                    </button>
+                    <button type="button" class="btn-tb-bulk btn-table-bulk-upload" onclick="Forms.openBulkUploadModal('ent_identified')" title="Bulk Upload Excel">
+                      <i class="fas fa-file-excel"></i> <span>Bulk Upload</span>
+                    </button>
+                    <button type="button" class="btn-tb-primary btn-open-drawer" onclick="Forms.openDrawer('formEntrepreneur', 'Identified')">
+                      <i class="fas fa-plus"></i> <span>+ Add Identified Entrepreneur</span>
+                    </button>
+                  </div>
                 </div>
               </div>
-              <div class="table-header-toolbar">
-                <div class="table-scheme-filters" style="display: flex; gap: 5px; align-items: center; margin-right: 4px;">
-                  <button type="button" class="btn-tb-secondary active" onclick="Forms.filterByLoanScheme('all', this)" style="padding: 4px 10px; font-size: 11px; border-radius: 16px; cursor: pointer;">All / सभी</button>
-                  <button type="button" class="btn-tb-secondary" onclick="Forms.filterByLoanScheme('Rang De', this)" style="padding: 4px 10px; font-size: 11px; border-radius: 16px; color: #4338CA; border-color: #C7D2FE; font-weight: 700; cursor: pointer;"><i class="fas fa-hand-holding-dollar text-purple"></i> Rang De Loan</button>
-                  <button type="button" class="btn-tb-secondary" onclick="Forms.filterByLoanScheme('PMEGP', this)" style="padding: 4px 10px; font-size: 11px; border-radius: 16px; cursor: pointer;">PMEGP</button>
-                  <button type="button" class="btn-tb-secondary" onclick="Forms.filterByLoanScheme('MUDRA', this)" style="padding: 4px 10px; font-size: 11px; border-radius: 16px; cursor: pointer;">MUDRA</button>
-                </div>
-                <div class="table-search-box">
-                  <i class="fas fa-search table-search-icon"></i>
-                  <input type="text" class="table-search-input" id="searchTblEntrepreneurs" placeholder="Search entrepreneurs, Rang De, PMEGP...">
-                </div>
-                <span class="table-count-badge" id="countTblEntrepreneurs">0 records</span>
-                <div class="table-actions">
-                  <button type="button" class="btn-tb-secondary" onclick="Forms.loadTabTable('entrepreneurship')" title="Refresh Data">
-                    <i class="fas fa-sync-alt"></i> <span>Refresh</span>
-                  </button>
-                  <button type="button" class="btn-tb-secondary btn-table-export-csv" onclick="Forms.exportTableCSV('entrepreneurship')" title="Export to CSV">
-                    <i class="fas fa-file-csv text-emerald"></i> <span>Export CSV</span>
-                  </button>
-                  <button type="button" class="btn-tb-bulk btn-table-bulk-upload" onclick="Forms.openBulkUploadModal('entrepreneurship')" title="Bulk Upload Excel">
-                    <i class="fas fa-file-excel"></i> <span>Bulk Upload</span>
-                  </button>
-                  <button type="button" class="btn-tb-secondary" onclick="Forms.openRangDeDrawer()" title="Add Rang De Loan Entry" style="background: #EEF2FF; color: #4338CA; border-color: #C7D2FE; font-weight: 600;">
-                    <i class="fas fa-hand-holding-dollar"></i> <span>+ Rang De Loan</span>
-                  </button>
-                  <button type="button" class="btn-tb-primary btn-open-drawer" onclick="Forms.openDrawer('formEntrepreneur')">
-                    <i class="fas fa-plus"></i> <span>Add Entrepreneur</span>
-                  </button>
-                </div>
+              <div class="table-responsive">
+                <table class="data-table" id="tblEntIdentified">
+                  <thead></thead>
+                  <tbody></tbody>
+                </table>
               </div>
             </div>
-            <div class="table-responsive">
-              <table class="data-table" id="tblEntrepreneurs">
-                <thead></thead>
-                <tbody></tbody>
-              </table>
+          </div>
+
+          <!-- TAB 2: ENTREPRENEURS ESTABLISHED -->
+          <div class="ent-tab-content" id="entTabContent_established" data-ent-tab="established" style="display: none;">
+            <div class="form-card">
+              <div class="form-header table-card-header">
+                <div class="table-header-info">
+                  <div class="table-header-icon-box bg-sky-subtle">
+                    <i class="fas fa-building text-sky"></i>
+                  </div>
+                  <div class="table-header-text">
+                    <h3 class="table-header-title">
+                      Entrepreneurs Established Records
+                      <span class="table-header-sub-hi">/ स्थापित स्वरोजगार रिकॉर्ड्स</span>
+                    </h3>
+                    <p class="table-header-desc">Verified micro-enterprises, grounded self-employment units & active operational businesses</p>
+                  </div>
+                </div>
+                <div class="table-header-toolbar">
+                  <div class="table-scheme-filters" style="display: flex; gap: 5px; align-items: center; margin-right: 4px;">
+                    <button type="button" class="btn-tb-secondary active" onclick="Forms.filterByLoanScheme('all', this, 'ent_established')" style="padding: 4px 10px; font-size: 11px; border-radius: 16px; cursor: pointer;">All / सभी</button>
+                    <button type="button" class="btn-tb-secondary" onclick="Forms.filterByLoanScheme('Rang De', this, 'ent_established')" style="padding: 4px 10px; font-size: 11px; border-radius: 16px; color: #4338CA; border-color: #C7D2FE; font-weight: 700; cursor: pointer;"><i class="fas fa-hand-holding-dollar text-purple"></i> Rang De Loan</button>
+                    <button type="button" class="btn-tb-secondary" onclick="Forms.filterByLoanScheme('PMEGP', this, 'ent_established')" style="padding: 4px 10px; font-size: 11px; border-radius: 16px; cursor: pointer;">PMEGP</button>
+                    <button type="button" class="btn-tb-secondary" onclick="Forms.filterByLoanScheme('MUDRA', this, 'ent_established')" style="padding: 4px 10px; font-size: 11px; border-radius: 16px; cursor: pointer;">MUDRA</button>
+                  </div>
+                  <div class="table-search-box">
+                    <i class="fas fa-search table-search-icon"></i>
+                    <input type="text" class="table-search-input" id="searchTblEntEstablished" placeholder="Search established entrepreneurs...">
+                  </div>
+                  <span class="table-count-badge" id="countTblEntEstablished">0 records</span>
+                  <div class="table-actions">
+                    <button type="button" class="btn-tb-secondary" onclick="Forms.loadTabTable('ent_established')" title="Refresh Data">
+                      <i class="fas fa-sync-alt"></i> <span>Refresh</span>
+                    </button>
+                    <button type="button" class="btn-tb-secondary btn-table-export-csv" onclick="Forms.exportTableCSV('ent_established')" title="Export to CSV">
+                      <i class="fas fa-file-csv text-emerald"></i> <span>Export CSV</span>
+                    </button>
+                    <button type="button" class="btn-tb-bulk btn-table-bulk-upload" onclick="Forms.openBulkUploadModal('ent_established')" title="Bulk Upload Excel">
+                      <i class="fas fa-file-excel"></i> <span>Bulk Upload</span>
+                    </button>
+                    <button type="button" class="btn-tb-primary btn-open-drawer" onclick="Forms.openDrawer('formEntrepreneur', 'Established')" style="background: #0284C7; border-color: #0284C7;">
+                      <i class="fas fa-plus"></i> <span>+ Add Established Entrepreneur</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div class="table-responsive">
+                <table class="data-table" id="tblEntEstablished">
+                  <thead></thead>
+                  <tbody></tbody>
+                </table>
+              </div>
             </div>
+          </div>
+          <!-- Hidden compatibility elements for legacy selector fallback -->
+          <div style="display:none;">
+            <input type="text" id="searchTblEntrepreneurs">
+            <span id="countTblEntrepreneurs"></span>
+            <table id="tblEntrepreneurs"><thead></thead><tbody></tbody></table>
           </div>
 
           <!-- Slide-Over Drawer: Entrepreneurship Form -->

@@ -37,42 +37,6 @@ const App = (function() {
     }
   }
 
-  const ROLE_PROFILES = {
-    ADMIN: {
-      id: "USR-001",
-      name: "जिला रोजगार अधिकारी",
-      email: "eo.dantewada@gmail.com",
-      role: "ADMIN",
-      block: "All",
-      youthHub: "All",
-      badgeTitle: "👑 जिला रोजगार अधिकारी (Admin)",
-      badgeClass: "badge-admin",
-      initials: "EO"
-    },
-    DANTEWADA: {
-      id: "USR-002",
-      name: "Youth Hub Dantewada",
-      email: "youthhub.dantewada@gmail.com",
-      role: "HUB_OPERATOR",
-      block: "Dantewada",
-      youthHub: "Youth Hub Dantewada",
-      badgeTitle: "🏢 Youth Hub Dantewada (दंतेवाड़ा)",
-      badgeClass: "badge-hub-dantewada",
-      initials: "DH"
-    },
-    GEEDAM: {
-      id: "USR-003",
-      name: "Youth Hub Geedam",
-      email: "youthhub.geedam@gmail.com",
-      role: "HUB_OPERATOR",
-      block: "Geedam",
-      youthHub: "Youth Hub Geedam",
-      badgeTitle: "💡 Youth Hub Geedam (गीदम)",
-      badgeClass: "badge-hub-geedam",
-      initials: "GH"
-    }
-  };
-
   /**
    * Authentication Verification & UI Setup
    */
@@ -158,31 +122,6 @@ const App = (function() {
     }
   }
 
-  function quickRoleLogin(roleKey) {
-    const profile = ROLE_PROFILES[roleKey];
-    if (!profile) return;
-
-    const token = "TOKEN-LIVE-" + Date.now();
-    API.setSession(token, profile);
-    currentUser = profile;
-    showLoginModal(false);
-    updateUserUI();
-    showToast(`स्विच किया गया: ${profile.name} (${profile.role})`, "success");
-
-    // Refresh active views
-    DashboardModule.loadDashboard();
-    ReportsModule.loadActiveReport();
-    
-    // Refresh current visible table if on a module view
-    const activeSection = document.querySelector(".page-section.active");
-    if (activeSection && activeSection.id.startsWith("view_")) {
-      const viewKey = activeSection.id.replace("view_", "");
-      if (viewKey !== "dashboard" && viewKey !== "reports" && viewKey !== "users") {
-        Forms.loadTabTable(viewKey);
-      }
-    }
-  }
-
   function showLoginModal(show) {
     const modal = document.getElementById("loginModal");
     if (modal) {
@@ -249,6 +188,15 @@ const App = (function() {
   }
 
   function switchView(viewName, subView = null, reportType = null, scrollTargetId = null) {
+    if (viewName === "ent_identified") {
+      switchView("entrepreneurship", "identified");
+      return;
+    }
+    if (viewName === "ent_established") {
+      switchView("entrepreneurship", "established");
+      return;
+    }
+
     // Reset active states
     document.querySelectorAll(".nav-item, .nav-sub-item").forEach(el => el.classList.remove("active"));
     document.querySelectorAll(".nav-dropdown-toggle").forEach(el => el.classList.remove("has-active-child"));
@@ -355,29 +303,14 @@ const App = (function() {
           }, 150);
         }
       } else if (viewName === "entrepreneurship") {
-        Forms.loadTabTable(viewName);
-        if (subView === "identified") {
-          const stageSelect = document.querySelector("#formEntrepreneur select[name='Stage']");
-          if (stageSelect) stageSelect.value = "Identified";
-          setTimeout(() => {
-            const el = document.getElementById("tblEntrepreneurs") ? document.getElementById("tblEntrepreneurs").closest(".form-card") : null;
-            if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-          }, 150);
-        } else if (subView === "rangde") {
+        Forms.loadTabTable("ent_identified");
+        if (subView === "rangde") {
           switchView("rangde");
           return;
-        } else if (subView === "loan") {
-          setTimeout(() => {
-            const el = document.getElementById("tblEntrepreneurs") ? document.getElementById("tblEntrepreneurs").closest(".form-card") : null;
-            if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
-          }, 150);
         } else if (subView === "established") {
-          const stageSelect = document.querySelector("#formEntrepreneur select[name='Stage']");
-          if (stageSelect) stageSelect.value = "Established";
-          setTimeout(() => {
-            const el = document.getElementById("tblEntrepreneurs") ? document.getElementById("tblEntrepreneurs").closest(".form-card") : null;
-            if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-          }, 150);
+          Forms.switchEntTab("established");
+        } else {
+          Forms.switchEntTab("identified");
         }
       } else {
         Forms.loadTabTable(viewName);
@@ -684,56 +617,6 @@ const App = (function() {
     }
 
     try {
-      const emailLower = (email || "").trim().toLowerCase();
-      const passClean = (password || "").trim();
-
-      // 1. Direct match with built-in default role profiles
-      const matchedRole = Object.values(ROLE_PROFILES).find(p => p.email.toLowerCase() === emailLower);
-      if (matchedRole) {
-        const validPass = matchedRole.role === "ADMIN" ? "Admin@EO2026" 
-                        : matchedRole.block === "Dantewada" ? "Dantewada@2026" 
-                        : "Geedam@2026";
-        if (passClean === validPass) {
-          const token = "TOKEN-LIVE-" + Date.now();
-          API.setSession(token, matchedRole);
-          currentUser = matchedRole;
-          showLoginModal(false);
-          updateUserUI();
-          DashboardModule.init();
-          ReportsModule.init();
-          showToast(`Welcome back, ${matchedRole.name}!`, "success");
-          return;
-        }
-      }
-
-      // 2. Check local custom users added in this session or stored locally
-      const customUsers = getLocalCustomUsers();
-      const matchedCustom = customUsers.find(u => u.Email.toLowerCase() === emailLower && u.Password_Hash === passClean);
-      if (matchedCustom) {
-        const userObj = {
-          id: matchedCustom.User_ID,
-          userId: matchedCustom.User_ID,
-          name: matchedCustom.Name,
-          email: matchedCustom.Email,
-          role: matchedCustom.Role,
-          block: matchedCustom.Block,
-          youthHub: matchedCustom.Youth_Hub || (matchedCustom.Block !== "All" ? `Youth Hub ${matchedCustom.Block}` : "All"),
-          badgeTitle: `${matchedCustom.Role === 'ADMIN' ? '👑' : '👤'} ${matchedCustom.Name} (${matchedCustom.Role})`,
-          badgeClass: matchedCustom.Role === 'ADMIN' ? 'badge-admin' : 'badge-hub-dantewada',
-          initials: (matchedCustom.Name || "U").substring(0, 2).toUpperCase()
-        };
-        const token = "TOKEN-CUSTOM-" + Date.now();
-        API.setSession(token, userObj);
-        currentUser = userObj;
-        showLoginModal(false);
-        updateUserUI();
-        DashboardModule.init();
-        ReportsModule.init();
-        showToast(`Welcome back, ${userObj.name} (${userObj.role})!`, "success");
-        return;
-      }
-
-      // 3. Fallback to Google Apps Script backend login API
       const res = await API.call("login", { email, password });
       if (res && res.success && res.user) {
         API.setSession(res.token, res.user);
@@ -802,7 +685,6 @@ const App = (function() {
         User_ID: "USR-001",
         Name: "जिला रोजगार अधिकारी (District Employment Officer)",
         Email: "eo.dantewada@gmail.com",
-        Password_Hash: "Admin@EO2026",
         Role: "ADMIN",
         Block: "All",
         Youth_Hub: "All",
@@ -813,7 +695,6 @@ const App = (function() {
         User_ID: "USR-002",
         Name: "Youth Hub Operator - Dantewada",
         Email: "youthhub.dantewada@gmail.com",
-        Password_Hash: "Dantewada@2026",
         Role: "HUB_OPERATOR",
         Block: "Dantewada",
         Youth_Hub: "Youth Hub Dantewada",
@@ -824,7 +705,6 @@ const App = (function() {
         User_ID: "USR-003",
         Name: "Youth Hub Operator - Geedam",
         Email: "youthhub.geedam@gmail.com",
-        Password_Hash: "Geedam@2026",
         Role: "HUB_OPERATOR",
         Block: "Geedam",
         Youth_Hub: "Youth Hub Geedam",
@@ -949,9 +829,6 @@ const App = (function() {
           <td>${statusBadge}</td>
           <td style="text-align: center;">
             <div style="display: inline-flex; gap: 6px; align-items: center; justify-content: center;">
-              <button type="button" class="btn-action-role" title="Switch Role / इस प्रोफाइल पर स्विच करें" onclick="App.switchUserRole('${escapeHtml(u.Email)}')">
-                <i class="fas fa-exchange-alt"></i> Switch
-              </button>
               <button type="button" class="btn-action-icon" title="Edit Role Assignment" onclick="App.openEditUserModal('${escapeHtml(u.Email)}')">
                 <i class="fas fa-edit"></i>
               </button>
@@ -1237,48 +1114,6 @@ const App = (function() {
     }
   }
 
-  /**
-   * 1-Click Role Switcher directly from the User Table
-   */
-  function switchUserRole(email) {
-    const user = cachedUsersList.find(u => u.Email.toLowerCase() === email.toLowerCase());
-    if (!user) {
-      showToast("उपयोगकर्ता नहीं मिला", "warning");
-      return;
-    }
-
-    const sessionUser = {
-      id: user.User_ID,
-      userId: user.User_ID,
-      name: user.Name,
-      email: user.Email,
-      role: user.Role,
-      block: user.Block,
-      youthHub: user.Youth_Hub || (user.Block !== "All" ? `Youth Hub ${user.Block}` : "All"),
-      badgeTitle: `${user.Role === 'ADMIN' ? '👑' : '👤'} ${user.Name} (${user.Role})`,
-      badgeClass: user.Role === 'ADMIN' ? 'badge-admin' : 'badge-hub-dantewada',
-      initials: (user.Name || "U").substring(0, 2).toUpperCase()
-    };
-
-    const token = "TOKEN-SWITCH-" + Date.now();
-    API.setSession(token, sessionUser);
-    currentUser = sessionUser;
-
-    showToast(`सक्रिय प्रोफाइल स्विच की गई: ${user.Name} (${user.Role} - ${user.Block})`, "success");
-    updateUserUI();
-
-    // Re-render users table to show new active indicator
-    renderUsersTable(cachedUsersList);
-
-    // Refresh dashboard and reports with block restrictions
-    if (window.DashboardModule && DashboardModule.loadDashboard) {
-      DashboardModule.loadDashboard();
-    }
-    if (window.ReportsModule && ReportsModule.loadActiveReport) {
-      ReportsModule.loadActiveReport();
-    }
-  }
-
   function escapeHtml(text) {
     if (!text) return "";
     return String(text)
@@ -1296,7 +1131,6 @@ const App = (function() {
     handleLogin,
     handleLogout,
     showLoginModal,
-    quickRoleLogin,
     loadUsersTable,
     filterUsersTable,
     openAddUserDrawer,
@@ -1307,8 +1141,7 @@ const App = (function() {
     openEditUserModal,
     closeEditUserModal,
     handleEditUserSubmit,
-    deleteUser,
-    switchUserRole
+    deleteUser
   };
 })();
 

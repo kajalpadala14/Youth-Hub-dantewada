@@ -275,40 +275,6 @@
   <script src="js/env.js"></script>
   <script src="js/api.js"></script>
   <script>
-    // Defined standard role profiles for Dantewada & Geedam
-    const ROLE_PROFILES = {
-      ADMIN: {
-        id: "USR-001",
-        name: "जिला रोजगार अधिकारी",
-        email: "eo.dantewada@gmail.com",
-        role: "ADMIN",
-        block: "All",
-        youthHub: "All",
-        badgeTitle: "👑 जिला रोजगार अधिकारी (Admin)",
-        initials: "EO"
-      },
-      DANTEWADA: {
-        id: "USR-002",
-        name: "Youth Hub Dantewada",
-        email: "youthhub.dantewada@gmail.com",
-        role: "HUB_OPERATOR",
-        block: "Dantewada",
-        youthHub: "Youth Hub Dantewada",
-        badgeTitle: "🏢 Youth Hub Dantewada",
-        initials: "DH"
-      },
-      GEEDAM: {
-        id: "USR-003",
-        name: "Youth Hub Geedam",
-        email: "youthhub.geedam@gmail.com",
-        role: "HUB_OPERATOR",
-        block: "Geedam",
-        youthHub: "Youth Hub Geedam",
-        badgeTitle: "💡 Youth Hub Geedam",
-        initials: "GH"
-      }
-    };
-
     function showAlert(msg, isError = true) {
       const alertBox = document.getElementById("loginAlert");
       const alertText = document.getElementById("loginAlertText");
@@ -333,21 +299,6 @@
       }
     }
 
-    // 1-Click Role Login
-    function loginAsRole(roleKey) {
-      const profile = ROLE_PROFILES[roleKey];
-      if (!profile) return;
-
-      const token = "TOKEN-LIVE-" + Date.now();
-      API.setSession(token, profile);
-
-      showAlert(`सफलतापूर्वक लॉगिन: ${profile.name}! रीडायरेक्ट हो रहा है...`, false);
-      setTimeout(() => {
-        window.location.href = "index.html";
-      }, 400);
-    }
-
-    // Standard credential login against Google Apps Script backend
     async function handleCustomLogin(e) {
       e.preventDefault();
       const email = document.getElementById("inputEmail").value.trim();
@@ -363,59 +314,6 @@
       btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> प्रमाणीकरण जारी है...';
 
       try {
-        const emailClean = email.toLowerCase().trim();
-        const passClean = password.trim();
-
-        // 1. Direct match with defined role profiles
-        const matchedRole = Object.values(ROLE_PROFILES).find(p => p.email.toLowerCase().trim() === emailClean);
-        if (matchedRole) {
-          const validPass = matchedRole.role === "ADMIN" ? "Admin@EO2026" 
-                          : matchedRole.block === "Dantewada" ? "Dantewada@2026" 
-                          : "Geedam@2026";
-          if (passClean === validPass) {
-            const token = "TOKEN-LIVE-" + Date.now();
-            API.setSession(token, matchedRole);
-            showAlert(`स्वागत है, ${matchedRole.name}! रीडायरेक्ट हो रहा है...`, false);
-            setTimeout(() => {
-              window.location.href = "index.html";
-            }, 250);
-            return;
-          }
-        }
-
-        // 2. Check local custom users registered via User Management tab
-        try {
-          const rawCustom = localStorage.getItem("YH_DANTEWADA_CUSTOM_USERS");
-          if (rawCustom) {
-            const customUsers = JSON.parse(rawCustom);
-            const matchedCustom = customUsers.find(u => u.Email.toLowerCase() === emailClean && u.Password_Hash === passClean);
-            if (matchedCustom) {
-              const userObj = {
-                id: matchedCustom.User_ID,
-                userId: matchedCustom.User_ID,
-                name: matchedCustom.Name,
-                email: matchedCustom.Email,
-                role: matchedCustom.Role,
-                block: matchedCustom.Block,
-                youthHub: matchedCustom.Youth_Hub || (matchedCustom.Block !== "All" ? `Youth Hub ${matchedCustom.Block}` : "All"),
-                badgeTitle: `${matchedCustom.Role === 'ADMIN' ? '👑' : '👤'} ${matchedCustom.Name} (${matchedCustom.Role})`,
-                badgeClass: matchedCustom.Role === 'ADMIN' ? 'badge-admin' : 'badge-hub-dantewada',
-                initials: (matchedCustom.Name || "U").substring(0, 2).toUpperCase()
-              };
-              const token = "TOKEN-CUSTOM-" + Date.now();
-              API.setSession(token, userObj);
-              showAlert(`स्वागत है, ${userObj.name} (${userObj.role})! रीडायरेक्ट हो रहा है...`, false);
-              setTimeout(() => {
-                window.location.href = "index.html";
-              }, 250);
-              return;
-            }
-          }
-        } catch (errCustom) {
-          console.warn("Could not check custom users:", errCustom);
-        }
-
-        // 3. Check backend Google Apps Script
         const res = await API.call("login", { email, password });
         if (res && res.success && res.user) {
           API.setSession(res.token, res.user);

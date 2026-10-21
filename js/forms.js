@@ -206,6 +206,73 @@ const Forms = (function() {
         { key: "Updates", label: "UPDATES" }
       ]
     },
+    ent_identified: {
+      sheetName: "Entrepreneurs",
+      tableId: "tblEntIdentified",
+      searchId: "searchTblEntIdentified",
+      countId: "countTblEntIdentified",
+      idField: "S.NO",
+      columns: [
+        { key: "S_No", label: "S.NO", isSerial: true },
+        { key: "Block", label: "BLOCK" },
+        { key: "Name", label: "NAME" },
+        { key: "Father_Name", label: "FATHER NAME" },
+        { key: "Village", label: "VILLAGE" },
+        { key: "Mobile", label: "MOBILE NO." },
+        { key: "Business", label: "BUSINESS IDEA" },
+        { key: "Identification_Date", label: "IDENTIFIED ON" },
+        { key: "Business_Plan_Status", label: "BIZ PLAN", isStatusBadge: true },
+        { key: "DPR_Status", label: "DPR STATUS", isStatusBadge: true },
+        { key: "Loan_Amount", label: "LOAN REQUIRED", isMoney: true },
+        { key: "Loan_Scheme", label: "SCHEME" },
+        { key: "Updates", label: "UPDATES" },
+        { key: "Remarks", label: "REMARK" }
+      ]
+    },
+    ent_established: {
+      sheetName: "Entrepreneurs_Established",
+      tableId: "tblEntEstablished",
+      searchId: "searchTblEntEstablished",
+      countId: "countTblEntEstablished",
+      idField: "S.NO",
+      columns: [
+        { key: "S_No", label: "S.NO", isSerial: true },
+        { key: "Block", label: "BLOCK" },
+        { key: "Name", label: "NAME" },
+        { key: "Father_Name", label: "FATHER NAME" },
+        { key: "Village", label: "VILLAGE" },
+        { key: "Mobile", label: "MOBILE NO." },
+        { key: "Business", label: "BUSINESS" },
+        { key: "Loan_Amount", label: "LONE AMOUNT", isMoney: true },
+        { key: "Updates", label: "UPDATES / STATUS" }
+      ]
+    },
+    ent_loan: {
+      sheetName: "Entrepreneurs",
+      tableId: "tblEntLoan",
+      searchId: "searchTblEntLoan",
+      countId: "countTblEntLoan",
+      idField: "S.NO",
+      columns: [
+        { key: "S_No", label: "S.NO", isSerial: true },
+        { key: "Block", label: "BLOCK" },
+        { key: "Name", label: "NAME" },
+        { key: "Father_Name", label: "FATHER NAME" },
+        { key: "Village", label: "VILLAGE" },
+        { key: "Mobile", label: "MOBILE NO." },
+        { key: "Business", label: "BUSINESS / ACTIVITY" },
+        { key: "Loan_Scheme", label: "LOAN SCHEME" },
+        { key: "Loan_Amount", label: "LOAN AMOUNT", isMoney: true },
+        { key: "Udyam_Registration", label: "UDHYAM REG.", isStatusBadge: true },
+        { key: "Bank_Documents", label: "BANK DOCS", isStatusBadge: true },
+        { key: "Pan_Card", label: "PAN", isStatusBadge: true },
+        { key: "Aadhar_Card", label: "AADHAR", isStatusBadge: true },
+        { key: "Voter_Card", label: "VOTER CARD", isStatusBadge: true },
+        { key: "Quotation", label: "QUOTATION", isStatusBadge: true },
+        { key: "Updates", label: "UPDATES" },
+        { key: "Remarks", label: "REMARK" }
+      ]
+    },
     navgurukul: {
       sheetName: "NavGurukul",
       tableId: "tblNavGurukul",
@@ -803,6 +870,42 @@ const Forms = (function() {
   }
 
   /**
+   * Helper classifiers for Entrepreneurship pipeline
+   */
+  function isEstablishedEntrepreneur(rec) {
+    if (!rec) return false;
+    const stage = String(rec.Stage || rec.STAGE || rec.stage || "").toLowerCase().trim();
+    if (stage === "established" || stage.includes("established") || stage.includes("स्थापित")) return true;
+
+    const bizStatus = String(rec.Business_Status || rec.business_status || "").toLowerCase().trim();
+    if (bizStatus === "established" || bizStatus.includes("established") || bizStatus.includes("स्थापित")) return true;
+
+    const estDate = String(rec.Establishment_Date || rec.establishment_date || "").trim();
+    if (estDate && estDate !== "-" && estDate !== "null" && estDate !== "undefined") return true;
+
+    const updates = String(rec.Updates || rec.UPDATES || rec.updates || "").toLowerCase();
+    const remarks = String(rec.Remarks || rec.REMARK || rec.remark || "").toLowerCase();
+    if (updates.includes("स्थापित इकाई") || remarks.includes("स्थापित इकाई") || updates.includes("established unit") || remarks.includes("established unit")) return true;
+
+    return false;
+  }
+
+  function isLoanEntrepreneur(rec) {
+    if (!rec) return false;
+    const loanReq = String(rec.Loan_Required || "").toLowerCase().trim();
+    const loanApp = String(rec.Loan_Applied || "").toLowerCase().trim();
+    const loanAmt = rec.Loan_Amount || rec["LONE AMOUNT"] || rec["LOAN AMOUNT"];
+    const scheme = String(rec.Loan_Scheme || rec["LOAN SCHEME"] || rec.Scheme || "").toLowerCase().trim();
+    const remarks = String(rec.Remarks || rec.REMARK || "").toUpperCase();
+
+    if (loanReq === "yes" || loanApp === "yes") return true;
+    if (loanAmt && !isNaN(loanAmt) && Number(loanAmt) > 0) return true;
+    if (scheme && scheme !== "self financed" && scheme !== "none" && scheme !== "-") return true;
+    if (remarks.includes("RANG DE") || remarks.includes("PMEGP") || remarks.includes("MUDRA")) return true;
+    return false;
+  }
+
+  /**
    * Real-Time Embedded Table Data Engine for each Tab
    */
   async function loadTabTable(moduleKey) {
@@ -818,6 +921,106 @@ const Forms = (function() {
     }
 
     try {
+      if (moduleKey === "ent_identified" || moduleKey === "ent_established" || moduleKey === "ent_loan" || moduleKey === "entrepreneurship") {
+        let entRes = await API.call("getTableRecords", { sheetName: "Entrepreneurs" });
+        let allEnt = entRes && (entRes.records || entRes.data);
+        if (!Array.isArray(allEnt)) allEnt = [];
+
+        // Query dedicated Entrepreneurs_Established sheet
+        let dedicatedEst = [];
+        try {
+          const estRes = await API.call("getTableRecords", { sheetName: "Entrepreneurs_Established" });
+          dedicatedEst = (estRes && (estRes.records || estRes.data)) || [];
+          if (!Array.isArray(dedicatedEst)) dedicatedEst = [];
+        } catch (e) {
+          dedicatedEst = [];
+        }
+
+        // Merge any uploaded records from session
+        ["entrepreneurship", "ent_identified", "ent_established", "ent_loan"].forEach(k => {
+          try {
+            const sessionKey = "YH_" + k.toUpperCase() + "_BULK_UPLOADED";
+            const up = JSON.parse(sessionStorage.getItem(sessionKey) || "[]");
+            if (Array.isArray(up)) {
+              up.forEach(u => {
+                const uId = String(u["S.NO"] || u["Youth_ID"] || u["Mobile"] || "");
+                const uName = String(u["Name"] || u["NAME"] || "").trim().toLowerCase();
+                if (k === "ent_established") {
+                  const existsEst = dedicatedEst.some(r => {
+                    const rId = String(r["S.NO"] || r["Mobile"] || "");
+                    const rName = String(r["Name"] || r["NAME"] || "").trim().toLowerCase();
+                    return (uId && rId && uId === rId) || (uName && rName && uName === rName);
+                  });
+                  if (!existsEst) dedicatedEst.push(u);
+                }
+                const exists = allEnt.some(r => {
+                  const rId = String(r["S.NO"] || r["Youth_ID"] || r["Mobile"] || "");
+                  const rName = String(r["Name"] || r["NAME"] || "").trim().toLowerCase();
+                  return (uId && rId && uId === rId) || (uName && rName && uName === rName);
+                });
+                if (!exists) allEnt.push(u);
+              });
+            }
+          } catch (e) {}
+        });
+
+        // Filter valid rows
+        allEnt = allEnt.filter(rec => {
+          const keys = Object.keys(rec).filter(k => k.trim() !== "" && k !== "S.NO" && k !== "SR. NO." && k !== "SR.NO." && k !== "S_No" && k !== "Entrepreneur_ID" && k !== "Youth_ID" && k !== "Emp_Link_ID" && k !== "Loan_ID");
+          return keys.length > 0 && keys.some(k => String(rec[k] || "").trim().length > 0);
+        });
+
+        dedicatedEst = dedicatedEst.filter(rec => {
+          const keys = Object.keys(rec).filter(k => k.trim() !== "" && k !== "S.NO" && k !== "SR. NO." && k !== "SR.NO." && k !== "S_No");
+          return keys.length > 0 && keys.some(k => String(rec[k] || "").trim().length > 0);
+        });
+
+        // Block-based filtering for Hub Operators
+        const currentUser = API.getCurrentUser();
+        if (currentUser && currentUser.block && currentUser.block !== "All") {
+          const userBlock = currentUser.block.toLowerCase();
+          allEnt = allEnt.filter(rec => {
+            const blockValRaw = String(rec.BLOCK || rec.Block || "").trim();
+            const isShifted = /^\d{7,13}$/.test(blockValRaw) || 
+              (Boolean(rec["FATHER NAME"] || rec["father name"]) && !rec["NAME"] && !rec["Name"]);
+            const rowBlock = isShifted 
+              ? String(rec["MOBILE NO."] || rec.Mobile || "").toLowerCase()
+              : String(rec.Block || rec.BLOCK || rec.block || "").toLowerCase();
+            return !rowBlock || rowBlock === userBlock;
+          });
+
+          dedicatedEst = dedicatedEst.filter(rec => {
+            const rowBlock = String(rec.Block || rec.BLOCK || "").toLowerCase();
+            return !rowBlock || rowBlock === userBlock;
+          });
+        }
+
+        const identifiedList = allEnt.filter(r => !isEstablishedEntrepreneur(r));
+        const establishedList = dedicatedEst.length > 0 ? dedicatedEst : allEnt.filter(isEstablishedEntrepreneur);
+        const loanList = allEnt.filter(isLoanEntrepreneur);
+
+        tableDataCache["ent_identified"] = identifiedList;
+        tableDataCache["ent_established"] = establishedList;
+        tableDataCache["ent_loan"] = loanList;
+        tableDataCache["entrepreneurship"] = allEnt;
+
+        // Render all present tables
+        if (document.getElementById("tblEntIdentified")) renderTabTable("ent_identified", identifiedList);
+        if (document.getElementById("tblEntEstablished")) renderTabTable("ent_established", establishedList);
+        if (document.getElementById("tblEntLoan")) renderTabTable("ent_loan", loanList);
+        if (document.getElementById("tblEntrepreneurs")) renderTabTable("entrepreneurship", allEnt);
+
+        // Update badge counts on top tabs
+        const bId = document.getElementById("badgeEntIdentifiedCount");
+        if (bId) bId.textContent = identifiedList.length;
+        const bEst = document.getElementById("badgeEntEstablishedCount");
+        if (bEst) bEst.textContent = establishedList.length;
+        const bLoan = document.getElementById("badgeEntLoanCount");
+        if (bLoan) bLoan.textContent = loanList.length;
+
+        return;
+      }
+
       let res = await API.call("getTableRecords", { sheetName: config.sheetName });
       let recordList = res && (res.records || res.data);
 
@@ -1052,6 +1255,21 @@ const Forms = (function() {
           break;
         case "Updates":
           val = rec.Updates || rec["UPDATES"] || rec.Loan_Updates || rec.updates || "";
+          break;
+        case "Identification_Date":
+          val = rec.Identification_Date || rec.IdentificationDate || rec["IDENTIFICATION DATE"] || rec["IDENTIFIED ON"] || rec.Date || "";
+          break;
+        case "Establishment_Date":
+          val = rec.Establishment_Date || rec.EstablishmentDate || rec["ESTABLISHMENT DATE"] || rec["ESTD DATE"] || "";
+          break;
+        case "Business_Plan_Status":
+          val = rec.Business_Plan_Status || rec.BusinessPlanStatus || rec["BUSINESS PLAN STATUS"] || rec.Plan_Status || "";
+          break;
+        case "DPR_Status":
+          val = rec.DPR_Status || rec.DprStatus || rec["DPR STATUS"] || "";
+          break;
+        case "Loan_Scheme":
+          val = rec.Loan_Scheme || rec["LOAN SCHEME"] || rec.LoanScheme || rec.Scheme || "";
           break;
         case "Candidate_Name":
           val = rec.Candidate_Name || rec["Candidate_Name"] || rec.Name || rec["पूरा नाम (Full Name)"] || rec["पूरा नाम"] || rec.Youth_Name || "";
@@ -1738,6 +1956,83 @@ const Forms = (function() {
         "UPDATES": "Sanction pending at bank branch"
       }
     },
+    ent_identified: {
+      sheetName: "Entrepreneurs",
+      title: "Entrepreneurs Identified / चिन्हांकित उद्यमी",
+      apiAction: "addEntrepreneur",
+      headers: [
+        "S.NO", "BLOCK", "NAME", "FATHER NAME", "VILLAGE",
+        "MOBILE NO.", "BUSINESS", "LONE AMOUNT", "UDHYAM REGISTRATION",
+        "BANK DOCUMENTS", "PAN CARD", "ADHAR CARD", "VOTER CARD",
+        "QUOTATION", "REMARK", "UPDATES"
+      ],
+      sample: {
+        "S.NO": 1,
+        "BLOCK": "Dantewada",
+        "NAME": "Ramesh Kumar",
+        "FATHER NAME": "Suresh Kumar",
+        "VILLAGE": "Chitalanka",
+        "MOBILE NO.": "9406123456",
+        "BUSINESS": "Dairy Farming Unit (Proposed)",
+        "LONE AMOUNT": 100000,
+        "UDHYAM REGISTRATION": "Pending",
+        "BANK DOCUMENTS": "Submitted",
+        "PAN CARD": "Available",
+        "ADHAR CARD": "Verified",
+        "VOTER CARD": "Available",
+        "QUOTATION": "Submitted",
+        "REMARK": "Identified candidate, business plan prepared",
+        "UPDATES": "Application forwarded to bank"
+      }
+    },
+    ent_established: {
+      sheetName: "Entrepreneurs_Established",
+      title: "Entrepreneurs Established / स्थापित स्वरोजगार",
+      apiAction: "addEntrepreneurEstablished",
+      headers: [
+        "S.NO", "BLOCK", "NAME", "FATHER NAME", "VILLAGE",
+        "MOBILE NO.", "BUSINESS", "LONE AMOUNT"
+      ],
+      sample: {
+        "S.NO": 1,
+        "BLOCK": "Geedam",
+        "NAME": "Suresh Mandavi",
+        "FATHER NAME": "Laxman Mandavi",
+        "VILLAGE": "Kasoli",
+        "MOBILE NO.": "9406654321",
+        "BUSINESS": "Welding & Fabrication Workshop",
+        "LONE AMOUNT": 250000
+      }
+    },
+    ent_loan: {
+      sheetName: "Entrepreneurs",
+      title: "Loan Process & Pipeline / ऋण प्रक्रिया",
+      apiAction: "addEntrepreneur",
+      headers: [
+        "S.NO", "BLOCK", "NAME", "FATHER NAME", "VILLAGE",
+        "MOBILE NO.", "BUSINESS", "LONE AMOUNT", "UDHYAM REGISTRATION",
+        "BANK DOCUMENTS", "PAN CARD", "ADHAR CARD", "VOTER CARD",
+        "QUOTATION", "REMARK", "UPDATES"
+      ],
+      sample: {
+        "S.NO": 1,
+        "BLOCK": "Kuakonda",
+        "NAME": "Prakash Yadav",
+        "FATHER NAME": "Kanhaiya Yadav",
+        "VILLAGE": "Palnar",
+        "MOBILE NO.": "9406112233",
+        "BUSINESS": "Grocery Retail & Spices",
+        "LONE AMOUNT": 150000,
+        "UDHYAM REGISTRATION": "Available",
+        "BANK DOCUMENTS": "Submitted",
+        "PAN CARD": "Available",
+        "ADHAR CARD": "Verified",
+        "VOTER CARD": "Available",
+        "QUOTATION": "Submitted",
+        "REMARK": "Loan sanctioned under PMEGP",
+        "UPDATES": "Sanction letter issued"
+      }
+    },
     navgurukul: {
       sheetName: "NavGurukul",
       title: "NavGurukul / नवगुरुकुल कोडिंग",
@@ -2019,19 +2314,21 @@ const Forms = (function() {
 
   function findMatchingExcelRawKey(rawKeys, targetKey) {
     if (!rawKeys || rawKeys.length === 0) return undefined;
-    const cleanTarget = String(targetKey).toLowerCase().replace(/[^a-z0-9]/g, "");
+    const cleanStr = s => String(s).toLowerCase().replace(/[^\p{L}\p{N}]/gu, "");
+    const cleanTarget = cleanStr(targetKey);
+    if (!cleanTarget) return undefined;
 
     // 1. Exact match
     if (rawKeys.includes(targetKey)) return targetKey;
 
     // 2. Exact clean match
-    let found = rawKeys.find(k => String(k).toLowerCase().replace(/[^a-z0-9]/g, "") === cleanTarget);
+    let found = rawKeys.find(k => cleanStr(k) === cleanTarget);
     if (found) return found;
 
     // 3. Concept / Alias match
     let matchedConcept = null;
     for (const [ckey, aliases] of Object.entries(CONCEPT_ALIASES)) {
-      const allAliases = [ckey.replace(/_/g, ""), ...aliases.map(a => String(a).toLowerCase().replace(/[^a-z0-9]/g, ""))];
+      const allAliases = [cleanStr(ckey), ...aliases.map(cleanStr).filter(Boolean)];
       if (allAliases.includes(cleanTarget)) {
         matchedConcept = ckey;
         break;
@@ -2039,17 +2336,17 @@ const Forms = (function() {
     }
 
     if (matchedConcept && CONCEPT_ALIASES[matchedConcept]) {
-      const cleanAliases = CONCEPT_ALIASES[matchedConcept].map(a => String(a).toLowerCase().replace(/[^a-z0-9]/g, ""));
+      const cleanAliases = CONCEPT_ALIASES[matchedConcept].map(cleanStr).filter(Boolean);
       found = rawKeys.find(k => {
-        const cleanRaw = String(k).toLowerCase().replace(/[^a-z0-9]/g, "");
-        return cleanAliases.includes(cleanRaw);
+        const cleanRaw = cleanStr(k);
+        return cleanRaw && cleanAliases.includes(cleanRaw);
       });
       if (found) return found;
     }
 
     // 4. Substring fallback for multi-word headers
     found = rawKeys.find(k => {
-      const cleanRaw = String(k).toLowerCase().replace(/[^a-z0-9]/g, "");
+      const cleanRaw = cleanStr(k);
       return cleanRaw.length > 2 && (cleanTarget.includes(cleanRaw) || cleanRaw.includes(cleanTarget));
     });
     if (found) return found;
@@ -2061,7 +2358,7 @@ const Forms = (function() {
     if (val === undefined || val === null) return "";
     const isDateField = /date|dob/i.test(key);
     if (isDateField) {
-      if (val instanceof Date) {
+      if (val instanceof Date || Object.prototype.toString.call(val) === "[object Date]") {
         if (!isNaN(val.getTime())) {
           return val.toISOString().split("T")[0];
         }
@@ -2857,7 +3154,16 @@ const Forms = (function() {
 
         let res = null;
         try {
-          res = await API.call(apiAction, payload);
+          if (formId === "formEntrepreneur" && payload.Stage === "Established") {
+            try {
+              res = await API.call("addEntrepreneurEstablished", payload);
+            } catch (e) {
+              res = null;
+            }
+          }
+          if (!res || !res.success) {
+            res = await API.call(apiAction, payload);
+          }
         } catch (apiErr) {
           res = { success: false, message: apiErr.message };
         }
@@ -2985,7 +3291,7 @@ const Forms = (function() {
   /**
    * Slide-Over Drawer Controls
    */
-  function openDrawer(formIdOrDrawerId) {
+  function openDrawer(formIdOrDrawerId, stage = null) {
     let drawer = document.getElementById(formIdOrDrawerId);
     if (!drawer || !drawer.classList.contains("slide-over-drawer")) {
       drawer = document.getElementById("drawer_" + formIdOrDrawerId) ||
@@ -3000,6 +3306,14 @@ const Forms = (function() {
     const backdrop = document.getElementById("slideOverBackdrop");
     if (backdrop) backdrop.classList.add("active");
     document.body.classList.add("drawer-open");
+
+    // Set stage if provided (e.g. 'Identified' or 'Established')
+    if (stage) {
+      const stageSelect = drawer.querySelector("select[name='Stage']");
+      if (stageSelect) {
+        stageSelect.value = stage;
+      }
+    }
 
     // Block locking for Hub Operators in open drawer
     const currentUser = API.getCurrentUser();
@@ -3064,27 +3378,67 @@ const Forms = (function() {
     }
   }
 
-  function filterByLoanScheme(scheme, btn) {
-    const filtersContainer = document.querySelector("#view_entrepreneurship .table-scheme-filters");
-    if (filtersContainer) {
-      filtersContainer.querySelectorAll("button").forEach(b => b.classList.remove("active"));
-      if (btn) {
+  function filterByLoanScheme(scheme, btn, moduleKey = "ent_identified") {
+    if (btn) {
+      const container = btn.closest(".table-scheme-filters");
+      if (container) {
+        container.querySelectorAll("button").forEach(b => b.classList.remove("active"));
         btn.classList.add("active");
-      } else {
-        filtersContainer.querySelectorAll("button").forEach(b => {
-          if (scheme === "all" && b.textContent.includes("All")) b.classList.add("active");
-          else if (scheme !== "all" && b.textContent.toLowerCase().includes(scheme.toLowerCase())) b.classList.add("active");
-        });
       }
     }
 
-    const searchInput = document.getElementById("searchTblEntrepreneurs");
+    const config = TAB_TABLE_CONFIGS[moduleKey] || TAB_TABLE_CONFIGS.ent_identified;
+    const searchInput = document.getElementById(config.searchId);
+    const allRecords = tableDataCache[moduleKey] || [];
+
     if (scheme === "all") {
       if (searchInput) searchInput.value = "";
-      filterTable("tblEntrepreneurs", "", "countTblEntrepreneurs");
+      renderTabTable(moduleKey, allRecords);
     } else {
       if (searchInput) searchInput.value = scheme;
-      filterTable("tblEntrepreneurs", scheme, "countTblEntrepreneurs");
+      const filtered = allRecords.filter((rec, idx) => {
+        return config.columns.some(col => {
+          const val = String(getRecordColValue(rec, col, idx) || "").toLowerCase();
+          return val.includes(scheme.toLowerCase());
+        });
+      });
+      renderTabTable(moduleKey, filtered);
+    }
+  }
+
+  /**
+   * Switch between Entrepreneurship Sub-Tabs (Identified, Established)
+   */
+  function switchEntTab(tabKey) {
+    const validTabs = ["identified", "established"];
+    if (!validTabs.includes(tabKey)) tabKey = "identified";
+
+    // 1. Toggle Tab Navigation Buttons
+    document.querySelectorAll(".module-tab-btn[data-ent-tab]").forEach(btn => {
+      const isTarget = btn.getAttribute("data-ent-tab") === tabKey;
+      btn.classList.toggle("active", isTarget);
+    });
+
+    // 2. Toggle Tab Content Divs
+    document.querySelectorAll(".ent-tab-content[data-ent-tab]").forEach(content => {
+      const isTarget = content.getAttribute("data-ent-tab") === tabKey;
+      content.style.display = isTarget ? "block" : "none";
+    });
+
+    // 3. Sync Sidebar active item in dropdownEntrepreneurship
+    document.querySelectorAll("#dropdownEntrepreneurship .nav-sub-item").forEach(item => {
+      const sub = item.getAttribute("data-subview");
+      if (sub === tabKey) {
+        item.classList.add("active");
+      } else if (sub && sub !== "rangde") {
+        item.classList.remove("active");
+      }
+    });
+
+    // 4. Load table data if not already cached
+    const modKey = tabKey === "established" ? "ent_established" : "ent_identified";
+    if (!tableDataCache[modKey] || tableDataCache[modKey].length === 0) {
+      loadTabTable(modKey);
     }
   }
 
@@ -3122,6 +3476,7 @@ const Forms = (function() {
     downloadSampleTemplate,
     handleLoanSchemeChange,
     filterByLoanScheme,
+    switchEntTab,
     openRangDeDrawer
   };
 })();

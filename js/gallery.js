@@ -401,16 +401,16 @@ const GalleryModule = (function() {
           liveItems.push({
             id: r.Activity_ID || ("ACT-" + Math.floor(Math.random() * 9000)),
             title: r.Activity_Name || "Field Activity",
-            category: "Activities",
+            category: r.Activity_Type || "Activities",
             date: r.Date || "",
             block: r.Block || "Dantewada",
-            gramPanchayat: r.GP || "",
+            gramPanchayat: r.GP || r.Village || "",
             participants: Number(r.Participants) || 0,
-            status: "Completed",
+            status: r.Outcome || "Completed",
             imageUrl: r.Photo_URL || r.Photos_URL,
             description: r.Description || r.Outcome || "Field activity event.",
-            tags: ["Activity", r.Activity_Type || "Event"],
-            uploadedBy: "Field Coordinator",
+            tags: [r.Activity_Type || "Activity", "Success Milestone"],
+            uploadedBy: r.Uploaded_By || "Field Coordinator",
             createdDate: r.Date || ""
           });
         }

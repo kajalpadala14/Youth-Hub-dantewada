@@ -230,7 +230,7 @@ const Forms = (function() {
       ]
     },
     ent_established: {
-      sheetName: "Entrepreneurs_Established",
+      sheetName: "Entrepreneurs Established",
       tableId: "tblEntEstablished",
       searchId: "searchTblEntEstablished",
       countId: "countTblEntEstablished",
@@ -926,10 +926,13 @@ const Forms = (function() {
         let allEnt = entRes && (entRes.records || entRes.data);
         if (!Array.isArray(allEnt)) allEnt = [];
 
-        // Query dedicated Entrepreneurs_Established sheet
+        // Query dedicated Entrepreneurs Established sheet (supports space and underscore)
         let dedicatedEst = [];
         try {
-          const estRes = await API.call("getTableRecords", { sheetName: "Entrepreneurs_Established" });
+          let estRes = await API.call("getTableRecords", { sheetName: "Entrepreneurs Established" });
+          if (!estRes || !estRes.success || !Array.isArray(estRes.records)) {
+            estRes = await API.call("getTableRecords", { sheetName: "Entrepreneurs_Established" });
+          }
           dedicatedEst = (estRes && (estRes.records || estRes.data)) || [];
           if (!Array.isArray(dedicatedEst)) dedicatedEst = [];
         } catch (e) {
@@ -1986,7 +1989,7 @@ const Forms = (function() {
       }
     },
     ent_established: {
-      sheetName: "Entrepreneurs_Established",
+      sheetName: "Entrepreneurs Established",
       title: "Entrepreneurs Established / स्थापित स्वरोजगार",
       apiAction: "addEntrepreneurEstablished",
       headers: [

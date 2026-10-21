@@ -69,6 +69,9 @@ const SHEETS_SCHEMA = {
   Entrepreneurs_Established: [
     "S.NO", "BLOCK", "NAME", "FATHER NAME", "VILLAGE", "MOBILE NO.", "BUSINESS", "LONE AMOUNT"
   ],
+  "Entrepreneurs Established": [
+    "S.NO", "BLOCK", "NAME", "FATHER NAME", "VILLAGE", "MOBILE NO.", "BUSINESS", "LONE AMOUNT"
+  ],
   NavGurukul: [
     "Candidate_ID", "Youth_ID", "Candidate_Name", "Mobile", "Block", "GP",
     "Qualification", "Registration_Date", "Selection_Status", "Admission_Status",
@@ -134,6 +137,7 @@ const ID_PREFIXES = {
   Education: { prefix: "EDU-2026-", idField: "Education_ID" },
   Entrepreneurs: { prefix: "ENT-2026-", idField: "Entrepreneur_ID" },
   Entrepreneurs_Established: { prefix: "", idField: "S.NO" },
+  "Entrepreneurs Established": { prefix: "", idField: "S.NO" },
   NavGurukul: { prefix: "NG-2026-", idField: "Candidate_ID" },
   Trainings: { prefix: "TRG-2026-", idField: "Training_ID" },
   Activities: { prefix: "ACT-2026-", idField: "Activity_ID" },
@@ -627,6 +631,7 @@ function findSheet(ss, sheetName) {
     "Youth_Master": ["Youth_Master", "Youth Master", "YouthMaster"],
     "Entrepreneurs": ["Entrepreneurs", "Entrepreneur", "PMEGP"],
     "Entrepreneurs_Established": ["Entrepreneurs Established", "Entrepreneurs_Established", "Established Entrepreneurs", "Established"],
+    "Entrepreneurs Established": ["Entrepreneurs Established", "Entrepreneurs_Established", "Established Entrepreneurs", "Established"],
     "Rehabilitation": ["Rehabilitation", "Rehab", "Rehabilitation Counselling", "Rehab Counselling"]
   };
 
@@ -835,7 +840,7 @@ function insertRecord(ss, sheetName, payload) {
     if (!payload.Updates && payload["UPDATES"]) payload.Updates = payload["UPDATES"];
   }
 
-  if (sheetName === "Entrepreneurs_Established") {
+  if (sheetName === "Entrepreneurs_Established" || sheetName === "Entrepreneurs Established") {
     if (!payload.NAME && (payload.Name || payload.Youth_Name)) payload.NAME = payload.Name || payload.Youth_Name;
     if (!payload.Name && payload.NAME) payload.Name = payload.NAME;
     if (!payload["FATHER NAME"] && (payload.Father_Name || payload.Father_Husband_Name)) {
@@ -1017,7 +1022,7 @@ function bulkInsertRecords(ss, sheetName, records) {
       if (!record.Updates && record["UPDATES"]) record.Updates = record["UPDATES"];
     }
 
-    if (sheetName === "Entrepreneurs_Established") {
+    if (sheetName === "Entrepreneurs_Established" || sheetName === "Entrepreneurs Established") {
       if (!record.NAME && (record.Name || record.Youth_Name)) record.NAME = record.Name || record.Youth_Name;
       if (!record.Name && record.NAME) record.Name = record.NAME;
       if (!record["FATHER NAME"] && (record.Father_Name || record.Father_Husband_Name)) {

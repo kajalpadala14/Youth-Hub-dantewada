@@ -934,6 +934,53 @@ const Forms = (function() {
   }
 
   /**
+   * Sort records in natural ascending order (by numeric serial number, ID, or Date)
+   */
+  function sortRecordsAscending(records, config) {
+    if (!Array.isArray(records) || records.length <= 1) return records;
+
+    const idField = config && config.idField ? config.idField : "";
+
+    return records.slice().sort((a, b) => {
+      // 1. Check for dedicated Serial Number field (e.g. 1, 2, 3...)
+      const snoA = a["SR. NO."] || a["SR.NO."] || a["SR NO"] || a["S.NO"] || a["S.No"] || a["S_No"] || a.S_No;
+      const snoB = b["SR. NO."] || b["SR.NO."] || b["SR NO"] || b["S.NO"] || b["S.No"] || b["S_No"] || b.S_No;
+
+      if (snoA !== undefined && snoB !== undefined && snoA !== "" && snoB !== "") {
+        const numA = Number(String(snoA).replace(/^[^\d]+/, ""));
+        const numB = Number(String(snoB).replace(/^[^\d]+/, ""));
+        if (!isNaN(numA) && !isNaN(numB) && numA !== numB) {
+          return numA - numB;
+        }
+      }
+
+      // 2. Check primary ID field (e.g. YH-2026-0001, MOB-2026-0001, ENT-2026-0001, RD-2026-00001)
+      if (idField && a[idField] !== undefined && b[idField] !== undefined) {
+        const valA = String(a[idField] || "").trim();
+        const valB = String(b[idField] || "").trim();
+        const matchA = valA.match(/(\d+)$/);
+        const matchB = valB.match(/(\d+)$/);
+        if (matchA && matchB) {
+          const numA = parseInt(matchA[1], 10);
+          const numB = parseInt(matchB[1], 10);
+          if (numA !== numB) return numA - numB;
+        }
+        return valA.localeCompare(valB, undefined, { numeric: true, sensitivity: "base" });
+      }
+
+      // 3. Fallback to Date field if available (earliest date first)
+      const dateA = a.Date || a.Registration_Date || a.Created_At || a.Upload_Date;
+      const dateB = b.Date || b.Registration_Date || b.Created_At || b.Upload_Date;
+      if (dateA && dateB && String(dateA).trim() && String(dateB).trim()) {
+        const cmp = String(dateA).localeCompare(String(dateB));
+        if (cmp !== 0) return cmp;
+      }
+
+      return 0;
+    });
+  }
+
+  /**
    * Real-Time Embedded Table Data Engine for each Tab
    */
   async function loadTabTable(moduleKey) {
@@ -1026,20 +1073,21 @@ const Forms = (function() {
           });
         }
 
-        const identifiedList = allEnt.filter(r => !isEstablishedEntrepreneur(r) && !isRangDeEntrepreneurRecord(r));
-        const establishedList = dedicatedEst.length > 0 ? dedicatedEst : allEnt.filter(r => isEstablishedEntrepreneur(r) && !isRangDeEntrepreneurRecord(r));
-        const loanList = allEnt.filter(r => isLoanEntrepreneur(r) && !isRangDeEntrepreneurRecord(r));
+        const identifiedList = sortRecordsAscending(allEnt.filter(r => !isEstablishedEntrepreneur(r) && !isRangDeEntrepreneurRecord(r)), TAB_TABLE_CONFIGS["ent_identified"]);
+        const establishedList = sortRecordsAscending(dedicatedEst.length > 0 ? dedicatedEst : allEnt.filter(r => isEstablishedEntrepreneur(r) && !isRangDeEntrepreneurRecord(r)), TAB_TABLE_CONFIGS["ent_established"]);
+        const loanList = sortRecordsAscending(allEnt.filter(r => isLoanEntrepreneur(r) && !isRangDeEntrepreneurRecord(r)), TAB_TABLE_CONFIGS["ent_loan"]);
+        const pureEnt = sortRecordsAscending(allEnt.filter(r => !isRangDeEntrepreneurRecord(r)), TAB_TABLE_CONFIGS["entrepreneurship"]);
 
         tableDataCache["ent_identified"] = identifiedList;
         tableDataCache["ent_established"] = establishedList;
         tableDataCache["ent_loan"] = loanList;
-        tableDataCache["entrepreneurship"] = allEnt.filter(r => !isRangDeEntrepreneurRecord(r));
+        tableDataCache["entrepreneurship"] = pureEnt;
 
         // Render all present tables
         if (document.getElementById("tblEntIdentified")) renderTabTable("ent_identified", identifiedList);
         if (document.getElementById("tblEntEstablished")) renderTabTable("ent_established", establishedList);
         if (document.getElementById("tblEntLoan")) renderTabTable("ent_loan", loanList);
-        if (document.getElementById("tblEntrepreneurs")) renderTabTable("entrepreneurship", tableDataCache["entrepreneurship"]);
+        if (document.getElementById("tblEntrepreneurs")) renderTabTable("entrepreneurship", pureEnt);
 
         // Update badge counts on top tabs
         const bId = document.getElementById("badgeEntIdentifiedCount");
@@ -1113,6 +1161,7 @@ const Forms = (function() {
             return !rowBlock || rowBlock === userBlock;
           });
         }
+        recordList = sortRecordsAscending(recordList, config);
         tableDataCache[moduleKey] = recordList;
         renderTabTable(moduleKey, recordList);
       } else {

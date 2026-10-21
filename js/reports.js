@@ -208,6 +208,23 @@ const ReportsModule = (function() {
       }
 
       if (Array.isArray(recordList) && recordList.length > 0) {
+        // Natural ascending sort (by S.No, ID, or Date)
+        recordList.sort((a, b) => {
+          const snoA = a["SR. NO."] || a["SR.NO."] || a["SR NO"] || a["S.NO"] || a["S.No"] || a["S_No"] || a.S_No;
+          const snoB = b["SR. NO."] || b["SR.NO."] || b["SR NO"] || b["S.NO"] || b["S.No"] || b["S_No"] || b.S_No;
+          if (snoA !== undefined && snoB !== undefined && snoA !== "" && snoB !== "") {
+            const numA = Number(String(snoA).replace(/^[^\d]+/, ""));
+            const numB = Number(String(snoB).replace(/^[^\d]+/, ""));
+            if (!isNaN(numA) && !isNaN(numB) && numA !== numB) return numA - numB;
+          }
+          const idA = a.Youth_ID || a.Candidate_ID || a.Activity_ID || a.Training_ID || a.MForm_ID || a.MyBharat_ID || a.Counselling_ID || a.Demand_ID;
+          const idB = b.Youth_ID || b.Candidate_ID || b.Activity_ID || b.Training_ID || b.MForm_ID || b.MyBharat_ID || b.Counselling_ID || b.Demand_ID;
+          if (idA && idB) {
+            return String(idA).localeCompare(String(idB), undefined, { numeric: true, sensitivity: "base" });
+          }
+          return 0;
+        });
+
         currentReportData = {
           title: reportTitle,
           headers: headers,

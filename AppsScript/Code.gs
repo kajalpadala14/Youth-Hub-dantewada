@@ -717,7 +717,7 @@ function getSheetRecords(ss, sheetName) {
   const values = sheet.getRange(dataStartRow, 1, numDataRows, lastCol).getValues();
   const records = [];
 
-  for (let i = values.length - 1; i >= 0; i--) {
+  for (let i = 0; i < values.length; i++) {
     const row = values[i];
     // Skip completely blank rows
     const hasData = row.some(v => v !== null && String(v).trim().length > 0);

@@ -47,4 +47,50 @@ describe('Form Validation Logic Unit Tests', () => {
       assert.ok(!shiftedPhoneInBlockColRegex.test('Katekalyan'));
     });
   });
+
+  describe('Table Records Ascending Sorting', () => {
+    const fs = require('node:fs');
+    const path = require('node:path');
+    const formsJs = fs.readFileSync(path.resolve(__dirname, '../js/forms.js'), 'utf8');
+    const sortMatch = formsJs.match(/function sortRecordsAscending\([\s\S]*?\n  \}/);
+    assert.ok(sortMatch, 'sortRecordsAscending function must exist');
+
+    const sortFn = new Function('records, config', sortMatch[0] + '\nreturn sortRecordsAscending(records, config);');
+
+    test('Sorts records in ascending order by S.NO / numeric serial', () => {
+      const records = [
+        { 'SR. NO.': 25, Name: 'Zoya' },
+        { 'SR. NO.': 2, Name: 'Aman' },
+        { 'SR. NO.': 10, Name: 'Kavita' }
+      ];
+      const sorted = sortFn(records, { idField: 'SR. NO.' });
+      assert.equal(sorted[0]['SR. NO.'], 2);
+      assert.equal(sorted[1]['SR. NO.'], 10);
+      assert.equal(sorted[2]['SR. NO.'], 25);
+    });
+
+    test('Sorts records in ascending order by prefixed ID (e.g. YH-2026-0001, ENT-2026-0168)', () => {
+      const records = [
+        { Youth_ID: 'YH-2026-0100', Name: 'Ramesh' },
+        { Youth_ID: 'YH-2026-0003', Name: 'Suresh' },
+        { Youth_ID: 'YH-2026-0015', Name: 'Mahesh' }
+      ];
+      const sorted = sortFn(records, { idField: 'Youth_ID' });
+      assert.equal(sorted[0].Youth_ID, 'YH-2026-0003');
+      assert.equal(sorted[1].Youth_ID, 'YH-2026-0015');
+      assert.equal(sorted[2].Youth_ID, 'YH-2026-0100');
+    });
+
+    test('Sorts records in ascending order by Date when no numeric serial is present', () => {
+      const records = [
+        { Date: '2026-10-15', Title: 'Workshop C' },
+        { Date: '2026-08-01', Title: 'Workshop A' },
+        { Date: '2026-09-10', Title: 'Workshop B' }
+      ];
+      const sorted = sortFn(records, {});
+      assert.equal(sorted[0].Date, '2026-08-01');
+      assert.equal(sorted[1].Date, '2026-09-10');
+      assert.equal(sorted[2].Date, '2026-10-15');
+    });
+  });
 });

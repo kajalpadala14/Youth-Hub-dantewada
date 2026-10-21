@@ -78,6 +78,39 @@ const DashboardModule = (function() {
       let res = await API.call("getDashboard", { filters });
 
       if (res && res.success && res.kpis) {
+        // Guarantee Rang De Loan count is fetched and displayed from live Google Sheet
+        if (res.kpis.rangde === undefined || res.kpis.rangde === 0) {
+          try {
+            const rdRes = await API.call("getTableRecords", { sheetName: "RangDe_Loan" });
+            let rdList = (rdRes && (rdRes.data || rdRes.records)) || [];
+            if (Array.isArray(rdList)) {
+              rdList = rdList.filter(r => {
+                const keys = Object.keys(r).filter(k => k.trim() !== "" && k !== "S.NO" && k !== "SR. NO." && k !== "SR.NO." && k !== "S_No" && k !== "Loan_ID");
+                return keys.length > 0 && keys.some(k => String(r[k] || "").trim().length > 0);
+              });
+              if (filters.block && filters.block !== "All") {
+                const b = filters.block.toLowerCase();
+                const gps = (AppConfig.BLOCKS && AppConfig.BLOCKS[filters.block]) || [];
+                rdList = rdList.filter(r => {
+                  const addr = String(r.Address || r.ADDRESS || r.Village || "").toLowerCase();
+                  const blk = String(r.Block || r.BLOCK || "").toLowerCase();
+                  return blk === b || addr.includes(b) || gps.some(gp => addr.includes(gp.toLowerCase()));
+                });
+              }
+              if (filters.gramPanchayat && filters.gramPanchayat !== "All") {
+                const gp = filters.gramPanchayat.toLowerCase();
+                rdList = rdList.filter(r => {
+                  const addr = String(r.Address || r.ADDRESS || r.Village || r.GP || r.Gram_Panchayat || "").toLowerCase();
+                  return addr.includes(gp);
+                });
+              }
+              res.kpis.rangde = rdList.length;
+            }
+          } catch (e) {
+            console.warn("Could not fetch RangDe loans for dashboard:", e);
+          }
+        }
+
         updateKpiCards(res.kpis);
         if (res.charts) {
           renderCharts(res.charts);

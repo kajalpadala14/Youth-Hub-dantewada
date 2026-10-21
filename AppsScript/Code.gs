@@ -1395,6 +1395,7 @@ function calculateDashboardKPIs(ss, filters) {
   let nav = (getSheetRecords(ss, "NavGurukul").records || []);
   let trg = (getSheetRecords(ss, "Trainings").records || []);
   let rehab = (getSheetRecords(ss, "Rehabilitation").records || []);
+  let rangde = (getSheetRecords(ss, "RangDe_Loan").records || []);
 
   // Filter by Block if selected
   if (filters.block && filters.block !== "All") {
@@ -1414,6 +1415,10 @@ function calculateDashboardKPIs(ss, filters) {
     nav = filterByBlock(nav);
     trg = filterByBlock(trg);
     rehab = filterByBlock(rehab);
+    rangde = rangde.filter(item => {
+      const rowLoc = String(item.Block || item.BLOCK || item.Address || item.ADDRESS || item.Village || "").toLowerCase();
+      return rowLoc.includes(b);
+    });
   }
 
   // Filter by Gram Panchayat if selected
@@ -1429,6 +1434,10 @@ function calculateDashboardKPIs(ss, filters) {
     nav = filterByGP(nav);
     trg = filterByGP(trg);
     rehab = filterByGP(rehab);
+    rangde = rangde.filter(item => {
+      const rowGp = String(item.Gram_Panchayat || item.GP || item.Village || item.Address || item.ADDRESS || "").toLowerCase();
+      return rowGp.includes(gp);
+    });
   }
 
   const totMob = mob.reduce((acc, m) => acc + (Number(m.Total_Mobilized) || 0), 0) || youth.length;
@@ -1545,7 +1554,8 @@ function calculateDashboardKPIs(ss, filters) {
       navgurukul: nav.length,
       trainingConducted: trg.length,
       totalRehabilitated: rehab.length,
-      rehabilitation: rehab.length
+      rehabilitation: rehab.length,
+      rangde: rangde.length
     },
     charts: {
       monthlyMobilization: {

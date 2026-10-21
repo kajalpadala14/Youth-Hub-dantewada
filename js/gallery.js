@@ -23,8 +23,55 @@ const GalleryModule = (function() {
   let filteredItems = [];
 
   function init() {
+    // Purge any local broken mock cards so gallery is 100% clean live sheet backend data
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch (e) {}
     setupEventListeners();
     populateBlockFilters();
+  }
+
+  function compressImageFile(file, maxWidth = 1200, maxHeight = 1200, quality = 0.78) {
+    return new Promise((resolve) => {
+      if (!file || !file.type.startsWith("image/")) {
+        resolve(null);
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+          let width = img.width;
+          let height = img.height;
+
+          if (width > maxWidth || height > maxHeight) {
+            if (width > height) {
+              height = Math.round((height * maxWidth) / width);
+              width = maxWidth;
+            } else {
+              width = Math.round((width * maxHeight) / height);
+              height = maxHeight;
+            }
+          }
+
+          const canvas = document.createElement("canvas");
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, width, height);
+          const base64 = canvas.toDataURL("image/jpeg", quality);
+          resolve(base64);
+        };
+        img.onerror = function() {
+          resolve(e.target.result);
+        };
+        img.src = e.target.result;
+      };
+      reader.onerror = function() {
+        resolve(null);
+      };
+      reader.readAsDataURL(file);
+    });
   }
 
   function getCustomItems() {
@@ -33,11 +80,11 @@ const GalleryModule = (function() {
       if (!raw) return [];
       const parsed = JSON.parse(raw);
       if (!Array.isArray(parsed)) return [];
-      // Strictly keep only valid entries with genuine image URLs (remove broken "dummy" placeholders)
+      // Strictly keep only valid entries with genuine image URLs (remove broken placeholders)
       return parsed.filter(i => {
         if (!i || !i.imageUrl) return false;
         const img = String(i.imageUrl).trim();
-        return img.startsWith("http://") || img.startsWith("https://") || img.startsWith("data:image/");
+        return img.startsWith("http://") || img.startsWith("https://");
       });
     } catch (e) {
       console.warn("Error parsing local gallery items", e);
@@ -124,6 +171,27 @@ const GalleryModule = (function() {
     const form = document.getElementById("formAddProgressGallery");
     if (form) {
       form.addEventListener("submit", handleAddPhotoSubmit);
+
+      // Auto-compress and preview image when chosen
+      const galFileInput = form.querySelector('input[type="file"]');
+      if (galFileInput) {
+        galFileInput.addEventListener("change", async function() {
+          const file = this.files && this.files[0];
+          const previewImg = document.getElementById("galPhotoPreview");
+          if (file) {
+            const compressed = await compressImageFile(file);
+            if (compressed) {
+              this.dataset.base64 = compressed;
+              this.dataset.filename = file.name;
+              this.dataset.mimetype = "image/jpeg";
+              if (previewImg) {
+                previewImg.src = compressed;
+                previewImg.style.display = "block";
+              }
+            }
+          }
+        });
+      }
     }
 
     // Lightbox modal keyboard controls
@@ -773,13 +841,8 @@ const GalleryModule = (function() {
     if (!base64Data && fileInput && fileInput.files && fileInput.files[0]) {
       const file = fileInput.files[0];
       fileName = file.name;
-      mimeType = file.type || "image/jpeg";
-      base64Data = await new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onload = (ev) => resolve(ev.target.result);
-        reader.onerror = () => resolve("");
-        reader.readAsDataURL(file);
-      });
+      mimeType = "image/jpeg";
+      base64Data = await compressImageFile(file);
     }
 
     let imageUrl = base64Data;
@@ -815,7 +878,7 @@ const GalleryModule = (function() {
 
     try {
       let driveFileId = "";
-      // 1. Upload file to Google Drive
+      // 1. Upload compressed file to Google Drive
       if (base64Data) {
         try {
           const uploadRes = await API.call("uploadFile", {
@@ -897,27 +960,24 @@ const GalleryModule = (function() {
 
       if (backendSaved) {
         App.showToast("Success story & photo saved to Google Sheet backend! • शीट में सुरक्षित हो गई", "success");
+        form.reset();
+        const previewImg = document.getElementById("galPhotoPreview");
+        if (previewImg) {
+          previewImg.src = "";
+          previewImg.style.display = "none";
+        }
+        if (fileInput) {
+          fileInput.value = "";
+          delete fileInput.dataset.base64;
+          delete fileInput.dataset.filename;
+          delete fileInput.dataset.mimetype;
+        }
+
+        closeAddPhotoDrawer();
+        await loadGallery();
       } else {
-        // Fallback save locally if offline
-        saveCustomItem(newItem);
-        App.showToast("Saved locally. Could not reach backend: " + (backendMessage || "Network/permission error"), "warning");
+        App.showToast("Could not save to Google Sheets backend: " + (backendMessage || "Please check network or backend connection"), "error");
       }
-
-      form.reset();
-      const previewImg = document.getElementById("galPhotoPreview");
-      if (previewImg) {
-        previewImg.src = "";
-        previewImg.style.display = "none";
-      }
-      if (fileInput) {
-        fileInput.value = "";
-        delete fileInput.dataset.base64;
-        delete fileInput.dataset.filename;
-        delete fileInput.dataset.mimetype;
-      }
-
-      closeAddPhotoDrawer();
-      await loadGallery();
     } catch (err) {
       App.showToast("Failed to save photo: " + err.message, "error");
     } finally {

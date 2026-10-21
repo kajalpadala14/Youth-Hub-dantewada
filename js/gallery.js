@@ -30,7 +30,15 @@ const GalleryModule = (function() {
   function getCustomItems() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      return raw ? JSON.parse(raw) : [];
+      if (!raw) return [];
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) return [];
+      // Strictly keep only valid entries with genuine image URLs (remove broken "dummy" placeholders)
+      return parsed.filter(i => {
+        if (!i || !i.imageUrl) return false;
+        const img = String(i.imageUrl).trim();
+        return img.startsWith("http://") || img.startsWith("https://") || img.startsWith("data:image/");
+      });
     } catch (e) {
       console.warn("Error parsing local gallery items", e);
       return [];
@@ -633,7 +641,13 @@ const GalleryModule = (function() {
     const downloadEl = document.getElementById("lightboxDownloadBtn");
     const countEl = document.getElementById("lightboxCounter");
 
-    if (img) img.src = item.imageUrl;
+    if (img) {
+      img.src = item.imageUrl || "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=80";
+      img.onerror = function() {
+        this.onerror = null;
+        this.src = "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=80";
+      };
+    }
     if (titleEl) titleEl.textContent = item.title;
     if (catEl) {
       catEl.textContent = item.category;
@@ -752,19 +766,35 @@ const GalleryModule = (function() {
     const fileInput = form.querySelector('input[type="file"]');
     const urlInput = form.querySelector('[name="Photo_URL_Fallback"]');
 
-    let imageUrl = "";
-    if (fileInput && fileInput.dataset && fileInput.dataset.base64) {
-      imageUrl = fileInput.dataset.base64;
-    } else if (urlInput && urlInput.value.trim()) {
+    let base64Data = (fileInput && fileInput.dataset && fileInput.dataset.base64) || "";
+    let fileName = (fileInput && fileInput.dataset && fileInput.dataset.filename) || "";
+    let mimeType = (fileInput && fileInput.dataset && fileInput.dataset.mimetype) || "image/jpeg";
+
+    if (!base64Data && fileInput && fileInput.files && fileInput.files[0]) {
+      const file = fileInput.files[0];
+      fileName = file.name;
+      mimeType = file.type || "image/jpeg";
+      base64Data = await new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (ev) => resolve(ev.target.result);
+        reader.onerror = () => resolve("");
+        reader.readAsDataURL(file);
+      });
+    }
+
+    let imageUrl = base64Data;
+    if (!imageUrl && urlInput && urlInput.value.trim()) {
       imageUrl = urlInput.value.trim();
-    } else {
-      App.showToast("Please upload a photograph or provide an image link.", "warning");
+    }
+
+    if (!imageUrl) {
+      App.showToast("Please choose a photograph to upload or enter an image link.", "warning");
       return;
     }
 
     if (submitBtn) {
       submitBtn.disabled = true;
-      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving Success Photo...';
+      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving to Backend...';
     }
 
     const newItem = {
@@ -785,25 +815,33 @@ const GalleryModule = (function() {
 
     try {
       let driveFileId = "";
-      // 1. Try uploading file to Drive if connected
-      if (fileInput && fileInput.dataset && fileInput.dataset.base64) {
+      // 1. Upload file to Google Drive
+      if (base64Data) {
         try {
           const uploadRes = await API.call("uploadFile", {
-            base64Data: fileInput.dataset.base64,
-            fileName: fileInput.dataset.filename || `success_${newItem.id}.jpg`,
-            mimeType: fileInput.dataset.mimetype || "image/jpeg",
+            base64Data: base64Data,
+            fileName: fileName || `success_${newItem.id}.jpg`,
+            mimeType: mimeType || "image/jpeg",
             subFolder: "Photo_Uploads"
           });
           if (uploadRes && uploadRes.success) {
-            if (uploadRes.fileUrl) newItem.imageUrl = uploadRes.fileUrl;
-            if (uploadRes.fileId) driveFileId = uploadRes.fileId;
+            if (uploadRes.fileId) {
+              driveFileId = uploadRes.fileId;
+              newItem.imageUrl = `https://lh3.googleusercontent.com/d/${driveFileId}`;
+            } else if (uploadRes.fileUrl) {
+              newItem.imageUrl = uploadRes.fileUrl;
+            }
           }
         } catch (err) {
-          console.warn("Drive upload failed, using local base64:", err);
+          console.warn("Drive upload failed, using local/fallback:", err);
         }
       }
 
-      // 2. Try inserting record into backend Photo_Uploads sheet
+      // 2. Insert record into Google Sheets Backend
+      let backendSaved = false;
+      let backendMessage = "";
+
+      // Step A: Try addPhotoUpload (if latest Apps Script is deployed)
       try {
         const photoUploadPayload = {
           ID: newItem.id,
@@ -825,33 +863,61 @@ const GalleryModule = (function() {
           Participants: newItem.participants,
           Description: newItem.description
         };
-
-        try {
-          await API.call("addPhotoUpload", photoUploadPayload);
-        } catch (e1) {
-          try {
-            await API.call("addSuccessPhoto", photoUploadPayload);
-          } catch (e2) {
-            await API.call("addProgressGallery", photoUploadPayload);
-          }
+        const pUploadRes = await API.call("addPhotoUpload", photoUploadPayload);
+        if (pUploadRes && pUploadRes.success) {
+          backendSaved = true;
+          backendMessage = pUploadRes.message;
+          if (pUploadRes.id) newItem.id = pUploadRes.id;
         }
-      } catch (e) {
-        console.warn("Backend addPhotoUpload failed, stored locally.", e);
+      } catch (e1) {}
+
+      // Step B: Fallback to addActivity (Guaranteed 100% supported in deployed Google Apps Script)
+      if (!backendSaved) {
+        try {
+          const actPayload = {
+            Date: newItem.date,
+            Activity_Type: newItem.category,
+            Activity_Name: newItem.title,
+            Block: newItem.block,
+            GP: newItem.gramPanchayat,
+            Village: newItem.gramPanchayat,
+            Participants: newItem.participants,
+            Description: newItem.description,
+            Outcome: newItem.status,
+            Photo_URL: newItem.imageUrl
+          };
+          const actRes = await API.call("addActivity", actPayload);
+          if (actRes && actRes.success) {
+            backendSaved = true;
+            backendMessage = actRes.message;
+            if (actRes.id) newItem.id = actRes.id;
+          }
+        } catch (e2) {}
       }
 
-      // 3. Save to localStorage
-      saveCustomItem(newItem);
+      if (backendSaved) {
+        App.showToast("Success story & photo saved to Google Sheet backend! • शीट में सुरक्षित हो गई", "success");
+      } else {
+        // Fallback save locally if offline
+        saveCustomItem(newItem);
+        App.showToast("Saved locally. Could not reach backend: " + (backendMessage || "Network/permission error"), "warning");
+      }
 
-      App.showToast("Success photo successfully added to gallery!", "success");
       form.reset();
       const previewImg = document.getElementById("galPhotoPreview");
       if (previewImg) {
         previewImg.src = "";
         previewImg.style.display = "none";
       }
+      if (fileInput) {
+        fileInput.value = "";
+        delete fileInput.dataset.base64;
+        delete fileInput.dataset.filename;
+        delete fileInput.dataset.mimetype;
+      }
 
       closeAddPhotoDrawer();
-      loadGallery();
+      await loadGallery();
     } catch (err) {
       App.showToast("Failed to save photo: " + err.message, "error");
     } finally {

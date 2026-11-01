@@ -1,20 +1,23 @@
 {
-  "name": "youth-hub-dantewada",
-  "version": "1.0.0",
-  "description": "Youth Hub Dantewada - Youth Development & Employment Monitoring System",
-  "main": "index.html",
+  "name": "dantewada-youth-development-portal",
+  "version": "2.0.0",
+  "description": "Dantewada Youth Development, Employment & Success Story Portal - District Administration / Zilla Panchayat Dantewada",
+  "main": "server.js",
   "scripts": {
-    "dev": "npx serve -l 3000",
-    "start": "npx serve -l 3000",
-    "serve": "npx serve -l 3000",
-    "test": "node --test test/**/*.test.js"
+    "start": "node server.js",
+    "dev": "node server.js",
+    "serve": "node server.js",
+    "test": "node --test test/*.test.js"
   },
   "keywords": [
-    "youth-hub",
     "dantewada",
-    "monitoring",
-    "dashboard"
+    "youth-development",
+    "employment",
+    "skill-training",
+    "field-visits",
+    "success-stories",
+    "chhattisgarh"
   ],
-  "author": "District Administration Dantewada",
+  "author": "District Administration / Zilla Panchayat, Dantewada",
   "license": "ISC"
 }

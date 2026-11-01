@@ -1,0 +1,2074 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard | Dantewada Youth Development Portal</title>
+
+  <!-- Tailwind CSS & FontAwesome -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <!-- Chart.js & SheetJS -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="js/vendor/xlsx.full.min.js"></script>
+
+  <!-- Application Stylesheet -->
+  <link rel="stylesheet" href="css/portal.css">
+</head>
+<body class="bg-slate-100 text-slate-800 antialiased flex flex-col h-screen overflow-hidden">
+
+  <!-- Tricolor Accent Top Stripe -->
+  <div class="tricolor-stripe"></div>
+
+  <!-- Top Navigation Header -->
+  <header class="bg-gradient-to-r from-[#071329] via-[#0d1e3d] to-[#08152c] text-white px-3 sm:px-6 py-2.5 flex items-center justify-between border-b border-amber-500/20 shadow-md shadow-black/25 shrink-0 z-30">
+    <!-- Left: Brand Insignia & Official Title (Guaranteed No Truncation) -->
+    <div class="flex items-center gap-2 sm:gap-3.5 min-w-0 shrink-0">
+      <!-- Mobile Sidebar Toggle Button -->
+      <button id="adminMobileSidebarToggle" class="lg:hidden w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-slate-800/90 hover:bg-slate-700 active:scale-95 text-amber-400 flex items-center justify-center transition border border-slate-700 shrink-0 shadow-sm" title="मेनू खोलें (Menu)" aria-label="Toggle Navigation Drawer">
+        <i class="fa-solid fa-bars text-sm"></i>
+      </button>
+
+      <!-- District Insignia / Monogram Badge -->
+      <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-blue-700 via-indigo-900 to-slate-950 text-amber-300 flex items-center justify-center font-black text-sm sm:text-lg border-2 border-amber-400/80 shadow-md shadow-blue-950/60 shrink-0 tracking-wider">
+        दं
+      </div>
+
+      <!-- Official Title & District Subtitle -->
+      <div class="leading-tight min-w-0">
+        <div class="flex items-center gap-1.5 sm:gap-2">
+          <h1 class="text-xs sm:text-base font-extrabold tracking-tight text-white truncate sm:whitespace-nowrap">
+            दंतेवाड़ा युवा पोर्टल
+          </h1>
+          <span class="hidden sm:inline-flex items-center text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-400/15 text-amber-300 border border-amber-400/30 whitespace-nowrap">
+            Admin Console
+          </span>
+        </div>
+        <p class="text-[10px] sm:text-[11px] text-slate-300 font-medium truncate sm:whitespace-nowrap mt-0.5 flex items-center gap-1.5">
+          <span>जिला प्रशासन, दंतेवाड़ा</span>
+          <span class="text-slate-500 hidden md:inline">•</span>
+          <span class="text-slate-400 text-[10px] hidden md:inline">छत्तीसगढ़</span>
+        </p>
+      </div>
+    </div>
+
+    <!-- Hidden fallback for roleSwitcherSelect -->
+    <select id="roleSwitcherSelect" class="hidden"></select>
+
+    <!-- Right: Current User Details, Live Status & Public Site Link -->
+    <div class="flex items-center gap-2 sm:gap-3.5 shrink-0">
+      <!-- Live Google Sheet Backend Connection Pill -->
+      <div id="headerLiveStatusBtn" class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-950/80 border border-emerald-500/40 text-[11px] text-emerald-300 font-semibold shadow-sm" title="गूगल शीट कनेक्शन स्थिति">
+        <span id="headerLiveDot" class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span id="headerLiveStatusText">Google Sheet कनेक्टेड</span>
+      </div>
+
+      <!-- User Info -->
+      <div class="text-right hidden sm:block">
+        <div id="adminCurrentUserName" class="text-xs font-bold text-slate-100 truncate max-w-[160px] lg:max-w-[200px]">Amit Varma</div>
+        <div class="flex items-center justify-end gap-1.5 mt-0.5">
+          <span id="adminCurrentUserRole" class="text-[10px] font-semibold text-amber-300 bg-amber-500/10 border border-amber-500/25 px-1.5 py-0.5 rounded truncate max-w-[140px]">Super Admin</span>
+          <span id="adminUserBlockBadge" class="hidden text-[10px] font-mono text-cyan-300 bg-cyan-950/80 border border-cyan-800 px-1.5 py-0.5 rounded"></span>
+        </div>
+      </div>
+
+      <!-- Avatar with Online Ring -->
+      <div class="relative shrink-0">
+        <div id="adminUserAvatar" class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gradient-to-tr from-blue-700 to-indigo-600 text-white font-bold flex items-center justify-center text-xs border-2 border-amber-400/70 shadow-md shrink-0">
+          AV
+        </div>
+        <span class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-[#08152c]" title="Online"></span>
+      </div>
+
+      <!-- Public Site Link Button -->
+      <a href="index.html" class="bg-gradient-to-r from-blue-900/60 to-slate-800 hover:from-blue-800 hover:to-slate-700 active:scale-95 text-slate-100 text-xs font-semibold p-2 sm:px-3 sm:py-1.5 rounded-xl border border-blue-500/40 shadow-sm flex items-center gap-1.5 transition" title="सार्वजनिक पोर्टल देखें (Public Site)">
+        <i class="fa-solid fa-arrow-up-right-from-square text-amber-400 text-xs"></i>
+        <span class="hidden sm:inline">Public Site</span>
+      </a>
+    </div>
+  </header>
+
+  <!-- Main Container: Sidebar + Tab Content -->
+  <div class="flex flex-1 overflow-hidden relative">
+
+    <!-- Mobile Drawer Overlay Backdrop -->
+    <div id="adminSidebarBackdrop" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-40 hidden transition-opacity duration-300"></div>
+
+    <!-- Sidebar Navigation: Strictly Focused on 12 Sheets & Core PRD -->
+    <aside id="adminSidebar" class="admin-sidebar w-68 bg-[#0b1324] text-slate-300 flex flex-col shrink-0 border-r border-slate-800/80 select-none">
+      
+      <!-- Mobile Drawer Close Header -->
+      <div class="lg:hidden p-3.5 border-b border-slate-800 flex items-center justify-between bg-[#070d1a]">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-700 to-indigo-900 text-white flex items-center justify-center font-bold text-xs border border-amber-500 shadow">दं</div>
+          <div>
+            <span class="text-xs font-bold text-white tracking-wide block">दंतेवाड़ा युवा पोर्टल</span>
+            <span class="text-[10px] text-amber-400 font-medium block">Admin Navigation</span>
+          </div>
+        </div>
+        <button id="adminCloseSidebarBtn" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 hover:text-white flex items-center justify-center text-xs transition" title="मेनू बंद करें (Close)">
+          <i class="fa-solid fa-xmark text-sm"></i>
+        </button>
+      </div>
+
+      <!-- Mobile User Profile Card in Drawer -->
+      <div class="lg:hidden p-3 bg-gradient-to-r from-slate-900 via-blue-950/80 to-slate-900 border-b border-slate-800 flex items-center gap-2.5">
+        <div class="w-9 h-9 rounded-full bg-gradient-to-tr from-blue-700 to-indigo-600 text-white font-bold flex items-center justify-center text-xs border-2 border-amber-400/70 shadow shrink-0">
+          AV
+        </div>
+        <div class="min-w-0 flex-1">
+          <div class="text-xs font-bold text-white truncate">Amit Varma</div>
+          <div class="flex items-center gap-1.5 mt-0.5">
+            <span class="text-[10px] font-semibold text-amber-300 bg-amber-500/15 border border-amber-500/25 px-1.5 py-0.2 rounded">Super Admin</span>
+            <span class="text-[10px] text-emerald-400 flex items-center gap-1 font-mono">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Online
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mobile Role Switcher (Visible on Phone/Tablet inside Drawer) -->
+      <div class="p-3 bg-slate-900/90 border-b border-slate-800 md:hidden">
+        <label class="text-[10px] font-bold text-amber-400 block mb-1 uppercase tracking-wider flex items-center gap-1">
+          <i class="fa-solid fa-user-shield"></i> सक्रिय भूमिका (Active Role):
+        </label>
+        <select id="roleSwitcherSelectMobile" class="w-full bg-slate-950 text-xs text-amber-300 font-medium border border-slate-700 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-blue-500">
+          <!-- Synced with roleSwitcherSelect -->
+        </select>
+      </div>
+
+      <nav class="flex-1 overflow-y-auto p-2.5 space-y-1 text-xs">
+
+        <!-- 1. CORE / मुख्य -->
+        <div class="sidebar-group-title text-[10px] font-bold tracking-wider text-slate-400">
+          <span>मुख्य नेविगेशन</span>
+        </div>
+
+        <button data-tab="dashboard" class="bilingual-nav-btn active">
+          <div class="flex items-center gap-2.5">
+            <span class="icon-box text-blue-400"><i class="fa-solid fa-chart-pie"></i></span>
+            <span class="title-en font-medium">डैशबोर्ड (Dashboard)</span>
+          </div>
+        </button>
+
+        <button data-tab="stories" class="bilingual-nav-btn">
+          <div class="flex items-center gap-2.5">
+            <span class="icon-box text-emerald-400"><i class="fa-solid fa-photo-film"></i></span>
+            <span class="title-en font-medium">सफलता गैलरी (Stories)</span>
+          </div>
+        </button>
+
+        <button data-tab="visits" class="bilingual-nav-btn">
+          <div class="flex items-center gap-2.5">
+            <span class="icon-box text-purple-400"><i class="fa-solid fa-camera"></i></span>
+            <span class="title-en font-medium">फील्ड विजिट (Visits)</span>
+          </div>
+        </button>
+
+        <!-- 💼 1. EMPLOYMENT & PLACEMENT -->
+        <div class="sidebar-group-title mt-3 flex items-center justify-between text-[10px] font-bold tracking-wider text-slate-400">
+          <span>💼 रोजगार एवं प्लेसमेंट</span>
+          <span class="text-slate-500 font-mono">2 SHEETS</span>
+        </div>
+
+        <button onclick="window.openSheetViewer('Employment_Registration')" class="bilingual-nav-btn" data-sheet="Employment_Registration">
+          <div class="flex items-center gap-2">
+            <span class="icon-box text-emerald-400"><i class="fa-solid fa-address-card"></i></span>
+            <span class="title-en">1. Employment Registration</span>
+          </div>
+          <span class="sheet-count-badge text-[10px] font-bold bg-emerald-400/15 text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-400/20">0</span>
+        </button>
+
+        <button onclick="window.openSheetViewer('Employed')" class="bilingual-nav-btn" data-sheet="Employed">
+          <div class="flex items-center gap-2">
+            <span class="icon-box text-blue-400"><i class="fa-solid fa-briefcase"></i></span>
+            <span class="title-en">2. Employed Youth</span>
+          </div>
+          <span class="sheet-count-badge text-[10px] font-bold bg-blue-400/15 text-blue-300 px-2 py-0.5 rounded-full border border-blue-400/20">0</span>
+        </button>
+
+        <!-- 🎓 2. SKILLS & EDUCATION -->
+        <div class="sidebar-group-title mt-3 flex items-center justify-between text-[10px] font-bold tracking-wider text-slate-400">
+          <span>🎓 कौशल एवं उच्च शिक्षा</span>
+          <span class="text-slate-500 font-mono">6 SHEETS</span>
+        </div>
+
+        <button onclick="window.openSheetViewer('Skill_Linked')" class="bilingual-nav-btn" data-sheet="Skill_Linked">
+          <div class="flex items-center gap-2">
+            <span class="icon-box text-amber-400"><i class="fa-solid fa-wrench"></i></span>
+            <span class="title-en">3. Skill Linked</span>
+          </div>
+          <span class="sheet-count-badge text-[10px] font-bold bg-amber-400/15 text-amber-300 px-2 py-0.5 rounded-full border border-amber-400/20">0</span>
+        </button>
+
+        <button onclick="window.openSheetViewer('Education_Linked')" class="bilingual-nav-btn" data-sheet="Education_Linked">
+          <div class="flex items-center gap-2">
+            <span class="icon-box text-indigo-400"><i class="fa-solid fa-graduation-cap"></i></span>
+            <span class="title-en">4. Education Linked</span>
+          </div>
+          <span class="sheet-count-badge text-[10px] font-bold bg-indigo-400/15 text-indigo-300 px-2 py-0.5 rounded-full border border-indigo-400/20">0</span>
+        </button>
+
+        <button onclick="window.openSheetViewer('IIM_Candidate_List')" class="bilingual-nav-btn" data-sheet="IIM_Candidate_List">
+          <div class="flex items-center gap-2">
+            <span class="icon-box text-purple-400"><i class="fa-solid fa-user-graduate"></i></span>
+            <span class="title-en">8. IIM Raipur List</span>
+          </div>
+          <span class="sheet-count-badge text-[10px] font-bold bg-purple-400/15 text-purple-300 px-2 py-0.5 rounded-full border border-purple-400/20">0</span>
+        </button>
+
+        <button onclick="window.openSheetViewer('Training_Conducted')" class="bilingual-nav-btn" data-sheet="Training_Conducted">
+          <div class="flex items-center gap-2">
+            <span class="icon-box text-orange-400"><i class="fa-solid fa-chalkboard-user"></i></span>
+            <span class="title-en">9. Training Conducted</span>
+          </div>
+          <span class="sheet-count-badge text-[10px] font-bold bg-orange-400/15 text-orange-300 px-2 py-0.5 rounded-full border border-orange-400/20">0</span>
+        </button>
+
+        <button onclick="window.openSheetViewer('MY_Bharat_Registration')" class="bilingual-nav-btn" data-sheet="MY_Bharat_Registration">
+          <div class="flex items-center gap-2">
+            <span class="icon-box text-blue-400"><i class="fa-solid fa-flag"></i></span>
+            <span class="title-en">10. MY Bharat</span>
+          </div>
+          <span class="sheet-count-badge text-[10px] font-bold bg-blue-400/15 text-blue-300 px-2 py-0.5 rounded-full border border-blue-400/20">0</span>
+        </button>
+
+        <button onclick="window.openSheetViewer('Youth_Hub_Trainings')" class="bilingual-nav-btn" data-sheet="Youth_Hub_Trainings">
+          <div class="flex items-center gap-2">
+            <span class="icon-box text-teal-400"><i class="fa-solid fa-certificate"></i></span>
+            <span class="title-en">11. Youth Hub Trainees</span>
+          </div>
+          <span class="sheet-count-badge text-[10px] font-bold bg-teal-400/15 text-teal-300 px-2 py-0.5 rounded-full border border-teal-400/20">0</span>
+        </button>
+
+        <!-- 💡 3. ENTERPRISE & LOANS -->
+        <div class="sidebar-group-title mt-3 flex items-center justify-between text-[10px] font-bold tracking-wider text-slate-400">
+          <span>💡 उद्यमिता व ऋण सहायता</span>
+          <span class="text-slate-500 font-mono">3 SHEETS</span>
+        </div>
+
+        <button onclick="window.openSheetViewer('Entrepreneur_Identified')" class="bilingual-nav-btn" data-sheet="Entrepreneur_Identified">
+          <div class="flex items-center gap-2">
+            <span class="icon-box text-yellow-400"><i class="fa-solid fa-rocket"></i></span>
+            <span class="title-en font-bold">12. Startup Hunt</span>
+          </div>
+          <span class="sheet-count-badge text-[10px] font-bold bg-amber-400/15 text-yellow-300 px-2 py-0.5 rounded-full border border-yellow-400/20">0</span>
+        </button>
+
+        <button onclick="window.openSheetViewer('PMEGP_PMFME_Loan')" class="bilingual-nav-btn" data-sheet="PMEGP_PMFME_Loan">
+          <div class="flex items-center gap-2">
+            <span class="icon-box text-rose-400"><i class="fa-solid fa-store"></i></span>
+            <span class="title-en">13. PMEGP / PMFME Loan</span>
+          </div>
+          <span class="sheet-count-badge text-[10px] font-bold bg-rose-400/15 text-rose-300 px-2 py-0.5 rounded-full border border-rose-400/20">0</span>
+        </button>
+
+        <button onclick="window.openSheetViewer('Rang_De_Loan')" class="bilingual-nav-btn" data-sheet="Rang_De_Loan">
+          <div class="flex items-center gap-2">
+            <span class="icon-box text-pink-400"><i class="fa-solid fa-handshake-angle"></i></span>
+            <span class="title-en">14. Rang De Loan</span>
+          </div>
+          <span class="sheet-count-badge text-[10px] font-bold bg-pink-400/15 text-pink-300 px-2 py-0.5 rounded-full border border-pink-400/20">0</span>
+        </button>
+
+        <!-- ⛺ 4. SPECIAL INITIATIVES -->
+        <div class="sidebar-group-title mt-3 flex items-center justify-between text-[10px] font-bold tracking-wider text-slate-400">
+          <span>⛺ बस्तर मुन्ने विशेष अभियान</span>
+          <span class="text-slate-500 font-mono">1 SHEET</span>
+        </div>
+
+        <button onclick="window.openSheetViewer('Bastar_Munne_Shivir')" class="bilingual-nav-btn" data-sheet="Bastar_Munne_Shivir">
+          <div class="flex items-center gap-2">
+            <span class="icon-box text-teal-400"><i class="fa-solid fa-campground"></i></span>
+            <span class="title-en">15. Bastar Munne Shivir</span>
+          </div>
+          <span class="sheet-count-badge text-[10px] font-bold bg-teal-400/15 text-teal-300 px-2 py-0.5 rounded-full border border-teal-400/20">0</span>
+        </button>
+
+        <!-- 🤝 5. COMMUNITY COORDINATION -->
+        <div class="sidebar-group-title mt-3 flex items-center justify-between text-[10px] font-bold tracking-wider text-slate-400">
+          <span>🤝 समुदाय व बैठकें</span>
+          <span class="text-slate-500 font-mono">VO/CLF</span>
+        </div>
+
+        <button onclick="window.openSheetViewer('Meetings_VO_CLF_TRIF')" class="bilingual-nav-btn" data-sheet="Meetings_VO_CLF_TRIF">
+          <div class="flex items-center gap-2">
+            <span class="icon-box text-purple-400"><i class="fa-solid fa-users-rectangle"></i></span>
+            <span class="title-en font-bold">16. VO CLF Meeting</span>
+          </div>
+          <span class="sheet-count-badge text-[10px] font-bold bg-purple-400/15 text-purple-300 px-2 py-0.5 rounded-full border border-purple-400/20">0</span>
+        </button>
+
+        <!-- 📋 6. FIELD SURVEY & REGISTRATION -->
+        <div class="sidebar-group-title mt-3 flex items-center justify-between text-[10px] font-bold tracking-wider text-slate-400">
+          <span>📋 फील्ड सर्वे एवं डेटा</span>
+          <span class="text-slate-500 font-mono">1 SHEET</span>
+        </div>
+
+        <button onclick="window.openSheetViewer('M_Form')" class="bilingual-nav-btn" data-sheet="M_Form">
+          <div class="flex items-center gap-2">
+            <span class="icon-box text-cyan-400"><i class="fa-solid fa-file-waveform"></i></span>
+            <span class="title-en font-bold">17. M-Form</span>
+          </div>
+          <span class="sheet-count-badge text-[10px] font-bold bg-cyan-400/15 text-cyan-300 px-2 py-0.5 rounded-full border border-cyan-400/20">0</span>
+        </button>
+
+        <!-- 5. ADMINISTRATION / प्रशासन -->
+        <div class="sidebar-group-title mt-3 flex items-center justify-between text-[10px] font-bold tracking-wider text-slate-400">
+          <span>⚙️ सिस्टम व सेटिंग्स</span>
+        </div>
+
+        <button data-tab="importer" class="bilingual-nav-btn">
+          <div class="flex items-center gap-2">
+            <span class="icon-box text-emerald-400"><i class="fa-solid fa-file-excel"></i></span>
+            <span class="title-en font-medium">डेटा आयात (Excel Import)</span>
+          </div>
+        </button>
+
+        <button data-tab="audit" class="bilingual-nav-btn">
+          <div class="flex items-center gap-2">
+            <span class="icon-box text-blue-400"><i class="fa-solid fa-database"></i></span>
+            <span class="title-en font-medium">सिस्टम ऑडिट लॉग (Audit Log)</span>
+          </div>
+        </button>
+
+      </nav>
+
+      <!-- Sidebar Footer -->
+      <div class="p-3 border-t border-slate-800/80 text-[11px] text-slate-400 bg-[#070d1a]">
+        <div class="flex items-center justify-between">
+          <span>Dantewada Portal v2.0</span>
+          <span class="flex items-center gap-1.5 text-green-400 font-mono text-[10px]">
+            <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> Online
+          </span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Area (Scrollable) -->
+    <main class="flex-1 overflow-y-auto p-3 sm:p-6 lg:p-8 pb-24 lg:pb-8">
+
+      <!-- Horizontal Breadcrumb & Quick Action Navigation Bar -->
+      <div class="bg-white border border-slate-200 rounded-2xl p-3 sm:px-5 mb-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <!-- Left: Toggle Sidebar on Mobile + Dynamic Breadcrumb -->
+        <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+          <button id="sidebarToggleBtn" class="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center transition text-sm shrink-0" title="Toggle Sidebar">
+            <i class="fa-solid fa-bars-staggered"></i>
+          </button>
+          
+          <div class="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs text-slate-500 truncate">
+            <a href="index.html" class="hover:text-blue-800 transition"><i class="fa-solid fa-house"></i></a>
+            <span>/</span>
+            <span id="adminNavBreadcrumbGroup" class="font-semibold text-slate-600 truncate">दंतेवाड़ा युवा विकास</span>
+            <span>/</span>
+            <span id="adminNavBreadcrumbActive" class="font-bold text-blue-900 bg-blue-50 px-2.5 py-0.5 rounded-md border border-blue-100 truncate">डैशबोर्ड</span>
+          </div>
+        </div>
+
+        <!-- Right: Action Navigation Bar -->
+        <div class="flex items-center gap-2 overflow-x-auto touch-scroll-row pb-1 sm:pb-0 w-full sm:w-auto">
+          <span id="topBarPendingFollowups" class="hidden">0</span>
+
+          <!-- Cloud Sync: Live Google Sheet Data -->
+          <button id="cloudSyncBtn" onclick="window.syncGoogleSheetData()" class="bg-gradient-to-r from-emerald-700 to-teal-800 hover:from-emerald-600 hover:to-teal-700 active:scale-95 text-white text-xs font-bold px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl shadow-xs transition flex items-center gap-1.5 whitespace-nowrap" title="गूगल शीट से लाइव डेटा लोड करें">
+            <i id="cloudSyncIcon" class="fa-solid fa-arrows-rotate text-[11px]"></i>
+            <span id="cloudSyncLabel">लाइव शीट सिंक</span>
+          </button>
+
+          <!-- Quick Action: + Add Youth -->
+          <button onclick="window.openAddYouthModal()" class="bg-blue-800 hover:bg-blue-900 text-white text-xs font-bold px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl shadow-xs transition flex items-center gap-1.5 whitespace-nowrap">
+            <i class="fa-solid fa-user-plus text-[11px]"></i>
+            <span>नया युवा जोड़ें</span>
+          </button>
+
+          <!-- Quick Action: Import -->
+          <button onclick="window.switchTab('importer')" class="bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl shadow-xs transition flex items-center gap-1.5 whitespace-nowrap">
+            <i class="fa-solid fa-file-excel text-[11px]"></i>
+            <span>डेटा आयात</span>
+          </button>
+
+          <!-- Quick Action: Export -->
+          <button onclick="window.exportYouthExcel()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 text-xs font-semibold px-3 py-1.5 sm:py-2 rounded-xl transition flex items-center gap-1.5 whitespace-nowrap">
+            <i class="fa-solid fa-download text-slate-500 text-[11px]"></i>
+            <span class="hidden sm:inline">एक्सपोर्ट</span>
+          </button>
+
+          <!-- Quick Action: Clear Mock Data -->
+          <button onclick="window.clearDatabaseToEmpty()" title="पोर्टल से सभी मॉक डेटा हटाएं (0 Records Clean Slate)" class="bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-300 text-xs font-bold px-3 py-1.5 sm:py-2 rounded-xl transition flex items-center gap-1.5 whitespace-nowrap">
+            <i class="fa-solid fa-trash-can text-rose-600 text-[11px]"></i>
+            <span class="hidden sm:inline">मॉक डेटा हटाएं (0)</span>
+            <span class="sm:hidden">क्लीन (0)</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- ======================================================== -->
+      <!-- TAB 1: DASHBOARD OVERVIEW & HERO KPI BANNER              -->
+      <!-- ======================================================== -->
+      <div id="tab-dashboard" class="admin-tab-content space-y-6">
+
+        <!-- Executive Console Header & Block Selector -->
+        <div class="gov-card p-5 sm:p-6 bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 text-white rounded-2xl shadow-lg border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <div class="inline-flex items-center gap-2 bg-amber-500/20 text-amber-300 text-[11px] font-semibold px-2.5 py-0.5 rounded-full mb-1 border border-amber-400/30">
+              <i class="fa-solid fa-gauge-high text-amber-400"></i> Executive Console • जिला प्रशासन दंतेवाड़ा
+            </div>
+            <h1 class="text-xl sm:text-2xl font-black tracking-tight text-white">
+              दंतेवाड़ा जिला युवा विकास एवं रोजगार डैशबोर्ड
+            </h1>
+            <p class="text-xs text-slate-300 mt-0.5">
+              शिक्षा, कौशल, रोजगार, स्वरोजगार व बस्तर मुन्ने शिविर का एकीकृत डिजिटल मॉनिटरिंग कंसोल
+            </p>
+          </div>
+
+          <div class="flex items-center gap-2.5 self-start md:self-auto bg-white/10 p-2 rounded-xl backdrop-blur-sm border border-white/15">
+            <span class="text-xs text-slate-300 font-bold hidden sm:inline"><i class="fa-solid fa-filter text-amber-400 mr-1"></i>ब्लॉक:</span>
+            <select id="dashBlockFilter" class="bg-slate-900 text-xs text-white font-bold border border-slate-700 rounded-lg px-3 py-1.5 shadow-sm focus:outline-none focus:border-amber-400">
+              <option value="All">सभी 4 ब्लॉक (All Blocks)</option>
+              <option value="Dantewada">दंतेवाड़ा (Dantewada)</option>
+              <option value="Geedam">गीदम (Geedam)</option>
+              <option value="Katekalyan">कटेकल्याण (Katekalyan)</option>
+              <option value="Kuakonda">कुआकोंडा (Kuakonda)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- 4 Clean Master Executive Metrics (Single Row) -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
+          <div class="bg-white p-3 sm:p-4 rounded-2xl border border-slate-200/90 shadow-xs flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3.5 hover:shadow-md transition">
+            <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-teal-50 text-teal-700 flex items-center justify-center text-lg sm:text-xl shrink-0 border border-teal-100">
+              <i class="fa-solid fa-users"></i>
+            </div>
+            <div class="min-w-0 flex-1">
+              <span class="text-[11px] sm:text-xs text-slate-500 font-medium block leading-tight truncate" title="कुल पंजीकृत युवा">कुल पंजीकृत युवा</span>
+              <strong id="kpi-total-youth" class="text-xl sm:text-2xl font-black text-slate-900 block mt-0.5">0</strong>
+            </div>
+          </div>
+
+          <div class="bg-white p-3 sm:p-4 rounded-2xl border border-slate-200/90 shadow-xs flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3.5 hover:shadow-md transition">
+            <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center text-lg sm:text-xl shrink-0 border border-blue-100">
+              <i class="fa-solid fa-briefcase"></i>
+            </div>
+            <div class="min-w-0 flex-1">
+              <span class="text-[11px] sm:text-xs text-slate-500 font-medium block leading-tight truncate" title="रोजगार प्राप्त युवा">रोजगार प्राप्त युवा</span>
+              <strong id="kpi-employed-youth" class="text-xl sm:text-2xl font-black text-blue-800 block mt-0.5">0</strong>
+            </div>
+          </div>
+
+          <div class="bg-white p-3 sm:p-4 rounded-2xl border border-slate-200/90 shadow-xs flex flex-col sm:flex-row items-start sm:items-center gap-2.5 sm:gap-3.5 hover:shadow-md transition">
+            <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-purple-50 text-purple-700 flex items-center justify-center text-lg sm:text-xl shrink-0 border border-purple-100">
+              <i class="fa-solid fa-graduation-cap"></i>
+            </div>
+            <div class="min-w-0 flex-1">
+              <span class="text-[11px] sm:text-xs text-slate-500 font-medium block leading-tight truncate" title="कौशल व शिक्षा लिंक्ड">कौशल व शिक्षा लिंक्ड</span>
+              <strong id="kpi-skills-youth" class="text-xl sm:text-2xl font-black text-purple-800 block mt-0.5">0</strong>
+            </div>
+          </div>
+
+          <div class="bg-white p-3 sm:p-4 rounded-2xl border border-slate-200/90 shadow-xs flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3.5 hover:shadow-md transition">
+            <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center text-lg sm:text-xl shrink-0 border border-amber-100">
+              <i class="fa-solid fa-lightbulb"></i>
+            </div>
+            <div class="min-w-0 flex-1">
+              <span class="text-[11px] sm:text-xs text-slate-500 font-medium block leading-tight truncate" title="स्टार्टअप्स व ऋण स्वीकृत">स्टार्टअप्स व ऋण स्वीकृत</span>
+              <strong id="kpi-loans" class="text-xl sm:text-2xl font-black text-amber-800 block mt-0.5">0</strong>
+            </div>
+          </div>
+        </div>
+        <span id="kpi-visits" class="hidden">0</span>
+        <span id="kpi-stories" class="hidden">0</span>
+
+        <!-- ============================================================ -->
+        <!-- 12 DATABASE CATEGORY MODULE KPI CARDS                        -->
+        <!-- ============================================================ -->
+        <div class="space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h2 class="text-base sm:text-lg font-black text-slate-900 flex items-center gap-2">
+                <i class="fa-solid fa-layer-group text-blue-700"></i>
+                <span>योजना एवं डेटाबेस मॉड्यूल (12 Category Modules)</span>
+              </h2>
+              <p class="text-xs text-slate-500 mt-0.5">
+                विशिष्ट मॉड्यूल पर क्लिक करके उसकी डेटा टेबल, पैरामीटर्स एवं विस्तृत सूची देखें।
+              </p>
+            </div>
+            
+            <!-- Category Filter Tabs -->
+            <div class="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl border border-slate-200 overflow-x-auto touch-scroll-row max-w-full" id="dashCatTabs">
+              <button onclick="window.filterDashCategory('all', this)" class="cat-pill active px-3 py-1 text-xs font-bold rounded-lg bg-white text-blue-900 shadow-xs border border-slate-200 transition">
+                सभी (12)
+              </button>
+              <button onclick="window.filterDashCategory('employment', this)" class="cat-pill px-2.5 py-1 text-xs font-medium text-slate-600 hover:text-slate-900 rounded-lg transition">
+                💼 रोजगार (2)
+              </button>
+              <button onclick="window.filterDashCategory('skills', this)" class="cat-pill px-2.5 py-1 text-xs font-medium text-slate-600 hover:text-slate-900 rounded-lg transition">
+                🎓 कौशल व शिक्षा (6)
+              </button>
+              <button onclick="window.filterDashCategory('enterprise', this)" class="cat-pill px-2.5 py-1 text-xs font-medium text-slate-600 hover:text-slate-900 rounded-lg transition">
+                💡 उद्यमिता व ऋण (3)
+              </button>
+              <button onclick="window.filterDashCategory('bastar', this)" class="cat-pill px-2.5 py-1 text-xs font-medium text-slate-600 hover:text-slate-900 rounded-lg transition">
+                ⛺ बस्तर मुन्ने (1)
+              </button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="dashCardsGrid">
+            
+            <!-- 1. Employment Registration -->
+            <div onclick="window.openSheetViewer('Employment_Registration')" data-dash-cat="employment" class="dash-module-card group bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 hover:border-teal-500 hover:shadow-md transition-all cursor-pointer flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between mb-3">
+                  <div class="w-10 h-10 rounded-xl bg-teal-50 text-teal-700 flex items-center justify-center text-lg border border-teal-100 group-hover:scale-105 transition-transform">
+                    <i class="fa-solid fa-address-card"></i>
+                  </div>
+                  <span class="text-[11px] font-semibold text-teal-700 bg-teal-50 px-2 py-0.5 rounded-md border border-teal-100">रोजगार</span>
+                </div>
+                <div class="text-3xl font-black text-slate-900 tracking-tight" id="kpi-card-val-employment-registration">0</div>
+                <div class="font-bold text-slate-900 text-sm mt-1">1. Employment Registration</div>
+                <div class="text-xs text-slate-500">पंजीकृत युवा डेटाबेस</div>
+              </div>
+              <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-teal-700 group-hover:text-teal-800">
+                <span>डेटा सूची देखें</span>
+                <i class="fa-solid fa-arrow-right text-[11px] transform group-hover:translate-x-1 transition-transform"></i>
+              </div>
+            </div>
+
+            <!-- 2. Employed -->
+            <div onclick="window.openSheetViewer('Employed')" data-dash-cat="employment" class="dash-module-card group bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 hover:border-emerald-500 hover:shadow-md transition-all cursor-pointer flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between mb-3">
+                  <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center text-lg border border-emerald-100 group-hover:scale-105 transition-transform">
+                    <i class="fa-solid fa-briefcase"></i>
+                  </div>
+                  <span class="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100">प्लेसमेंट</span>
+                </div>
+                <div class="text-3xl font-black text-slate-900 tracking-tight" id="kpi-card-val-employed">0</div>
+                <div class="font-bold text-slate-900 text-sm mt-1">2. Employed</div>
+                <div class="text-xs text-slate-500">रोजगार प्राप्त युवा</div>
+              </div>
+              <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-emerald-700 group-hover:text-emerald-800">
+                <span>डेटा सूची देखें</span>
+                <i class="fa-solid fa-arrow-right text-[11px] transform group-hover:translate-x-1 transition-transform"></i>
+              </div>
+            </div>
+
+            <!-- 3. Skill Linked -->
+            <div onclick="window.openSheetViewer('Skill_Linked')" data-dash-cat="skills" class="dash-module-card group bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 hover:border-blue-500 hover:shadow-md transition-all cursor-pointer flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between mb-3">
+                  <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center text-lg border border-blue-100 group-hover:scale-105 transition-transform">
+                    <i class="fa-solid fa-gears"></i>
+                  </div>
+                  <span class="text-[11px] font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100">कौशल</span>
+                </div>
+                <div class="text-3xl font-black text-slate-900 tracking-tight" id="kpi-card-val-skill-linked">0</div>
+                <div class="font-bold text-slate-900 text-sm mt-1">3. Skill Linked</div>
+                <div class="text-xs text-slate-500">कौशल प्रशिक्षण प्राप्त</div>
+              </div>
+              <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-blue-700 group-hover:text-blue-800">
+                <span>डेटा सूची देखें</span>
+                <i class="fa-solid fa-arrow-right text-[11px] transform group-hover:translate-x-1 transition-transform"></i>
+              </div>
+            </div>
+
+            <!-- 4. Education Linked -->
+            <div onclick="window.openSheetViewer('Education_Linked')" data-dash-cat="skills" class="dash-module-card group bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 hover:border-purple-500 hover:shadow-md transition-all cursor-pointer flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between mb-3">
+                  <div class="w-10 h-10 rounded-xl bg-purple-50 text-purple-700 flex items-center justify-center text-lg border border-purple-100 group-hover:scale-105 transition-transform">
+                    <i class="fa-solid fa-graduation-cap"></i>
+                  </div>
+                  <span class="text-[11px] font-semibold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-md border border-purple-100">उच्च शिक्षा</span>
+                </div>
+                <div class="text-3xl font-black text-slate-900 tracking-tight" id="kpi-card-val-education-linked">0</div>
+                <div class="font-bold text-slate-900 text-sm mt-1">4. Education Linked</div>
+                <div class="text-xs text-slate-500">शिक्षा से जुड़े युवा</div>
+              </div>
+              <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-purple-700 group-hover:text-purple-800">
+                <span>डेटा सूची देखें</span>
+                <i class="fa-solid fa-arrow-right text-[11px] transform group-hover:translate-x-1 transition-transform"></i>
+              </div>
+            </div>
+
+            <!-- 5. Entrepreneur Identified -->
+            <div onclick="window.openSheetViewer('Entrepreneur_Identified')" data-dash-cat="enterprise" class="dash-module-card group bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 hover:border-amber-500 hover:shadow-md transition-all cursor-pointer flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between mb-3">
+                  <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center text-lg border border-amber-100 group-hover:scale-105 transition-transform">
+                    <i class="fa-solid fa-lightbulb"></i>
+                  </div>
+                  <span class="text-[11px] font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-100">स्टार्टअप</span>
+                </div>
+                <div class="text-3xl font-black text-slate-900 tracking-tight" id="kpi-card-val-entrepreneur-identified">0</div>
+                <div class="font-bold text-slate-900 text-sm mt-1">12. Startup Hunt</div>
+                <div class="text-xs text-slate-500">चयनित उद्यमी एवं स्टार्टअप विचार</div>
+              </div>
+              <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-amber-700 group-hover:text-amber-800">
+                <span>डेटा सूची देखें</span>
+                <i class="fa-solid fa-arrow-right text-[11px] transform group-hover:translate-x-1 transition-transform"></i>
+              </div>
+            </div>
+
+            <!-- 13. PMEGP / PMFME Loan -->
+            <div onclick="window.openSheetViewer('PMEGP_PMFME_Loan')" data-dash-cat="enterprise" class="dash-module-card group bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 hover:border-orange-500 hover:shadow-md transition-all cursor-pointer flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between mb-3">
+                  <div class="w-10 h-10 rounded-xl bg-orange-50 text-orange-700 flex items-center justify-center text-lg border border-orange-100 group-hover:scale-105 transition-transform">
+                    <i class="fa-solid fa-hand-holding-dollar"></i>
+                  </div>
+                  <span class="text-[11px] font-semibold text-orange-700 bg-orange-50 px-2 py-0.5 rounded-md border border-orange-100">सरकारी ऋण</span>
+                </div>
+                <div class="text-3xl font-black text-slate-900 tracking-tight" id="kpi-card-val-pmegp-pmfme-loan">0</div>
+                <div class="font-bold text-slate-900 text-sm mt-1">13. PMEGP / PMFME Loan</div>
+                <div class="text-xs text-slate-500">ऋण स्वीकृति व अनुदान</div>
+              </div>
+              <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-orange-700 group-hover:text-orange-800">
+                <span>डेटा सूची देखें</span>
+                <i class="fa-solid fa-arrow-right text-[11px] transform group-hover:translate-x-1 transition-transform"></i>
+              </div>
+            </div>
+
+            <!-- 14. Rang De Loan -->
+            <div onclick="window.openSheetViewer('Rang_De_Loan')" data-dash-cat="enterprise" class="dash-module-card group bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 hover:border-pink-500 hover:shadow-md transition-all cursor-pointer flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between mb-3">
+                  <div class="w-10 h-10 rounded-xl bg-pink-50 text-pink-700 flex items-center justify-center text-lg border border-pink-100 group-hover:scale-105 transition-transform">
+                    <i class="fa-solid fa-handshake-angle"></i>
+                  </div>
+                  <span class="text-[11px] font-semibold text-pink-700 bg-pink-50 px-2 py-0.5 rounded-md border border-pink-100">माइक्रो लोन</span>
+                </div>
+                <div class="text-3xl font-black text-slate-900 tracking-tight" id="kpi-card-val-rang-de-loan">0</div>
+                <div class="font-bold text-slate-900 text-sm mt-1">14. Rang De Loan</div>
+                <div class="text-xs text-slate-500">रंग दे सामाजिक ऋण</div>
+              </div>
+              <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-pink-700 group-hover:text-pink-800">
+                <span>डेटा सूची देखें</span>
+                <i class="fa-solid fa-arrow-right text-[11px] transform group-hover:translate-x-1 transition-transform"></i>
+              </div>
+            </div>
+
+            <!-- 8. IIM Candidate List -->
+            <div onclick="window.openSheetViewer('IIM_Candidate_List')" data-dash-cat="skills" class="dash-module-card group bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 hover:border-sky-500 hover:shadow-md transition-all cursor-pointer flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between mb-3">
+                  <div class="w-10 h-10 rounded-xl bg-sky-50 text-sky-700 flex items-center justify-center text-lg border border-sky-100 group-hover:scale-105 transition-transform">
+                    <i class="fa-solid fa-building-columns"></i>
+                  </div>
+                  <span class="text-[11px] font-semibold text-sky-700 bg-sky-50 px-2 py-0.5 rounded-md border border-sky-100">IIM रायपुर</span>
+                </div>
+                <div class="text-3xl font-black text-slate-900 tracking-tight" id="kpi-card-val-iim-candidate-list">0</div>
+                <div class="font-bold text-slate-900 text-sm mt-1">8. IIM Candidate List</div>
+                <div class="text-xs text-slate-500">उम्मीदवार सूची व चयन</div>
+              </div>
+              <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-sky-700 group-hover:text-sky-800">
+                <span>डेटा सूची देखें</span>
+                <i class="fa-solid fa-arrow-right text-[11px] transform group-hover:translate-x-1 transition-transform"></i>
+              </div>
+            </div>
+
+            <!-- 9. Training Conducted -->
+            <div onclick="window.openSheetViewer('Training_Conducted')" data-dash-cat="skills" class="dash-module-card group bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 hover:border-teal-500 hover:shadow-md transition-all cursor-pointer flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between mb-3">
+                  <div class="w-10 h-10 rounded-xl bg-teal-50 text-teal-700 flex items-center justify-center text-lg border border-teal-100 group-hover:scale-105 transition-transform">
+                    <i class="fa-solid fa-chalkboard-user"></i>
+                  </div>
+                  <span class="text-[11px] font-semibold text-teal-700 bg-teal-50 px-2 py-0.5 rounded-md border border-teal-100">सत्र</span>
+                </div>
+                <div class="text-3xl font-black text-slate-900 tracking-tight" id="kpi-card-val-training-conducted">0</div>
+                <div class="font-bold text-slate-900 text-sm mt-1">9. Training Conducted</div>
+                <div class="text-xs text-slate-500">आयोजित प्रशिक्षण बैच</div>
+              </div>
+              <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-teal-700 group-hover:text-teal-800">
+                <span>डेटा सूची देखें</span>
+                <i class="fa-solid fa-arrow-right text-[11px] transform group-hover:translate-x-1 transition-transform"></i>
+              </div>
+            </div>
+
+            <!-- 10. MY Bharat Registration -->
+            <div onclick="window.openSheetViewer('MY_Bharat_Registration')" data-dash-cat="skills" class="dash-module-card group bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 hover:border-rose-500 hover:shadow-md transition-all cursor-pointer flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between mb-3">
+                  <div class="w-10 h-10 rounded-xl bg-rose-50 text-rose-700 flex items-center justify-center text-lg border border-rose-100 group-hover:scale-105 transition-transform">
+                    <i class="fa-solid fa-id-card"></i>
+                  </div>
+                  <span class="text-[11px] font-semibold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-md border border-rose-100">राष्ट्रीय पोर्टल</span>
+                </div>
+                <div class="text-3xl font-black text-slate-900 tracking-tight" id="kpi-card-val-my-bharat-registration">0</div>
+                <div class="font-bold text-slate-900 text-sm mt-1">10. MY Bharat Registration</div>
+                <div class="text-xs text-slate-500">माई भारत युवा पंजीयन</div>
+              </div>
+              <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-rose-700 group-hover:text-rose-800">
+                <span>डेटा सूची देखें</span>
+                <i class="fa-solid fa-arrow-right text-[11px] transform group-hover:translate-x-1 transition-transform"></i>
+              </div>
+            </div>
+
+            <!-- 11. Youth Hub Trainings -->
+            <div onclick="window.openSheetViewer('Youth_Hub_Trainings')" data-dash-cat="skills" class="dash-module-card group bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 hover:border-indigo-500 hover:shadow-md transition-all cursor-pointer flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between mb-3">
+                  <div class="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-700 flex items-center justify-center text-lg border border-indigo-100 group-hover:scale-105 transition-transform">
+                    <i class="fa-solid fa-users-gear"></i>
+                  </div>
+                  <span class="text-[11px] font-semibold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-100">हब ट्रेनिंग</span>
+                </div>
+                <div class="text-3xl font-black text-slate-900 tracking-tight" id="kpi-card-val-youth-hub-trainings">0</div>
+                <div class="font-bold text-slate-900 text-sm mt-1">11. Youth Hub Trainees</div>
+                <div class="text-xs text-slate-500">यूथ हब प्रशिक्षणार्थी</div>
+              </div>
+              <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-indigo-700 group-hover:text-indigo-800">
+                <span>डेटा सूची देखें</span>
+                <i class="fa-solid fa-arrow-right text-[11px] transform group-hover:translate-x-1 transition-transform"></i>
+              </div>
+            </div>
+
+            <!-- 12. Bastar Munne Shivir -->
+            <div onclick="window.openSheetViewer('Bastar_Munne_Shivir')" data-dash-cat="bastar" class="dash-module-card group bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 hover:border-teal-500 hover:shadow-md transition-all cursor-pointer flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between mb-3">
+                  <div class="w-10 h-10 rounded-xl bg-teal-50 text-teal-700 flex items-center justify-center text-lg border border-teal-100 group-hover:scale-105 transition-transform">
+                    <i class="fa-solid fa-campground"></i>
+                  </div>
+                  <span class="text-[11px] font-semibold text-teal-700 bg-teal-50 px-2 py-0.5 rounded-md border border-teal-100">विशेष अभियान</span>
+                </div>
+                <div class="text-3xl font-black text-slate-900 tracking-tight" id="kpi-card-val-bastar-munne-shivir">0</div>
+                <div class="font-bold text-slate-900 text-sm mt-1">15. Bastar Munne Shivir</div>
+                <div class="text-xs text-slate-500">शिविर प्रतिभागी डेटाबेस</div>
+              </div>
+              <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-teal-700 group-hover:text-teal-800">
+                <span>डेटा सूची देखें</span>
+                <i class="fa-solid fa-arrow-right text-[11px] transform group-hover:translate-x-1 transition-transform"></i>
+              </div>
+            </div>
+
+            <!-- 13. VO CLF Meeting -->
+            <div onclick="window.openSheetViewer('Meetings_VO_CLF_TRIF')" data-dash-cat="field" class="dash-module-card group bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 hover:border-purple-500 hover:shadow-md transition-all cursor-pointer flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between mb-3">
+                  <div class="w-10 h-10 rounded-xl bg-purple-50 text-purple-700 flex items-center justify-center text-lg border border-purple-100 group-hover:scale-105 transition-transform">
+                    <i class="fa-solid fa-users-rectangle"></i>
+                  </div>
+                  <span class="text-[11px] font-semibold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-md border border-purple-100">समीक्षा बैठक</span>
+                </div>
+                <div class="text-3xl font-black text-slate-900 tracking-tight" id="kpi-card-val-meetings-vo-clf-trif">0</div>
+                <div class="font-bold text-slate-900 text-sm mt-1">16. VO CLF Meeting</div>
+                <div class="text-xs text-slate-500">VO / CLF बैठक एवं फ़ोटो रिकॉर्ड</div>
+              </div>
+              <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-purple-700 group-hover:text-purple-800">
+                <span>बैठक विवरण देखें</span>
+                <i class="fa-solid fa-arrow-right text-[11px] transform group-hover:translate-x-1 transition-transform"></i>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Charts Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div class="gov-card p-5 lg:col-span-1">
+            <h3 class="font-bold text-slate-800 text-sm mb-3">ब्लॉकवार पंजीकृत युवा</h3>
+            <div class="h-60">
+              <canvas id="adminBlockChart"></canvas>
+            </div>
+          </div>
+
+          <div class="gov-card p-5 lg:col-span-1">
+            <h3 class="font-bold text-slate-800 text-sm mb-3">लिंगानुपात (Gender Ratio)</h3>
+            <div class="h-60">
+              <canvas id="adminGenderChart"></canvas>
+            </div>
+          </div>
+
+          <div class="gov-card p-5 lg:col-span-1">
+            <h3 class="font-bold text-slate-800 text-sm mb-3">शैक्षणिक योग्यता (Qualifications)</h3>
+            <div class="h-60">
+              <canvas id="adminQualChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ======================================================== -->
+      <!-- TAB 2: EXCEL / CSV 11-SHEETS IMPORTER                    -->
+      <!-- ======================================================== -->
+      <div id="tab-importer" class="admin-tab-content hidden space-y-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900">
+              Existing Database Integration — 11 Sheets Importer
+            </h2>
+            <p class="text-xs text-slate-500 mt-0.5">
+              `merged_dantewada_data.xlsx` एवं संबंधित Excel/CSV फाइलों को मॉड्यूल अनुसार सुरक्षित रूप से इंपोर्ट करें।
+            </p>
+          </div>
+          <button onclick="window.downloadSampleTemplate()" class="bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-semibold px-3 py-2 rounded-xl flex items-center gap-2 transition">
+            <i class="fa-solid fa-download text-green-700"></i> टेम्पलेट डाउनलोड करें
+          </button>
+        </div>
+
+        <!-- Sheet Selector & Drag Drop Box -->
+        <div class="gov-card p-6">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            <div class="md:col-span-1">
+              <label class="block text-xs font-bold text-slate-700 uppercase mb-1">
+                इंपोर्ट हेतु शीट चुनें (Select Sheet) *
+              </label>
+              <select id="importerSheetSelect" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-xs font-semibold focus:outline-none focus:border-blue-600">
+                <option value="Employment_Registration">1. Employment Registration (रोजगार पंजीकरण)</option>
+                <option value="Employed">2. Employed (रोजगार प्राप्त युवा)</option>
+                <option value="Skill_Linked">3. Skill Linked (कौशल प्रशिक्षण)</option>
+                <option value="Education_Linked">4. Education Linked (शिक्षा से जुड़े युवा)</option>
+                <option value="Entrepreneur_Identified">12. Startup Hunt (चयनित उद्यमी एवं स्टार्टअप्स)</option>
+                <option value="PMEGP_PMFME_Loan">13. PMEGP / PMFME Loan (ऋण एवं योजना)</option>
+                <option value="Rang_De_Loan">14. Rang De Loan (रंग दे माइक्रो लोन)</option>
+                <option value="IIM_Candidate_List">8. IIM Candidate List (IIM रायपुर)</option>
+                <option value="Training_Conducted">9. Training Conducted (आयोजित प्रशिक्षण)</option>
+                <option value="MY_Bharat_Registration">10. MY Bharat Registration (माई भारत)</option>
+                <option value="Youth_Hub_Trainings">11. Youth Hub Trainees (यूथ हब प्रशिक्षणार्थी)</option>
+                <option value="Bastar_Munne_Shivir">15. Bastar Munne Shivir (बस्तर मुन्ने शिविर)</option>
+                <option value="Meetings_VO_CLF_TRIF">16. VO CLF Meeting (VO / CLF बैठकें)</option>
+                <option value="M_Form">17. M-Form Survey (एम-फॉर्म सर्वे)</option>
+                <option value="Startup_District_Ideas">↳ Startup District Ideas (जिलावार विचार)</option>
+                <option value="Bastar_Munne_Report">↳ Bastar Munne Report (ग्रामवार रिपोर्ट)</option>
+              </select>
+
+              <!-- Live Sheet Columns Specification Guide -->
+              <div id="sheetColumnGuide" class="mt-3 p-3 bg-blue-50/80 border border-blue-200 rounded-xl text-[11px] text-blue-950">
+                <div class="font-bold mb-1 flex items-center justify-between text-blue-900">
+                  <span class="flex items-center gap-1"><i class="fa-solid fa-table-columns text-blue-700"></i> अपेक्षित कॉलम्स:</span>
+                  <span id="sheetColCount" class="font-mono bg-blue-200/80 text-blue-900 px-1.5 py-0.2 rounded text-[10px]">12 Cols</span>
+                </div>
+                <div id="sheetColumnBadges" class="flex flex-wrap gap-1 mt-1.5 max-h-36 overflow-y-auto"></div>
+              </div>
+            </div>
+
+            <div class="md:col-span-2">
+              <label class="block text-xs font-bold text-slate-700 uppercase mb-1">
+                Excel / CSV फाइल अपलोड (.xlsx, .xls, .csv)
+              </label>
+              <div id="importerDropzone" class="dropzone-box p-6 text-center">
+                <input type="file" id="importerFileInput" accept=".xlsx, .xls, .csv" class="hidden">
+                <i class="fa-solid fa-cloud-arrow-up text-3xl text-blue-600 mb-2"></i>
+                <p class="text-xs font-bold text-slate-700">फाइल यहाँ ड्रैग एवं ड्रॉप करें अथवा क्लिक करके चुनें</p>
+                <p class="text-[11px] text-slate-400 mt-1">स्वचालित डुप्लीकेट पहचान, डेटा सत्यापन व ऑडिट लॉगिंग सक्षम</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Preview Area (Hidden by default until file is uploaded) -->
+        <div id="importerPreviewArea" class="hidden gov-card p-6 space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+            <h3 class="font-bold text-slate-900 text-sm flex items-center gap-2">
+              <i class="fa-solid fa-magnifying-glass-chart text-blue-600"></i>
+              डेटा पूर्वावलोकन एवं सत्यापन रिपोर्ट (Data Pre-flight Preview)
+            </h3>
+            <button onclick="window.commitCurrentImport()" class="bg-green-700 hover:bg-green-800 text-white text-xs font-bold px-4 py-2 rounded-xl shadow transition flex items-center gap-2">
+              <i class="fa-solid fa-check-double"></i> डेटाबेस में सुरक्षित करें (Commit Import)
+            </button>
+          </div>
+
+          <div id="importerStatsSummary"></div>
+
+          <div>
+            <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">पहचाने गए डुप्लीकेट रिकॉर्ड्स (Duplicate Check)</h4>
+            <div id="importerDuplicatesList" class="max-h-32 overflow-y-auto"></div>
+          </div>
+
+          <div>
+            <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">प्रारंभिक 10 पंक्तियों का पूर्वावलोकन (Preview Sample)</h4>
+            <div class="overflow-x-auto border border-slate-200 rounded-xl">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-slate-50 text-slate-600 uppercase font-semibold border-b border-slate-200">
+                  <tr>
+                    <th class="p-3">#</th>
+                    <th class="p-3">Name</th>
+                    <th class="p-3">Mobile</th>
+                    <th class="p-3">Block</th>
+                    <th class="p-3">Village/GP</th>
+                    <th class="p-3">Status</th>
+                  </tr>
+                </thead>
+                <tbody id="importerPreviewTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ======================================================== -->
+      <!-- TAB: 11 EXCEL SHEETS DEDICATED DATA VIEWER               -->
+      <!-- ======================================================== -->
+      <div id="tab-sheet-viewer" class="admin-tab-content hidden space-y-6">
+
+        <!-- Quick Sheet Selector Pills Bar (16 Sheets Horizontal Touch Swiper) -->
+        <div class="gov-card p-3 bg-white">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+              <i class="fa-solid fa-table-cells text-blue-700"></i> सभी 16 शीट्स चयन (All 16 Sheets):
+            </span>
+            <span class="text-[10px] text-slate-400 font-medium hidden sm:inline">← हॉरिजॉन्टल स्वाइप करें →</span>
+          </div>
+          <div id="sheetPillSelector" class="flex items-center gap-1.5 overflow-x-auto touch-scroll-row pb-1">
+            <!-- Dynamically populated via js/admin-app.js -->
+          </div>
+        </div>
+
+        <!-- Sheet Header Bar -->
+        <div class="gov-card p-5 sm:p-6">
+          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            <div>
+              <div class="flex flex-wrap items-center gap-2 mb-1">
+                <span id="sheetHeaderNum" class="w-7 h-7 rounded-lg bg-blue-800 text-white font-bold flex items-center justify-center text-xs">2</span>
+                <h2 id="sheetHeaderTitle" class="text-xl sm:text-2xl font-extrabold text-slate-900">
+                  Employed — रोजगार प्राप्त युवा
+                </h2>
+                <span id="sheetHeaderColCount" class="bg-emerald-100 text-emerald-800 text-[11px] font-bold px-2.5 py-0.5 rounded-lg border border-emerald-200">
+                  10 कॉलम्स
+                </span>
+              </div>
+              <p id="sheetHeaderDesc" class="text-xs text-slate-500 mt-1">
+                चयनित शीट के डेटाबेस रिकॉर्ड्स एवं फील्ड विवरण।
+              </p>
+            </div>
+            <div class="flex flex-wrap items-center gap-2 w-full lg:w-auto">
+              <button onclick="window.exportActiveSheetExcel()" class="flex-1 sm:flex-initial bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 text-xs font-semibold px-2.5 sm:px-3 py-2 rounded-xl flex items-center justify-center gap-1.5 transition" title="एक्सेल डाउनलोड">
+                <i class="fa-solid fa-file-excel text-green-700"></i> <span>Excel</span>
+              </button>
+              <button onclick="window.openBulkUploadModal()" class="flex-1 sm:flex-initial bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold px-2.5 sm:px-3.5 py-2 rounded-xl shadow transition flex items-center justify-center gap-1.5" title="बल्क अपलोड">
+                <i class="fa-solid fa-cloud-arrow-up"></i> <span>अपलोड</span>
+              </button>
+              <button onclick="window.openAddSheetRecordModal()" class="w-full sm:w-auto bg-blue-800 hover:bg-blue-900 text-white text-xs font-bold px-3.5 py-2 rounded-xl shadow transition flex items-center justify-center gap-1.5">
+                <i class="fa-solid fa-plus"></i> <span>नया रिकॉर्ड जोड़ें</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bastar Munne Trade Quick Filter Bar (Visible when Sheet 12 is Active) -->
+        <div id="bastarTradeFilterBar" class="hidden gov-card p-4 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white rounded-2xl shadow-xl border border-indigo-900/40">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+            <span class="text-xs font-bold text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
+              <i class="fa-solid fa-graduation-cap"></i> ट्रेड अनुसार त्वरित फ़िल्टर (Trade Quick Filter Bar)
+            </span>
+            <span class="text-[11px] text-slate-300 font-medium">इच्छुक युवा (शिविर आवेदन)</span>
+          </div>
+          <div class="flex flex-wrap items-center gap-2 text-xs">
+            <button onclick="window.filterBastarTrade('')" class="px-3 py-1.5 rounded-xl bg-white/20 hover:bg-white/30 text-white font-bold transition flex items-center gap-1.5">
+              <i class="fa-solid fa-layer-group text-[11px]"></i> सभी ट्रेड्स (All)
+            </button>
+            <button onclick="window.filterBastarTrade('RAJMISTRI')" class="px-3 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 font-semibold transition flex items-center gap-1.5">
+              <i class="fa-solid fa-trowel-bricks text-[11px]"></i> राजमिस्त्री (91)
+            </button>
+            <button onclick="window.filterBastarTrade('DRIVING')" class="px-3 py-1.5 rounded-xl bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 border border-blue-500/40 font-semibold transition flex items-center gap-1.5">
+              <i class="fa-solid fa-car text-[11px]"></i> ड्राइविंग (66)
+            </button>
+            <button onclick="window.filterBastarTrade('SILAI')" class="px-3 py-1.5 rounded-xl bg-pink-500/20 hover:bg-pink-500/30 text-pink-300 border border-pink-500/40 font-semibold transition flex items-center gap-1.5">
+              <i class="fa-solid fa-scissors text-[11px]"></i> सिलाई (42)
+            </button>
+            <button onclick="window.filterBastarTrade('COMPUTER')" class="px-3 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 font-semibold transition flex items-center gap-1.5">
+              <i class="fa-solid fa-laptop text-[11px]"></i> कंप्यूटर (19)
+            </button>
+            <button onclick="window.filterBastarTrade('ELECTRICIAN')" class="px-3 py-1.5 rounded-xl bg-orange-500/20 hover:bg-orange-500/30 text-orange-300 border border-orange-500/40 font-semibold transition flex items-center gap-1.5">
+              <i class="fa-solid fa-bolt text-[11px]"></i> इलेक्ट्रीशियन (18)
+            </button>
+            <button onclick="window.filterBastarTrade('WELDING')" class="px-3 py-1.5 rounded-xl bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 border border-purple-500/40 font-semibold transition flex items-center gap-1.5">
+              <i class="fa-solid fa-fire text-[11px]"></i> वेल्डिंग (10)
+            </button>
+            <button onclick="window.filterBastarTrade('PLUMBER')" class="px-3 py-1.5 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-500/40 font-semibold transition flex items-center gap-1.5">
+              <i class="fa-solid fa-faucet text-[11px]"></i> प्लंबर (8)
+            </button>
+          </div>
+        </div>
+
+        <!-- Startup & Innovation Ideas District Quick Filter Bar (Visible when Sheet 5 is Active) -->
+        <div id="startupDistrictFilterBar" class="hidden gov-card p-4 bg-gradient-to-r from-slate-900 via-amber-950 to-slate-900 text-white rounded-2xl shadow-xl border border-amber-900/40">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+            <span class="text-xs font-bold text-yellow-300 uppercase tracking-wider flex items-center gap-1.5">
+              <i class="fa-solid fa-map-location-dot"></i> जिलावार स्टार्टअप चयन (District Filter Bar)
+            </span>
+            <span class="text-[11px] text-slate-300 font-medium">स्टार्टअप व नवाचार प्रस्ताव</span>
+          </div>
+          <div class="flex flex-wrap items-center gap-2 text-xs">
+            <button onclick="window.filterEntrepreneurByDistrict('All')" class="startup-dist-btn px-3 py-1.5 rounded-xl bg-white/20 hover:bg-white/30 text-white font-bold transition flex items-center gap-1.5">
+              <i class="fa-solid fa-layer-group text-[11px]"></i> सभी विचार (All)
+            </button>
+            <button onclick="window.filterEntrepreneurByDistrict('Dantewada')" class="startup-dist-btn px-3 py-1.5 rounded-xl bg-blue-500/20 hover:bg-blue-500/30 text-blue-200 border border-blue-400/30 font-semibold transition flex items-center gap-1.5">
+              <i class="fa-solid fa-location-dot text-blue-400"></i> दंतेवाड़ा (109 / Shortlisted 19)
+            </button>
+            <button onclick="window.filterEntrepreneurByDistrict('Sukma')" class="startup-dist-btn px-3 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-200 border border-emerald-400/30 font-semibold transition flex items-center gap-1.5">
+              <i class="fa-solid fa-location-dot text-emerald-400"></i> सुकमा (4)
+            </button>
+            <button onclick="window.filterEntrepreneurByDistrict('Bastar')" class="startup-dist-btn px-3 py-1.5 rounded-xl bg-purple-500/20 hover:bg-purple-500/30 text-purple-200 border border-purple-400/30 font-semibold transition flex items-center gap-1.5">
+              <i class="fa-solid fa-location-dot text-purple-400"></i> बस्तर (4)
+            </button>
+            <button onclick="window.filterEntrepreneurByDistrict('Kondagaon')" class="startup-dist-btn px-3 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-400/30 font-semibold transition flex items-center gap-1.5">
+              <i class="fa-solid fa-location-dot text-amber-400"></i> कोण्डागांव (1)
+            </button>
+            <button onclick="window.filterEntrepreneurByDistrict('Durg')" class="startup-dist-btn px-3 py-1.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 border border-rose-400/30 font-semibold transition flex items-center gap-1.5">
+              <i class="fa-solid fa-location-dot text-rose-400"></i> दुर्ग (1)
+            </button>
+          </div>
+        </div>
+
+        <!-- Filter & Table Card -->
+        <div class="gov-card overflow-hidden">
+          <div class="p-4 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center gap-2 flex-1 min-w-[260px]">
+              <div class="relative w-full max-w-md">
+                <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+                <input type="text" id="sheetSearchInput" placeholder="डेटाबेस में खोजें (Search in this sheet)..." class="w-full pl-9 pr-3 py-1.5 bg-white border border-slate-300 rounded-xl text-xs focus:outline-none focus:border-blue-600">
+              </div>
+              <select id="sheetBlockFilter" class="bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs font-medium focus:outline-none focus:border-blue-600">
+                <option value="All">सभी ब्लॉक (All Blocks)</option>
+                <option value="Dantewada">दंतेवाड़ा</option>
+                <option value="Geedam">गीदम</option>
+                <option value="Katekalyan">कटेकल्याण</option>
+                <option value="Kuakonda">कुआकोंडा</option>
+              </select>
+            </div>
+            <div class="text-xs text-slate-600 font-bold">
+              कुल रिकॉर्ड: <span id="sheetRecordCount" class="font-mono text-blue-800">0</span>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto max-h-[650px] overflow-y-auto">
+            <table class="w-full text-left text-xs">
+              <thead id="sheetTableHead" class="sticky top-0 bg-slate-100 text-slate-700 uppercase font-bold border-b border-slate-300 text-[11px] shadow-sm z-10 whitespace-nowrap">
+                <!-- Dynamically populated column headers -->
+              </thead>
+              <tbody id="sheetTableBody" class="divide-y divide-slate-100 font-normal whitespace-nowrap">
+                <!-- Dynamically populated data rows -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ======================================================== -->
+      <!-- TAB 3: YOUTH PROFILES MANAGEMENT                         -->
+      <!-- ======================================================== -->
+      <div id="tab-youth" class="admin-tab-content hidden space-y-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900">
+              Youth Digital Profiles Management (युवा प्रबंधन)
+            </h2>
+            <p class="text-xs text-slate-500 mt-0.5">
+              प्रत्येक युवा के डिजिटल प्रोफाइल, योग्यता, रोजगार स्थिति व एकीकृत इतिहास का प्रबंधन।
+            </p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="window.exportYouthExcel()" class="bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-semibold px-3 py-2 rounded-xl flex items-center gap-1.5 transition">
+              <i class="fa-solid fa-file-excel text-green-700"></i> Excel Export
+            </button>
+            <button onclick="window.openAddYouthModal()" class="bg-blue-800 hover:bg-blue-900 text-white text-xs font-bold px-4 py-2 rounded-xl shadow transition flex items-center gap-1.5">
+              <i class="fa-solid fa-user-plus"></i> नया युवा जोड़ें
+            </button>
+          </div>
+        </div>
+
+        <!-- Search & Filter Bar -->
+        <div class="gov-card p-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 text-xs">
+            <div class="lg:col-span-2">
+              <input type="text" id="youthSearchInput" placeholder="नाम, मोबाइल, ग्राम अथवा ID से खोजें..." class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 focus:outline-none focus:border-blue-600">
+            </div>
+            <div>
+              <select id="youthBlockFilter" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 focus:outline-none focus:border-blue-600 font-medium">
+                <option value="All">सभी ब्लॉक (All Blocks)</option>
+                <option value="Dantewada">दंतेवाड़ा</option>
+                <option value="Geedam">गीदम</option>
+                <option value="Katekalyan">कटेकल्याण</option>
+                <option value="Kuakonda">कुआकोंडा</option>
+              </select>
+            </div>
+            <div>
+              <select id="youthGenderFilter" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 focus:outline-none focus:border-blue-600 font-medium">
+                <option value="All">सभी लिंग (All Genders)</option>
+                <option value="Male">पुरुष (Male)</option>
+                <option value="Female">महिला (Female)</option>
+              </select>
+            </div>
+            <div>
+              <select id="youthCategoryFilter" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 focus:outline-none focus:border-blue-600 font-medium">
+                <option value="All">सभी वर्ग (All Categories)</option>
+                <option value="ST">ST</option>
+                <option value="SC">SC</option>
+                <option value="OBC">OBC</option>
+                <option value="General">General</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Youth Records Table -->
+        <div class="gov-card overflow-hidden">
+          <div class="p-4 border-b border-slate-200 flex items-center justify-between">
+            <span class="text-xs font-bold text-slate-700">
+              कुल रिकॉर्ड्स: <span id="youthRecordCount" class="text-blue-700 font-mono">0</span>
+            </span>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-50 text-slate-600 uppercase font-bold border-b border-slate-200">
+                <tr>
+                  <th class="p-3">#</th>
+                  <th class="p-3">युवा का नाम व पिता</th>
+                  <th class="p-3">मोबाइल नंबर</th>
+                  <th class="p-3">ब्लॉक / ग्राम पंचायत</th>
+                  <th class="p-3">लिंग / वर्ग</th>
+                  <th class="p-3">योग्यता व स्थिति</th>
+                  <th class="p-3 text-emerald-800">इच्छित करियर (Aspired Career)</th>
+                  <th class="p-3 text-right">कार्रवाई</th>
+                </tr>
+              </thead>
+              <tbody id="youthTableBody">
+                <!-- Injected via js/admin-app.js -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ======================================================== -->
+      <!-- TAB 4: FIELD VISIT & MULTI-PHOTO UPLOAD                  -->
+      <!-- ======================================================== -->
+      <div id="tab-visits" class="admin-tab-content hidden space-y-6">
+        <div>
+          <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900">
+            Field Visit & Photo Upload Module (फील्ड विजिट प्रविष्टि)
+          </h2>
+          <p class="text-xs text-slate-500 mt-0.5">
+            गाँव, प्रशिक्षण केंद्र, हितग्राही अथवा उद्यम के निरीक्षण के बाद रिपोर्ट एवं फोटो दर्ज करें।
+          </p>
+        </div>
+
+        <form id="visitEntryForm" onsubmit="window.saveFieldVisitForm(event)" class="gov-card p-6 space-y-6">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+            <div>
+              <label class="block font-bold text-slate-700 uppercase mb-1">Visit ID (स्वतः जनरेट)</label>
+              <input type="text" id="visitAutoId" readonly class="w-full bg-slate-100 font-mono font-bold text-blue-900 border border-slate-300 rounded-xl px-3 py-2.5">
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 uppercase mb-1">विजिट की तारीख *</label>
+              <input type="date" id="visitDateInput" required class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5">
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 uppercase mb-1">निरीक्षण अधिकारी/कर्मचारी का नाम *</label>
+              <input type="text" id="visitOfficerInput" required placeholder="अधिकारी का नाम" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+            <div>
+              <label class="block font-bold text-slate-700 uppercase mb-1">ब्लॉक *</label>
+              <select id="visitBlockSelect" required class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 font-semibold">
+                <option value="Dantewada">दंतेवाड़ा (Dantewada)</option>
+                <option value="Geedam">गीदम (Geedam)</option>
+                <option value="Katekalyan">कटेकल्याण (Katekalyan)</option>
+                <option value="Kuakonda">कुआकोंडा (Kuakonda)</option>
+              </select>
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 uppercase mb-1">ग्राम पंचायत *</label>
+              <input type="text" id="visitGPInput" required placeholder="ग्राम पंचायत का नाम" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5">
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 uppercase mb-1">स्थान / संस्था / केंद्र का नाम *</label>
+              <input type="text" id="visitLocationInput" required placeholder="जैसे: डैनेक्स इकाई, हरम" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+            <div>
+              <label class="block font-bold text-slate-700 uppercase mb-1">विजिट का उद्देश्य *</label>
+              <input type="text" id="visitPurposeInput" required placeholder="जैसे: PMEGP यूनिट भौतिक सत्यापन" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5">
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 uppercase mb-1">संबंधित योजना / गतिविधि</label>
+              <select id="visitSchemeSelect" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5">
+                <option value="PMEGP">PMEGP (खादी व ग्रामोद्योग)</option>
+                <option value="PMFME">PMFME (खाद्य प्रसंस्करण)</option>
+                <option value="MUDRA LOAN">Mudra Loan (मुद्रा योजना)</option>
+                <option value="Danexx">Danexx Garments</option>
+                <option value="Livelihood College">Livelihood College Training</option>
+                <option value="Youth Hub Dantewada">Youth Hub Dantewada</option>
+                <option value="Bastar Munne Shivir">बस्तर मुन्ने शिविर</option>
+                <option value="General Inspection">सामान्य प्रशासनिक निरीक्षण</option>
+              </select>
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 uppercase mb-1">संबंधित युवा/हितग्राही (यदि लागू हो)</label>
+              <input type="text" id="visitYouthInput" placeholder="हितग्राही का नाम" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5">
+            </div>
+          </div>
+
+          <!-- Description and Observations -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+            <div>
+              <label class="block font-bold text-slate-700 uppercase mb-1">विजिट का विस्तृत विवरण *</label>
+              <textarea id="visitDescInput" rows="3" required placeholder="विजिट के दौरान की गई गतिविधियां..." class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5"></textarea>
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 uppercase mb-1">मुख्य निष्कर्ष (Key Findings) *</label>
+              <textarea id="visitFindingsInput" rows="3" required placeholder="निरीक्षण में क्या पाया गया..." class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5"></textarea>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+            <div>
+              <label class="block font-bold text-slate-700 uppercase mb-1">सामने आई समस्या (Issues Faced)</label>
+              <textarea id="visitIssuesInput" rows="2" placeholder="कोई तकनीकी, वित्तीय या अधोसंरचना संबंधी समस्या..." class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2"></textarea>
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 uppercase mb-1">आगे की कार्रवाई (Action Required)</label>
+              <textarea id="visitActionInput" rows="2" placeholder="प्रशासन या बैंक द्वारा अपेक्षित कदम..." class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2"></textarea>
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 uppercase mb-1">Follow-up Date & Status</label>
+              <div class="space-y-2">
+                <input type="date" id="visitFollowUpInput" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-1.5">
+                <select id="visitStatusSelect" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-1.5 font-semibold">
+                  <option value="Visit Completed">Visit Completed (विजिट पूर्ण)</option>
+                  <option value="Report Pending">Report Pending (रिपोर्ट लंबित)</option>
+                  <option value="Follow-up Required">Follow-up Required (फॉलो-अप आवश्यक)</option>
+                  <option value="Action in Progress">Action in Progress (कार्रवाई जारी)</option>
+                  <option value="Resolved">Resolved (समाधान पूर्ण)</option>
+                  <option value="Closed">Closed (बंद)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Multi-Photo Uploader Section -->
+          <div class="border-t border-slate-200 pt-5">
+            <div class="flex items-center justify-between mb-2">
+              <label class="text-xs font-bold text-slate-800 uppercase flex items-center gap-1.5">
+                <i class="fa-solid fa-camera text-blue-600"></i>
+                फील्ड विजिट फोटो अपलोड (JPG, JPEG, PNG, WebP)
+              </label>
+              <span class="text-[11px] text-slate-400">एक या अधिक फोटो अपलोड करें</span>
+            </div>
+
+            <div class="dropzone-box p-5 text-center cursor-pointer mb-4" onclick="document.getElementById('visitPhotoInput').click()">
+              <input type="file" id="visitPhotoInput" accept="image/jpeg,image/png,image/webp,image/jpg" multiple class="hidden" onchange="window.handlePhotoFiles(this.files)">
+              <i class="fa-solid fa-camera-retro text-2xl text-blue-600 mb-1"></i>
+              <p class="text-xs font-bold text-slate-700">फोटो जोड़ने के लिए क्लिक करें या यहाँ खींचें</p>
+              <p class="text-[11px] text-slate-400">कार्य पूर्व, कार्य पश्चात या निरीक्षण फोटो टैग करें</p>
+            </div>
+
+            <!-- Photos Thumbnail Preview Grid -->
+            <div id="visitPhotoPreviewGrid" class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3"></div>
+          </div>
+
+          <div class="pt-4 border-t border-slate-200 flex justify-end">
+            <button type="submit" class="bg-blue-800 hover:bg-blue-900 text-white font-bold text-xs px-6 py-3 rounded-xl shadow transition flex items-center gap-2">
+              <i class="fa-solid fa-floppy-disk"></i> विजिट रिपोर्ट एवं फोटो सुरक्षित करें
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- ======================================================== -->
+      <!-- TAB 5: VISIT GALLERY & REVIEW                            -->
+      <!-- ======================================================== -->
+      <div id="tab-gallery" class="admin-tab-content hidden space-y-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900">
+              Visit Gallery & Review (विजिट गैलरी व समीक्षा)
+            </h2>
+            <p class="text-xs text-slate-500 mt-0.5">
+              फील्ड विजिट की तस्वीरें, रिपोर्ट एवं सार्वजनिक वेबसाइट पर प्रकाशन का अनुमोदन।
+            </p>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <select id="galleryBlockFilter" class="bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none focus:border-blue-600">
+              <option value="All">सभी ब्लॉक (All Blocks)</option>
+              <option value="Dantewada">दंतेवाड़ा</option>
+              <option value="Geedam">गीदम</option>
+              <option value="Katekalyan">कटेकल्याण</option>
+              <option value="Kuakonda">कुआकोंडा</option>
+            </select>
+            <select id="galleryStatusFilter" class="bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none focus:border-blue-600">
+              <option value="All">सभी स्थिति (All Status)</option>
+              <option value="Visit Completed">Visit Completed</option>
+              <option value="Follow-up Required">Follow-up Required</option>
+              <option value="Resolved">Resolved</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="adminVisitGalleryGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+      </div>
+
+      <!-- ======================================================== -->
+      <!-- TAB 6: SUCCESS STORIES MANAGEMENT                        -->
+      <!-- ======================================================== -->
+      <div id="tab-stories" class="admin-tab-content hidden space-y-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900">
+              Success Stories Management (सफलता की कहानियाँ)
+            </h2>
+            <p class="text-xs text-slate-500 mt-0.5">
+              दंतेवाड़ा के सफल युवाओं की कहानियाँ तैयार करें, समीक्षा करें और सार्वजनिक वेबसाइट पर प्रकाशित करें।
+            </p>
+          </div>
+          <button onclick="window.openCreateStoryModal()" class="bg-blue-800 hover:bg-blue-900 text-white text-xs font-bold px-4 py-2 rounded-xl shadow transition flex items-center gap-2">
+            <i class="fa-solid fa-plus"></i> नई Success Story बनाएं
+          </button>
+        </div>
+
+        <div class="gov-card overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-50 text-slate-600 uppercase font-bold border-b border-slate-200">
+                <tr>
+                  <th class="p-3">#</th>
+                  <th class="p-3">युवा / गाँव</th>
+                  <th class="p-3">कहानी का शीर्षक</th>
+                  <th class="p-3">श्रेणी</th>
+                  <th class="p-3">Workflow Status</th>
+                  <th class="p-3 text-right">कार्रवाई</th>
+                </tr>
+              </thead>
+              <tbody id="storiesTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ======================================================== -->
+      <!-- TAB 7: VISIT MONITORING & FOLLOW-UP                      -->
+      <!-- ======================================================== -->
+      <div id="tab-monitoring" class="admin-tab-content hidden space-y-6">
+        <div>
+          <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900">
+            Visit Monitoring & Follow-up Tracker (फॉलो-अप व मॉनिटरिंग)
+          </h2>
+          <p class="text-xs text-slate-500 mt-0.5">
+            विजिट के उपरांत लंबित रिपोर्ट, अनुवर्ती कार्रवाई एवं निराकरण की ट्रैकिंग।
+          </p>
+        </div>
+
+        <!-- Metric Tracker -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div class="p-4 bg-white border border-slate-200 rounded-xl shadow-sm">
+            <span class="text-xs font-bold text-amber-700 block mb-1">Pending Reports</span>
+            <strong id="mon-pending" class="text-2xl font-extrabold text-slate-900">0</strong>
+          </div>
+          <div class="p-4 bg-white border border-slate-200 rounded-xl shadow-sm">
+            <span class="text-xs font-bold text-rose-700 block mb-1">Follow-ups Due</span>
+            <strong id="mon-followup" class="text-2xl font-extrabold text-slate-900">0</strong>
+          </div>
+          <div class="p-4 bg-white border border-slate-200 rounded-xl shadow-sm">
+            <span class="text-xs font-bold text-blue-700 block mb-1">Completed Visits</span>
+            <strong id="mon-completed" class="text-2xl font-extrabold text-slate-900">0</strong>
+          </div>
+          <div class="p-4 bg-white border border-slate-200 rounded-xl shadow-sm">
+            <span class="text-xs font-bold text-green-700 block mb-1">Resolved Issues</span>
+            <strong id="mon-resolved" class="text-2xl font-extrabold text-slate-900">0</strong>
+          </div>
+        </div>
+
+        <div class="gov-card overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-50 text-slate-600 uppercase font-bold border-b border-slate-200">
+                <tr>
+                  <th class="p-3">Visit ID</th>
+                  <th class="p-3">स्थान व ब्लॉक</th>
+                  <th class="p-3">निरीक्षण अधिकारी</th>
+                  <th class="p-3">आवश्यक कार्रवाई (Action Required)</th>
+                  <th class="p-3">Follow-up Date</th>
+                  <th class="p-3">स्थिति अद्यतन (Change Status)</th>
+                </tr>
+              </thead>
+              <tbody id="monitoringTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ======================================================== -->
+      <!-- TAB 8: REPORTS & ANALYTICS                               -->
+      <!-- ======================================================== -->
+      <div id="tab-reports" class="admin-tab-content hidden space-y-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900">
+              Reports & Analytics (रिपोर्ट्स व विश्लेषण)
+            </h2>
+            <p class="text-xs text-slate-500 mt-0.5">
+              PRD सेक्शन 9 के अनुसार ब्लॉक, योजना, रोजगार एवं फील्ड विजिट की एक्सेल/प्रिंट रिपोर्ट।
+            </p>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button onclick="window.print()" class="bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-semibold px-3 py-2 rounded-xl flex items-center gap-1.5 transition">
+              <i class="fa-solid fa-print"></i> प्रिंट (Print PDF)
+            </button>
+            <button onclick="window.exportCurrentReportExcel()" class="bg-green-700 hover:bg-green-800 text-white text-xs font-bold px-4 py-2 rounded-xl shadow transition flex items-center gap-1.5">
+              <i class="fa-solid fa-file-excel"></i> Excel डाउनलोड
+            </button>
+          </div>
+        </div>
+
+        <div class="gov-card p-4">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">रिपोर्ट का प्रकार चुनें (Select Report Type):</label>
+              <select id="reportTypeSelect" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 font-semibold">
+                <option value="block_summary">1. ब्लॉकवार युवा पंजीयन सारांश (Block Summary)</option>
+                <option value="employment_tracking">2. रोजगार प्राप्त युवा सूची (Employment Placements)</option>
+                <option value="loan_beneficiaries">3. PMEGP/PMFME व ऋण लाभार्थी (Loan Beneficiaries)</option>
+                <option value="trainings_conducted">4. आयोजित प्रशिक्षण कार्यक्रम (Trainings Conducted)</option>
+                <option value="visits_monitoring">5. फील्ड विजिट एवं फोटो रिपोर्ट (Visits & Photos)</option>
+                <option value="follow_up_due">6. लंबित फॉलो-अप एवं कार्रवाई (Follow-up Due)</option>
+                <option value="success_stories">7. सफलता की कहानियों की निर्देशिका (Success Stories)</option>
+                <option value="audit_trail">8. डेटा संशोधन व ऑडिट लॉग (Audit Trail)</option>
+              </select>
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">ब्लॉक फ़िल्टर:</label>
+              <select id="reportBlockFilter" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 font-semibold">
+                <option value="All">सभी ब्लॉक (All Blocks)</option>
+                <option value="Dantewada">दंतेवाड़ा</option>
+                <option value="Geedam">गीदम</option>
+                <option value="Katekalyan">कटेकल्याण</option>
+                <option value="Kuakonda">कुआकोंडा</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="gov-card overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead id="reportsTableHeader"></thead>
+              <tbody id="reportsTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ======================================================== -->
+      <!-- TAB 9: AUDIT LOGS & SYSTEM                               -->
+      <!-- ======================================================== -->
+      <div id="tab-audit" class="admin-tab-content hidden space-y-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900">
+              Audit Logs & Security Trail (ऑडिट लॉग)
+            </h2>
+            <p class="text-xs text-slate-500 mt-0.5">
+              सिस्टम में प्रत्येक यूजर द्वारा किए गए डेटा संशोधन, अनुमोदन एवं आयात की समयवार प्रविष्टि।
+            </p>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2">
+            <button onclick="window.clearDatabaseToEmpty()" class="bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold px-3.5 py-2 rounded-xl transition shadow-xs flex items-center gap-1.5">
+              <i class="fa-solid fa-trash-can"></i> सारा मॉक डेटा हटाएं (0 Records Clean Slate)
+            </button>
+            <button onclick="window.resetDatabaseToFactory()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold px-3 py-2 rounded-xl transition border border-slate-300 flex items-center gap-1.5">
+              <i class="fa-solid fa-rotate-left"></i> सैंपल मॉक डेटा लोड करें
+            </button>
+          </div>
+        </div>
+
+        <div class="gov-card overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-50 text-slate-600 uppercase font-bold border-b border-slate-200">
+                <tr>
+                  <th class="p-3">तारीख व समय</th>
+                  <th class="p-3">उपयोगकर्ता (User & Role)</th>
+                  <th class="p-3">क्रिया (Action)</th>
+                  <th class="p-3">मॉड्यूल</th>
+                  <th class="p-3">लक्षित रिकॉर्ड (Target)</th>
+                  <th class="p-3">विवरण (Details)</th>
+                </tr>
+              </thead>
+              <tbody id="auditLogsTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL: ADD / EDIT YOUTH PROFILE                          -->
+  <!-- ======================================================== -->
+  <div id="youthModal" class="modal-backdrop fixed inset-0 z-50 hidden items-center justify-center p-4">
+    <div class="modal-content bg-white w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto">
+      <div class="p-6 border-b border-slate-200 flex items-center justify-between">
+        <h3 id="youthModalTitle" class="font-extrabold text-slate-900 text-lg">नया युवा रिकॉर्ड जोड़ें</h3>
+        <button onclick="window.closeYouthModal()" class="text-slate-400 hover:text-slate-600">
+          <i class="fa-solid fa-xmark text-xl"></i>
+        </button>
+      </div>
+
+      <form id="youthForm" onsubmit="window.saveYouthForm(event)" class="p-6 space-y-4 text-xs">
+        <input type="hidden" id="youthFormId">
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">युवा का पूरा नाम *</label>
+            <input type="text" id="youthFormName" required placeholder="जैसे: मनीषा यादव" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">पिता/पति का नाम</label>
+            <input type="text" id="youthFormFather" placeholder="पिता/पति का नाम" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">मोबाइल नंबर *</label>
+            <input type="tel" id="youthFormMobile" required pattern="[0-9]{10}" placeholder="10 अंकों का मोबाइल" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">लिंग *</label>
+            <select id="youthFormGender" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2">
+              <option value="Male">पुरुष (Male)</option>
+              <option value="Female">महिला (Female)</option>
+              <option value="Other">अन्य (Other)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">सामाजिक श्रेणी *</label>
+            <select id="youthFormCategory" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2">
+              <option value="ST">ST (अनुसूचित जनजाति)</option>
+              <option value="SC">SC (अनुसूचित जाति)</option>
+              <option value="OBC">OBC (अन्य पिछड़ा वर्ग)</option>
+              <option value="General">सामान्य (General)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">ब्लॉक *</label>
+            <select id="youthFormBlock" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2">
+              <option value="Dantewada">दंतेवाड़ा (Dantewada)</option>
+              <option value="Geedam">गीदम (Geedam)</option>
+              <option value="Katekalyan">कटेकल्याण (Katekalyan)</option>
+              <option value="Kuakonda">कुआकोंडा (Kuakonda)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">ग्राम पंचायत</label>
+            <input type="text" id="youthFormGP" placeholder="ग्राम पंचायत का नाम" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">ग्राम / मजरा</label>
+            <input type="text" id="youthFormVillage" placeholder="गाँव का नाम" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">उच्चतम शैक्षणिक योग्यता *</label>
+            <select id="youthFormQual" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2">
+              <option value="10th Pass">10th Pass</option>
+              <option value="12th Pass">12th Pass</option>
+              <option value="Graduate">Graduate (स्नातक)</option>
+              <option value="Post Graduate">Post Graduate (स्नातकोत्तर)</option>
+              <option value="ITI / Diploma">ITI / Diploma</option>
+              <option value="Below 10th">Below 10th</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">वर्तमान रोजगार स्थिति</label>
+            <select id="youthFormStatus" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2">
+              <option value="Unemployed">बेरोजगार (Unemployed)</option>
+              <option value="Employed">रोजगार प्राप्त (Employed)</option>
+              <option value="Self Employed">स्वरोजगार (Self-Employed)</option>
+              <option value="Under Training">प्रशिक्षु (Under Training)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">
+              इच्छित करियर (Aspired Career) *
+            </label>
+            <input type="text" id="youthFormCareer" list="careerDatalist" placeholder="जैसे: Direct Formal Jobs" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 font-medium text-slate-800 focus:outline-none focus:border-blue-600">
+            <datalist id="careerDatalist">
+              <option value="Direct Formal Jobs">
+              <option value="Skill Training / ITI">
+              <option value="Self-Employment / MSME">
+              <option value="Govt Services / Defence">
+              <option value="Retail & Hospitality">
+              <option value="Automobile & Technician">
+              <option value="BPO & Office Assistance">
+              <option value="Agriculture & Dairy">
+            </datalist>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">संबंधित योजना / संस्था</label>
+            <input type="text" id="youthFormScheme" placeholder="जैसे: Youth Hub / Danexx" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">टिप्पणी (Remarks)</label>
+            <input type="text" id="youthFormRemarks" placeholder="विशेष टिप्पणी..." class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2">
+          </div>
+        </div>
+
+        <div class="pt-4 border-t border-slate-200 flex justify-end gap-3">
+          <button type="button" onclick="window.closeYouthModal()" class="px-4 py-2 border border-slate-300 rounded-xl font-semibold text-slate-700 hover:bg-slate-50">
+            रद्द करें
+          </button>
+          <button type="submit" class="bg-blue-800 hover:bg-blue-900 text-white font-bold px-5 py-2 rounded-xl shadow">
+            सुरक्षित करें (Save Profile)
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL: YOUTH DOSSIER WITH LINKED TIMELINE                -->
+  <!-- ======================================================== -->
+  <div id="youthDossierModal" class="modal-backdrop fixed inset-0 z-50 hidden items-center justify-center p-4">
+    <div class="modal-content bg-white w-full max-w-3xl rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto" id="youthDossierContent"></div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL: BASTAR MUNNE SHIVIR VILLAGE CANDIDATE DIRECTORY   -->
+  <!-- ======================================================== -->
+  <div id="villageCandidatesModal" class="modal-backdrop fixed inset-0 z-50 hidden items-center justify-center p-3 sm:p-4">
+    <div class="modal-content bg-white w-full max-w-5xl rounded-2xl shadow-2xl overflow-hidden max-h-[92vh] flex flex-col">
+      <!-- Modal Header -->
+      <div class="p-4 sm:p-5 border-b border-slate-200 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-11 h-11 rounded-xl bg-blue-600/30 border border-blue-400/40 text-blue-300 flex items-center justify-center text-lg shadow-inner">
+            <i class="fa-solid fa-tree-city"></i>
+          </div>
+          <div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <span id="villageModalBadge" class="text-[11px] font-bold bg-amber-400 text-slate-900 px-2 py-0.5 rounded-md uppercase tracking-wider">
+                ग्राम पंचायत
+              </span>
+              <span id="villageModalBlock" class="text-xs text-slate-300 font-medium bg-white/10 px-2 py-0.5 rounded-md border border-white/15">
+                Block: Dantewada
+              </span>
+              <span id="villageModalTradeBadge" class="text-xs font-bold bg-blue-500/30 text-blue-200 px-2.5 py-0.5 rounded-md border border-blue-400/30">
+                ट्रेड: सभी
+              </span>
+            </div>
+            <h3 id="villageModalTitle" class="text-lg sm:text-xl font-black text-white mt-0.5">
+              ग्राम: PADHAPUR — पंजीकृत इच्छुक युवा
+            </h3>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="window.exportVillageCandidatesExcel()" class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-xl text-xs font-semibold transition">
+            <i class="fa-solid fa-file-excel text-emerald-400"></i> Excel Export
+          </button>
+          <button onclick="window.closeVillageCandidateModal()" class="w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white flex items-center justify-center transition">
+            <i class="fa-solid fa-xmark text-lg"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Controls & Filter Bar -->
+      <div class="p-3.5 bg-slate-50 border-b border-slate-200 space-y-2.5">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+          <div class="relative flex-1 max-w-md">
+            <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+            <input type="text" id="villageModalSearchInput" oninput="window.renderVillageCandidatesTable()" placeholder="उम्मीदवार, पिता का नाम, ट्रेड या मोबाइल से खोजें..." class="w-full pl-9 pr-3 py-1.5 bg-white border border-slate-300 rounded-xl text-xs focus:outline-none focus:border-blue-600">
+          </div>
+          <div class="text-xs font-semibold text-slate-600 flex items-center gap-2">
+            <span>कुल उम्मीदवार:</span>
+            <span id="villageModalCandidateCount" class="font-mono text-sm font-bold text-blue-900 bg-blue-100 px-2.5 py-0.5 rounded-lg border border-blue-200">0</span>
+          </div>
+        </div>
+        <!-- Trade Filter Pills -->
+        <div class="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs scrollbar-thin" id="villageModalTradePills">
+          <!-- Dynamically inserted trade buttons -->
+        </div>
+      </div>
+
+      <!-- Scrollable Candidates Table -->
+      <div class="flex-1 overflow-x-auto overflow-y-auto max-h-[55vh]">
+        <table class="w-full text-left text-xs">
+          <thead class="sticky top-0 bg-slate-100 text-slate-700 uppercase font-bold border-b border-slate-300 text-[11px] shadow-sm z-10 whitespace-nowrap">
+            <tr>
+              <th class="p-3 font-mono">#</th>
+              <th class="p-3">उम्मीदवार का नाम</th>
+              <th class="p-3">पिता का नाम</th>
+              <th class="p-3">इच्छुक ट्रेड (Trade)</th>
+              <th class="p-3">जन्म तिथि</th>
+              <th class="p-3">मोबाइल नंबर</th>
+              <th class="p-3">आधार (Masked)</th>
+              <th class="p-3">स्थिति (Status)</th>
+              <th class="p-3 text-right">कार्रवाई</th>
+            </tr>
+          </thead>
+          <tbody id="villageModalCandidatesBody" class="divide-y divide-slate-100 font-normal whitespace-nowrap">
+            <!-- Dynamically populated candidate rows -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="p-3.5 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-xs">
+        <span class="text-slate-500 text-[11px]">बस्तर मुन्ने शिविर 2026 • जिला प्रशासन दक्षिण बस्तर दंतेवाड़ा</span>
+        <button onclick="window.closeVillageCandidateModal()" class="px-4 py-1.5 bg-slate-800 hover:bg-slate-900 text-white rounded-xl font-bold transition">
+          बंद करें (Close)
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL: ADD RECORD TO ACTIVE SHEET                        -->
+  <!-- ======================================================== -->
+  <div id="sheetRecordModal" class="modal-backdrop fixed inset-0 z-50 hidden items-center justify-center p-4">
+    <div class="modal-content bg-white w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto">
+      <div class="p-5 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+        <div>
+          <h3 id="sheetRecordModalTitle" class="font-extrabold text-slate-900 text-base">नया रिकॉर्ड जोड़ें</h3>
+          <p id="sheetRecordModalSubtitle" class="text-xs text-slate-500 mt-0.5">शीट के निर्धारित पैरामीटर्स अनुसार डेटा दर्ज करें</p>
+        </div>
+        <button onclick="window.closeSheetRecordModal()" class="text-slate-400 hover:text-slate-600 p-1">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+      <form id="sheetRecordForm" onsubmit="window.saveSheetRecord(event)" class="p-6 space-y-4 text-xs">
+        <div id="sheetRecordFormFields" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <!-- Dynamically populated input fields for the active sheet -->
+        </div>
+        <div class="pt-4 border-t border-slate-200 flex justify-end gap-3">
+          <button type="button" onclick="window.closeSheetRecordModal()" class="px-4 py-2 border border-slate-300 rounded-xl font-semibold text-slate-700 hover:bg-slate-50">रद्द करें</button>
+          <button type="submit" class="px-5 py-2 bg-blue-800 hover:bg-blue-900 text-white rounded-xl font-bold shadow flex items-center gap-1.5">
+            <i class="fa-solid fa-check"></i> रिकॉर्ड सुरक्षित करें
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL: BULK UPLOAD EXCEL (.XLSX) WITH FORMAT TEMPLATE    -->
+  <!-- ======================================================== -->
+  <div id="bulkUploadModal" class="modal-backdrop fixed inset-0 z-50 hidden items-center justify-center p-3 sm:p-4">
+    <div class="modal-content bg-white w-full max-w-3xl rounded-2xl shadow-2xl overflow-hidden max-h-[92vh] flex flex-col">
+      <!-- Modal Header -->
+      <div class="p-5 border-b border-slate-200 bg-slate-900 text-white flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-emerald-600/30 border border-emerald-400/40 text-emerald-300 flex items-center justify-center text-lg">
+            <i class="fa-solid fa-file-excel"></i>
+          </div>
+          <div>
+            <h3 class="font-extrabold text-white text-base flex items-center gap-2">
+              बल्क डेटा अपलोड (Excel .xlsx Bulk Upload)
+            </h3>
+            <p id="bulkModalSheetSubtitle" class="text-xs text-slate-300 mt-0.5">
+              चयनित शीट हेतु निर्धारित एक्सेल फॉर्मेट (.xlsx) में डेटा एक साथ अपलोड करें
+            </p>
+          </div>
+        </div>
+        <button onclick="window.closeBulkUploadModal()" class="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 transition">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body (Scrollable) -->
+      <div class="p-6 space-y-5 overflow-y-auto max-h-[calc(92vh-140px)]">
+        <!-- Target Sheet Selector & Excel Template Download Row -->
+        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div class="flex-1">
+              <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                लक्ष्य शीट चुनें (Target Sheet):
+              </label>
+              <select id="bulkUploadSheetSelect" onchange="window.updateBulkFormatDisplay()" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none focus:border-blue-600">
+                <!-- Dynamically populated -->
+              </select>
+            </div>
+            <div class="flex flex-wrap sm:flex-nowrap gap-2 pt-1 sm:pt-4">
+              <button type="button" onclick="window.downloadSheetExcelTemplate()" class="flex-1 sm:flex-none bg-emerald-800 hover:bg-emerald-900 text-white text-xs font-bold px-3.5 py-2 rounded-xl flex items-center justify-center gap-1.5 shadow transition">
+                <i class="fa-solid fa-file-excel text-green-300"></i>
+                <span>डाउनलोड Excel (.xlsx) टेम्पलेट</span>
+              </button>
+              <button type="button" onclick="window.downloadMasterExcelTemplate()" class="flex-1 sm:flex-none bg-white hover:bg-slate-100 text-slate-800 border border-slate-300 text-xs font-bold px-3 py-2 rounded-xl flex items-center justify-center gap-1.5 shadow-2xs transition">
+                <i class="fa-solid fa-book text-blue-700"></i>
+                <span>मास्टर वर्कबुक (.xlsx)</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Format Columns Showcase Banner -->
+        <div class="p-3.5 bg-blue-50/70 border border-blue-200 rounded-xl">
+          <div class="text-[11px] font-bold text-blue-900 mb-1.5 flex items-center justify-between">
+            <span class="flex items-center gap-1.5"><i class="fa-solid fa-table-columns text-blue-600"></i> एक्सेल शीट के अपेक्षित कॉलम हेडर्स (Excel Column Headers):</span>
+            <span id="bulkUploadColCount" class="font-mono text-[10px] bg-blue-200/80 text-blue-900 px-2 py-0.5 rounded-full font-bold">11 Cols</span>
+          </div>
+          <div id="bulkUploadFormatHeaders" class="flex flex-wrap gap-1 text-[11px]">
+            <!-- Column badges rendered dynamically -->
+          </div>
+        </div>
+
+        <!-- Input Modes: File Upload or Direct Paste -->
+        <div class="space-y-4">
+          <!-- Mode Tabs -->
+          <div class="flex items-center gap-2 border-b border-slate-200 pb-2 text-xs">
+            <button type="button" id="bulkTabBtnFile" onclick="window.switchBulkUploadMode('file')" class="px-3.5 py-1.5 rounded-xl font-bold bg-blue-900 text-white shadow-xs">
+              <i class="fa-solid fa-file-excel mr-1"></i> Excel (.xlsx / .xls) फ़ाइल अपलोड
+            </button>
+            <button type="button" id="bulkTabBtnPaste" onclick="window.switchBulkUploadMode('paste')" class="px-3.5 py-1.5 rounded-xl font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200">
+              <i class="fa-solid fa-paste mr-1"></i> Excel से कॉपी किया गया डेटा पेस्ट करें (Ctrl+V)
+            </button>
+          </div>
+
+          <!-- Section A: File Upload Dropzone -->
+          <div id="bulkModeFileSection">
+            <div id="bulkDropzone" class="border-2 border-dashed border-emerald-300 hover:border-emerald-600 rounded-2xl p-6 text-center cursor-pointer bg-emerald-50/30 hover:bg-emerald-50/60 transition">
+              <input type="file" id="bulkFileInput" accept=".xlsx, .xls, .csv" class="hidden">
+              <i class="fa-solid fa-file-excel text-4xl text-green-700 mb-2"></i>
+              <p class="text-xs font-bold text-slate-800">अपनी Excel फ़ाइल (.xlsx या .xls) यहाँ ड्रैग व ड्रॉप करें</p>
+              <p class="text-[11px] text-slate-500 mt-1">या कंप्यूटर से एक्सेल फ़ाइल चुनने के लिए यहाँ क्लिक करें</p>
+            </div>
+          </div>
+
+          <!-- Section B: Direct Paste Textarea -->
+          <div id="bulkModePasteSection" class="hidden space-y-2">
+            <div class="flex items-center justify-between">
+              <label class="text-xs font-bold text-slate-700">
+                Excel से कॉपी की गई पंक्तियाँ (Rows) यहाँ सीधे पेस्ट करें (Ctrl+V):
+              </label>
+              <button type="button" onclick="window.clearBulkPasteText()" class="text-[11px] text-rose-600 hover:underline">
+                साफ़ करें (Clear)
+              </button>
+            </div>
+            <textarea id="bulkPasteTextarea" rows="6" placeholder="Excel शीट में पंक्तियों को कॉपी करें और सीधे यहाँ पेस्ट करें (Ctrl+V)&#10;First Name	Last Name	Father's Name	Grampanchayat	Block Name	Mobile Number...&#10;Manisha	Yadav	Girdhar	HIRANAR	Geedam	9754000000..." class="w-full font-mono text-[11px] p-3 border border-slate-300 rounded-xl bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 leading-relaxed"></textarea>
+            <button type="button" onclick="window.parseBulkPasteData()" class="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-bold shadow transition flex items-center gap-1.5">
+              <i class="fa-solid fa-wand-magic-sparkles text-amber-400"></i> एक्सेल डेटा का परीक्षण व प्रीव्यू करें (Parse & Preview)
+            </button>
+          </div>
+        </div>
+
+        <!-- Preview Area (Appears once file or text is parsed) -->
+        <div id="bulkPreviewContainer" class="hidden space-y-3 pt-3 border-t border-slate-200">
+          <div class="flex items-center justify-between">
+            <h4 class="font-extrabold text-slate-900 text-xs uppercase tracking-wider flex items-center gap-1.5">
+              <i class="fa-solid fa-clipboard-check text-emerald-600"></i> प्री-फ़्लाइट डेटा सत्यापन (Preview & Validation)
+            </h4>
+            <span id="bulkParsedFileBadge" class="text-[10px] font-mono bg-slate-100 text-slate-700 px-2 py-0.5 rounded border border-slate-200"></span>
+          </div>
+
+          <!-- KPI Counters: Total, Valid, Duplicates, Invalid -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-center text-xs">
+            <div class="p-2.5 bg-slate-50 border border-slate-200 rounded-xl">
+              <span class="text-[10px] text-slate-500 uppercase font-bold block">कुल पंक्तियाँ (Total)</span>
+              <strong id="bulkStatTotal" class="text-base text-slate-800">0</strong>
+            </div>
+            <div class="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl">
+              <span class="text-[10px] text-emerald-700 uppercase font-bold block">सत्यापित (Valid)</span>
+              <strong id="bulkStatValid" class="text-base text-emerald-700">0</strong>
+            </div>
+            <div class="p-2.5 bg-amber-50 border border-amber-200 rounded-xl">
+              <span class="text-[10px] text-amber-700 uppercase font-bold block">डुप्लीकेट (Duplicates)</span>
+              <strong id="bulkStatDuplicates" class="text-base text-amber-700">0</strong>
+            </div>
+            <div class="p-2.5 bg-rose-50 border border-rose-200 rounded-xl">
+              <span class="text-[10px] text-rose-700 uppercase font-bold block">अमान्य (Invalid)</span>
+              <strong id="bulkStatInvalid" class="text-base text-rose-700">0</strong>
+            </div>
+          </div>
+
+          <!-- Sample Table Preview -->
+          <div class="overflow-x-auto border border-slate-200 rounded-xl max-h-48 overflow-y-auto">
+            <table class="w-full text-left text-xs border-collapse">
+              <thead id="bulkPreviewThead" class="bg-slate-100 text-slate-700 sticky top-0 font-bold border-b border-slate-200"></thead>
+              <tbody id="bulkPreviewTbody" class="divide-y divide-slate-100 font-normal"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
+        <button type="button" onclick="window.closeBulkUploadModal()" class="px-4 py-2 border border-slate-300 rounded-xl font-semibold text-xs text-slate-700 hover:bg-slate-100 transition">
+          रद्द करें (Cancel)
+        </button>
+        <button type="button" id="bulkCommitBtn" onclick="window.commitBulkUpload()" disabled class="px-5 py-2 bg-emerald-700 hover:bg-emerald-800 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl text-xs font-bold shadow flex items-center gap-1.5 transition">
+          <i class="fa-solid fa-check"></i> <span id="bulkCommitBtnText">डेटाबेस में आयात करें (Import 0 Records)</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL: CREATE SUCCESS STORY                              -->
+  <!-- ======================================================== -->
+  <div id="createStoryModal" class="modal-backdrop fixed inset-0 z-50 hidden items-center justify-center p-4">
+    <div class="modal-content bg-white w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto">
+      <div class="p-6 border-b border-slate-200 flex items-center justify-between">
+        <h3 class="font-extrabold text-slate-900 text-lg">नई Success Story बनाएं</h3>
+        <button onclick="window.closeCreateStoryModal()" class="text-slate-400 hover:text-slate-600">
+          <i class="fa-solid fa-xmark text-xl"></i>
+        </button>
+      </div>
+
+      <form onsubmit="window.saveStoryForm(event)" class="p-6 space-y-4 text-xs">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">सफल युवा का नाम</label>
+            <input type="text" id="storyYouthName" placeholder="जैसे: पल्लवी नाग" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">गाँव / स्थान</label>
+            <input type="text" id="storyVillage" placeholder="जैसे: बारसूर" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">ब्लॉक</label>
+            <select id="storyBlock" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2">
+              <option value="Dantewada">दंतेवाड़ा</option>
+              <option value="Geedam">गीदम</option>
+              <option value="Katekalyan">कटेकल्याण</option>
+              <option value="Kuakonda">कुआकोंडा</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">उपलब्धि का शीर्षक</label>
+            <input type="text" id="storyTitle" placeholder="जैसे: डैनेक्स में मास्टर क्वालिटी चेकर बनीं" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">श्रेणी (Category)</label>
+            <select id="storyCategory" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2">
+              <option value="Employment">रोजगार (Employment)</option>
+              <option value="Entrepreneurship">उद्यमिता (Entrepreneurship)</option>
+              <option value="Education & Career">शिक्षा व कोडिंग (Education & Career)</option>
+              <option value="Skill Training">कौशल प्रशिक्षण (Skill Training)</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">संबंधित योजना</label>
+          <input type="text" id="storyScheme" placeholder="जैसे: Danexx / PMEGP" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2">
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">फोटो अथवा PDF दस्तावेज अपलोड करें (Direct Photo / PDF Upload)</label>
+          <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3 p-3.5 bg-slate-50 border-2 border-dashed border-slate-300 hover:border-blue-500 rounded-2xl transition">
+            <div id="storyFilePreviewBox" class="w-20 h-20 rounded-xl bg-white border border-slate-200 flex flex-col items-center justify-center overflow-hidden shrink-0 text-slate-400">
+              <i class="fa-solid fa-cloud-arrow-up text-2xl text-slate-400"></i>
+              <span class="text-[9px] mt-1 text-slate-400 font-bold uppercase">फोटो / PDF</span>
+            </div>
+            <div class="flex-1 w-full space-y-2">
+              <div class="flex flex-wrap items-center gap-2">
+                <label for="storyFileInput" class="cursor-pointer inline-flex items-center gap-2 px-3 py-2 bg-blue-700 hover:bg-blue-800 text-white rounded-xl text-xs font-bold transition shadow-xs">
+                  <i class="fa-solid fa-folder-open"></i>
+                  <span>फ़ाइल चुनें (फोटो या PDF)</span>
+                </label>
+                <input type="file" id="storyFileInput" accept="image/*,application/pdf,.pdf" onchange="window.handleStoryFileSelected(this)" class="hidden">
+                <button type="button" id="storyClearFileBtn" onclick="window.clearStoryFile()" class="hidden px-2.5 py-1.5 text-xs text-rose-600 hover:bg-rose-50 rounded-lg font-semibold border border-rose-200">
+                  <i class="fa-solid fa-trash-can mr-1"></i>हटाएं
+                </button>
+                <span id="storyFileStatus" class="text-xs text-slate-500 italic">PNG, JPG, WEBP या PDF (अधिकतम 15MB)</span>
+              </div>
+              <div>
+                <input type="text" id="storyPhotoUrl" placeholder="या ऑनलाइन फ़ोटो/PDF का लिंक (URL) दर्ज करें..." class="w-full bg-white border border-slate-300 rounded-lg px-3 py-1.5 text-xs text-slate-700 placeholder:text-slate-400">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">संक्षिप्त सारांश (Summary - 2-3 पंक्तियाँ)</label>
+          <textarea id="storySummary" rows="2" placeholder="संक्षेप में बताएं कि युवा ने क्या हासिल किया..." class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2"></textarea>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">पूरी कहानी (Detailed Narrative)</label>
+          <textarea id="storyFull" rows="4" placeholder="युवा की पृष्ठभूमि, प्रशिक्षण का अनुभव एवं वर्तमान सफलता..." class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2"></textarea>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">प्रेरक कथन / कोट (Quote)</label>
+            <input type="text" id="storyQuote" placeholder="जैसे: 'युवा हब ने मुझे आर्थिक आत्मनिर्भरता दी...'" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">उपलब्धि की तारीख</label>
+            <input type="date" id="storyDate" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2">
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2 pt-2">
+          <input type="checkbox" id="storyFeatured" class="rounded text-blue-600 focus:ring-blue-500">
+          <label for="storyFeatured" class="font-bold text-slate-800">Featured Story (होमपेज पर प्रमुखता से दिखाएं)</label>
+        </div>
+
+        <div class="pt-4 border-t border-slate-200 flex justify-end gap-3">
+          <button type="button" onclick="window.closeCreateStoryModal()" class="px-4 py-2 border border-slate-300 rounded-xl font-semibold text-slate-700">
+            रद्द करें
+          </button>
+          <button type="submit" class="bg-blue-800 hover:bg-blue-900 text-white font-bold px-5 py-2 rounded-xl shadow">
+            सुरक्षित करें व समीक्षा हेतु भेजें
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Success Story View Reader -->
+  <div id="storyModal" class="modal-backdrop fixed inset-0 z-50 hidden items-center justify-center p-4">
+    <div class="modal-content bg-white w-full max-w-3xl rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto" id="storyModalContent"></div>
+  </div>
+
+  <!-- Modal: Field Visit Details -->
+  <div id="visitModal" class="modal-backdrop fixed inset-0 z-50 hidden items-center justify-center p-4">
+    <div class="modal-content bg-white w-full max-w-3xl rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto" id="visitModalContent"></div>
+  </div>
+
+  <!-- Mobile Bottom Quick Navigation Dock (Native App Style) -->
+  <nav class="lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-[#081326]/95 backdrop-blur-md border-t border-slate-800/90 px-2 py-1 flex items-center justify-around shadow-2xl safe-area-pb">
+    <button onclick="window.switchTab('dashboard')" class="mobile-nav-btn flex flex-col items-center gap-0.5 px-3 py-1 rounded-xl text-slate-300 hover:text-white transition active:scale-95" title="डैशबोर्ड">
+      <i class="fa-solid fa-chart-pie text-sm text-blue-400"></i>
+      <span class="text-[10px] font-medium">डैशबोर्ड</span>
+    </button>
+    <button onclick="window.openSheetViewer('Employment_Registration')" class="mobile-nav-btn flex flex-col items-center gap-0.5 px-3 py-1 rounded-xl text-slate-300 hover:text-white transition active:scale-95" title="17 शीट्स डेटा">
+      <i class="fa-solid fa-table-cells text-sm text-emerald-400"></i>
+      <span class="text-[10px] font-medium">17 शीट्स</span>
+    </button>
+    <button onclick="window.openAddYouthModal()" class="flex flex-col items-center justify-center w-11 h-11 -mt-5 rounded-full bg-gradient-to-tr from-blue-700 to-indigo-600 text-white shadow-lg shadow-blue-950/70 border-2 border-amber-400 transition active:scale-90" title="नया युवा जोड़ें">
+      <i class="fa-solid fa-plus text-base font-bold"></i>
+    </button>
+    <button onclick="window.switchTab('stories')" class="mobile-nav-btn flex flex-col items-center gap-0.5 px-3 py-1 rounded-xl text-slate-300 hover:text-white transition active:scale-95" title="सफलता कहानियां">
+      <i class="fa-solid fa-photo-film text-sm text-purple-400"></i>
+      <span class="text-[10px] font-medium">गैलरी</span>
+    </button>
+    <button onclick="window.toggleSidebar()" class="mobile-nav-btn flex flex-col items-center gap-0.5 px-3 py-1 rounded-xl text-slate-300 hover:text-white transition active:scale-95" title="मेन्यू खोलें">
+      <i class="fa-solid fa-bars-staggered text-sm text-amber-400"></i>
+      <span class="text-[10px] font-medium">मेन्यू</span>
+    </button>
+  </nav>
+
+  <!-- Application Logic Scripts -->
+  <script src="js/env.js?v=3.5"></script>
+  <script src="js/api.js?v=3.5"></script>
+  <script src="js/auth.js?v=3.5"></script>
+  <script src="js/mform-data.js?v=3.5"></script>
+  <script src="js/db.js?v=3.5"></script>
+  <script src="js/public-app.js?v=3.5"></script>
+  <script src="js/admin-app.js?v=3.5"></script>
+</body>
+</html>

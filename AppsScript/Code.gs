@@ -1,18 +1,207 @@
 /**
  * =========================================================================
- * YOUTH HUB DANTEWADA - MONITORING SYSTEM
- * Google Apps Script All-In-One Production Backend (Code.gs)
+ * YOUTH HUB DANTEWADA - GOOGLE APPS SCRIPT PRODUCTION BACKEND (v3.1)
  * =========================================================================
- * Features:
- * 1. setupDatabase() - Automatically creates all 15 sheets with exact headers & formatting
- * 2. doPost(e) - Fast JSON dispatcher for all 14 data modules + Authentication + Dashboard KPIs
- * 3. doGet(e) - Health check and Web App status
- * 4. uploadFile() - Upload candidate/event photos directly to Google Drive
+ * आपकी एक्सेल शीट के सटीक हेडर्स व टाइटल रो (Title Row) संरचना के अनुसार।
+ * 
+ * 📌 सेटअप निर्देश (केवल 1 मिनट):
+ * 1. अपनी Google Sheet खोलें।
+ * 2. Extensions > Apps Script में जाएं।
+ * 3. यह पूरा कोड पेस्ट करें और Save (Ctrl+S) करें।
+ * 4. ऊपर फ़ंक्शन 'setupDatabase' चुनकर 'Run' दबाएं (यह 13 टैब्स और सटीक हेडर्स बना देगा)।
+ * 5. ऊपर Deploy > New deployment > Web app:
+ *    - Execute as: 'Me'
+ *    - Who has access: 'Anyone'  <-- (जरूरी)
+ * 6. Deploy करें और जो URL मिले, वह पोर्टल में डाल दें!
  * =========================================================================
  */
 
-// Global Sheet Schema Definition (Exact matching with Frontend forms)
+// आपकी एक्सेल फ़ाइल के सटीक 13 शीट्स के हेडर्स
+const EXACT_EXCEL_TEMPLATES = {
+  // 1. रोजगार पंजीयन
+  "Employment_Registration": {
+    hasTitle: false,
+    headers: [
+      "SR.No", "First Name", "Last Name", "Father's Name / Husband's Name",
+      "Grampanchayat", "Block Name", "Mobile Number", "Gender", "Category",
+      "Highest Qualification", "Current Occupation", "Aspired Career"
+    ]
+  },
+
+  // 2. रोजगार प्राप्त
+  "Employed": {
+    hasTitle: false,
+    headers: [
+      "SR. NO.", "NAME ", "FATHER NAME", "ADDRESS", "BLOCK",
+      "DISTRICT", "MOBILE N0.", "ORGANISATION", "DATE OF JOINING", "SALARY"
+    ]
+  },
+
+  // 3. कौशल प्रशिक्षण
+  "Skill_Linked": {
+    hasTitle: false,
+    headers: [
+      "SR. NO.", "NAME ", "VILLAGE", "MOBILE NO.", "INSTITUTE", "SKILL TRAINING"
+    ]
+  },
+
+  // 4. शिक्षा लिंकेज
+  "Education_Linked": {
+    hasTitle: false,
+    headers: [
+      "Name", "Faather Name", "Mother Name", "Email", "Gender",
+      "Education", "Phone Number", "Address"
+    ]
+  },
+
+  // 5. PMEGP / PMFME लोन
+  "PMEGP_PMFME_Loan": {
+    hasTitle: false,
+    headers: [
+      "SR. NO.", "NAME", "FATHER NAME", "VILLAGE", "BLOCK",
+      "LOAN AMOUNT", "YOJNA", "BUSSINESS"
+    ]
+  },
+
+  // 6. आईआईएम रायपुर
+  "IIM_Candidate_List": {
+    hasTitle: true,
+    titleText: "CANDIDATE LIST IIM RAIPUR 2025",
+    headers: [
+      "SR", "NAME ", "FATHER NAME", "GENDER", "AGE", "CAST",
+      "GP", "BLOCK", "DISTRICT", "MOBILE NO, ", "EDUCATION", "PERCENT", "AGE"
+    ]
+  },
+
+  // 7. आयोजित प्रशिक्षण
+  "Training_Conducted": {
+    hasTitle: false,
+    headers: [
+      "SR. NO.", "NAME ", "ADDRESS", "MOBILE NO.", "INSTITUTE", "TRAINING"
+    ]
+  },
+
+  // 8. माई भारत पंजीयन
+  "MY_Bharat_Registration": {
+    hasTitle: true,
+    titleText: "MY BHARAT REGISTRATION LIST",
+    headers: [
+      "NAME", "FATHER NAME", "VILLAGE", "BLOCK", "DOB",
+      "GENDER", "MOBILE NO.", "CATEGORY", "CURRENT OCCUPATION", "REMARK"
+    ]
+  },
+
+  // 9. युवा हब प्रशिक्षण
+  "Youth_Hub_Trainings": {
+    hasTitle: true,
+    titleText: "YOUTHS ATTENDED TRAININGS AT YOUTH HUBS",
+    headers: [
+      "NAME", "FATHER NAME", "VILLAGE", "BLOCK", "DOB",
+      "GENDER", "MOBILE NO.", "REMARK"
+    ]
+  },
+
+  // 10. बस्तर मुन्ने विशेष शिविर
+  "Bastar_Munne_Shivir": {
+    hasTitle: true,
+    titleText: "BASTAR MUNNE SHIVIR REGISTERED YOUTH LIST FOR SKILL TRAINING",
+    headers: [
+      "SR. NO.", "NAME", "FATHER NAME", "VILLAGE", "BLOCK",
+      "DOB", "GENDER", "MOBILE NO.", "AADHAR", "CATEGORY", "INTERESTED TRADE (इच्छुक ट्रेड)"
+    ]
+  },
+
+  // 11. ग्राम संगठन (VO/CLF) बैठकें
+  "Meetings_VO_CLF_TRIF": {
+    hasTitle: false,
+    headers: [
+      "DATE", "VILLAGE", "BLOCK", "VO / CLF NAME", "ADHAYAKSH / SACHIV",
+      "DISCUSS POINT", "REMARKS", "PHOTO"
+    ]
+  },
+
+  // 12. उद्यमी व स्टार्टअप विचार
+  "Entrepreneur_Identified": {
+    hasTitle: false,
+    headers: [
+      "SR. NO.", "STARTUP / IDEA NAME", "DISTRICT", "FOUNDER NAME", "AGE",
+      "ADDRESS", "EDUCATION", "MOBILE NO.", "INVESTMENT NEEDED", "WORK TYPE", "BUSINESS MODEL / PROBLEM"
+    ]
+  },
+
+  // 13. रंग दे ऋण लाभार्थी
+  "Rang_De_Loan": {
+    hasTitle: false,
+    headers: [
+      "SR. NO.", "NAME", "ADDRESS", "MOBILE NO.", "ACTIVITY", "AMOUNT (₹)", "2ND (₹)"
+    ]
+  },
+
+  // 14. एम-फॉर्म सर्वे (17. M-Form)
+  "M_Form": {
+    hasTitle: false,
+    headers: [
+      "SR. NO.", "Block Name", "Grampanchayat", "First Name", "Last Name",
+      "Mobile Number", "Gender", "Email", "Pin Code", "Father's Name / Husband's Name",
+      "Mother's Name", "Category", "Highest Qualification", "Current Occupation", "Aspired Career"
+    ]
+  }
+};
+
+// Global Schema Definition for Unit Tests and Core Compatibility
 const SHEETS_SCHEMA = {
+  Employment_Registration: [
+    "SR.No", "First Name", "Last Name", "Father's Name / Husband's Name",
+    "Grampanchayat", "Block Name", "Mobile Number", "Gender", "Category",
+    "Highest Qualification", "Current Occupation", "Aspired Career"
+  ],
+  Employed: [
+    "SR. NO.", "NAME ", "FATHER NAME", "ADDRESS", "BLOCK",
+    "DISTRICT", "MOBILE N0.", "ORGANISATION", "DATE OF JOINING", "SALARY"
+  ],
+  Skill_Linked: [
+    "SR. NO.", "NAME ", "VILLAGE", "MOBILE NO.", "INSTITUTE", "SKILL TRAINING"
+  ],
+  Education_Linked: [
+    "Name", "Faather Name", "Mother Name", "Email", "Gender",
+    "Education", "Phone Number", "Address"
+  ],
+  PMEGP_PMFME_Loan: [
+    "SR. NO.", "NAME", "FATHER NAME", "VILLAGE", "BLOCK",
+    "LOAN AMOUNT", "YOJNA", "BUSSINESS"
+  ],
+  IIM_Candidate_List: [
+    "SR", "NAME ", "FATHER NAME", "GENDER", "AGE", "CAST",
+    "GP", "BLOCK", "DISTRICT", "MOBILE NO, ", "EDUCATION", "PERCENT", "AGE2"
+  ],
+  Training_Conducted: [
+    "SR. NO.", "NAME ", "ADDRESS", "MOBILE NO.", "INSTITUTE", "TRAINING"
+  ],
+  MY_Bharat_Registration: [
+    "NAME", "FATHER NAME", "VILLAGE", "BLOCK", "DOB",
+    "GENDER", "MOBILE NO.", "CATEGORY", "CURRENT OCCUPATION", "REMARK"
+  ],
+  Youth_Hub_Trainings: [
+    "NAME", "FATHER NAME", "VILLAGE", "BLOCK", "DOB",
+    "GENDER", "MOBILE NO.", "REMARK"
+  ],
+  Bastar_Munne_Shivir: [
+    "SR. NO.", "NAME", "FATHER NAME", "VILLAGE", "BLOCK",
+    "DOB", "GENDER", "MOBILE NO.", "AADHAR", "CATEGORY", "INTERESTED TRADE (इच्छुक ट्रेड)"
+  ],
+  Meetings_VO_CLF_TRIF: [
+    "DATE", "VILLAGE", "BLOCK", "VO / CLF NAME", "ADHAYAKSH / SACHIV",
+    "DISCUSS POINT", "REMARKS", "PHOTO"
+  ],
+  Entrepreneur_Identified: [
+    "SR. NO.", "STARTUP / IDEA NAME", "DISTRICT", "FOUNDER NAME", "AGE",
+    "ADDRESS", "EDUCATION", "MOBILE NO.", "INVESTMENT NEEDED", "WORK TYPE", "BUSINESS MODEL / PROBLEM"
+  ],
+  Rang_De_Loan: [
+    "SR. NO.", "NAME", "ADDRESS", "MOBILE NO.", "ACTIVITY", "AMOUNT (₹)", "2ND (₹)"
+  ],
+
+  // Compatibility schemas
   Youth_Master: [
     "Youth_ID", "Youth_Name", "Father_Husband_Name", "Mobile_Number", "Gender",
     "DOB", "Age", "Category", "Aadhaar_Number", "Qualification", "Occupation",
@@ -25,8 +214,9 @@ const SHEETS_SCHEMA = {
     "Male", "Female", "Other", "Total_Mobilized", "Photo_URL", "Remarks"
   ],
   M_Form: [
-    "MForm_ID", "Youth_ID", "Youth_Name", "Mobile", "Date", "Block", "GP",
-    "Village", "MForm_Status", "MForm_Reg_No", "Follow_Up_Status", "Remarks"
+    "SR. NO.", "Block Name", "Grampanchayat", "First Name", "Last Name", "Mobile Number", "Gender",
+    "Email", "Pin Code", "Father's Name / Husband's Name", "Mother's Name", "Category",
+    "Highest Qualification", "Current Occupation", "Aspired Career", "MForm_ID"
   ],
   My_Bharat: [
     "MyBharat_ID", "Youth_ID", "Youth_Name", "Mobile", "Registration_Date",
@@ -49,12 +239,12 @@ const SHEETS_SCHEMA = {
     "Qualification", "Preferred_Job", "Registration_Status", "Remarks"
   ],
   Employment_Linked: [
-    "SR. NO.", "NAME", "ADDRESS", "MOBILE NO.", "REMARK"
+    "SR. NO.", "NAME ", "FATHER NAME", "ADDRESS", "BLOCK",
+    "DISTRICT", "MOBILE N0.", "ORGANISATION", "DATE OF JOINING", "SALARY"
   ],
   Education: [
-    "Education_ID", "Youth_ID", "Youth_Name", "Current_Qualification",
-    "Education_Goal", "Institution_Name", "Course", "Admission_Date",
-    "Block", "GP", "Status", "Remarks"
+    "Name", "Faather Name", "Mother Name", "Email", "Gender",
+    "Education", "Phone Number", "Address"
   ],
   Entrepreneurs: [
     "Entrepreneur_ID", "Stage", "Youth_ID", "Name", "Father_Name", "Mobile", "Block", "Village",
@@ -69,1540 +259,808 @@ const SHEETS_SCHEMA = {
   Entrepreneurs_Established: [
     "S.NO", "BLOCK", "NAME", "FATHER NAME", "VILLAGE", "MOBILE NO.", "BUSINESS", "LONE AMOUNT"
   ],
-  "Entrepreneurs Established": [
-    "S.NO", "BLOCK", "NAME", "FATHER NAME", "VILLAGE", "MOBILE NO.", "BUSINESS", "LONE AMOUNT"
-  ],
   NavGurukul: [
     "Candidate_ID", "Youth_ID", "Candidate_Name", "Mobile", "Block", "GP",
     "Qualification", "Registration_Date", "Selection_Status", "Admission_Status",
     "Joining_Date", "Remarks"
   ],
   Trainings: [
-    "Training_ID", "Training_Name", "Training_Type", "Date", "Start_Date", "End_Date",
-    "Block", "GP", "Venue", "Training_Provider", "Trainer_Name",
-    "Male_Participants", "Female_Participants", "Total_Participants",
-    "Training_Topic", "Outcome", "Photo_URL", "Remarks"
+    "Training_ID", "Financial_Year", "Quarter", "Month", "Training_Name",
+    "Training_Category", "Training_Topic", "Start_Date", "End_Date", "Duration_Days",
+    "Total_Participants", "Male", "Female", "Block", "Venue",
+    "Trainer_Name", "Trainer_Org", "Cost_Incurred", "Outcome", "Photo_URL", "Remarks"
   ],
   Activities: [
-    "Activity_ID", "Date", "Activity_Type", "Activity_Name", "Block", "GP",
-    "Village", "Participants", "Description", "Outcome", "Photo_URL"
+    "Activity_ID", "Date", "Month", "Block", "Activity_Category",
+    "Activity_Name", "Objective", "Key_Outcomes", "Male", "Female",
+    "Total_Participants", "Lead_Person", "Photo_URL", "Remarks"
   ],
   Rehabilitation: [
-    "Rehab_ID", "Youth_ID", "Candidate_Name", "Father_Husband_Name", "Mobile",
-    "Block", "GP", "Village", "Surrender_Date", "Rehabilitation_Status",
-    "Assistance_Type", "Assistance_Amount", "Scheme_Linked", "Employment_Status",
-    "Current_Status", "Follow_Up_Date", "Follow_Up_Status", "Pending_Issue", "Remarks"
+    "Rehab_ID", "Youth_ID", "Youth_Name", "Date", "Block",
+    "Rehab_Category", "Special_Needs", "Assistance_Provided",
+    "Livelihood_Option", "Follow_Up_Date", "Current_Status", "Remarks"
   ],
   IIM_Raipur: [
-    "IIM_ID", "Candidate_Name", "Father_Husband_Name", "Age", "Category",
-    "Address", "Village", "Block", "Mobile_Number", "Aadhaar_Number",
-    "Latest_Exam_Percentage", "Stream_Subject", "Vocational_Course", "Certificate_Diploma",
-    "Current_Occupation", "Work_Experience", "Raipur_Stay_3Months",
-    "Home_Responsibility_Manager", "Family_Recall_Risk", "Family_Consent",
-    "Business_Type_Desired", "Existing_Business_Idea", "Local_Problem_To_Solve",
-    "Why_This_Course", "Plan_After_Course", "Dropout_History", "Source_Info",
-    "Declaration", "Entrepreneurship_Thoughts", "Selection_Status"
-  ],
-  Shasan_Sahyog: [
-    "Demand_ID", "Name", "Father_Husband_Name", "DOB", "Address", "Village",
-    "Block", "District", "Mobile_Number", "Assistance_Required", "Status", "Remarks"
-  ],
-  RangDe_Loan: [
-    "SR. NO.", "NAME", "ADDRESS", "MOBILE NO.", "ACTIVITY", "AMOUNT", "2ND",
-    "Loan_ID", "Youth_ID", "Father_Name", "Block", "GP", "Village",
-    "Business", "Application_Date", "Loan_Status",
-    "Repayment_Status", "Tenure_Months", "Udyam_Registration", "Bank_Account",
-    "Updates", "Remarks"
-  ],
-  Progress_Gallery: [
-    "Gallery_ID", "Title", "Category", "Date", "Block", "Gram_Panchayat",
-    "Participants", "Progress_Status", "Photo_URL", "Description", "Tags",
-    "Uploaded_By", "Created_At"
+    "SR", "NAME ", "FATHER NAME", "GENDER", "AGE", "CAST",
+    "GP", "BLOCK", "DISTRICT", "MOBILE NO, ", "EDUCATION", "PERCENT", "AGE2"
   ],
   Photo_Uploads: [
-    "ID", "Record_ID", "Category", "Photo_Name", "Drive_File_ID", "Drive_URL", "Upload_Date", "Uploaded_By", "Status"
+    "Photo_ID", "Upload_Date", "Module", "Record_ID", "Title",
+    "File_Name", "Drive_File_ID", "Direct_Link", "Thumbnail_Link", "Uploaded_By", "Block", "Tags"
   ],
-  Users: [
-    "User_ID", "Name", "Email", "Password_Hash", "Role", "Block", "Youth_Hub", "Status", "Created_At"
+  RangDe_Loan: [
+    "SR. NO.", "NAME", "ADDRESS", "MOBILE NO.", "ACTIVITY", "AMOUNT (₹)", "2ND (₹)"
   ]
 };
 
-// Form ID Prefix Configuration
-const ID_PREFIXES = {
-  Youth_Master: { prefix: "YH-2026-", idField: "Youth_ID" },
-  Mobilization: { prefix: "MOB-2026-", idField: "Activity_ID" },
-  M_Form: { prefix: "MF-2026-", idField: "MForm_ID" },
-  My_Bharat: { prefix: "MB-2026-", idField: "MyBharat_ID" },
-  Counselling: { prefix: "COU-2026-", idField: "Counselling_ID" },
-  Skill_Training: { prefix: "SKL-2026-", idField: "Training_Record_ID" },
-  Employment_Registered: { prefix: "ER-2026-", idField: "Emp_Reg_ID" },
-  Employment_Linked: { prefix: "", idField: "SR. NO." },
-  Education: { prefix: "EDU-2026-", idField: "Education_ID" },
-  Entrepreneurs: { prefix: "ENT-2026-", idField: "Entrepreneur_ID" },
-  Entrepreneurs_Established: { prefix: "", idField: "S.NO" },
-  "Entrepreneurs Established": { prefix: "", idField: "S.NO" },
-  NavGurukul: { prefix: "NG-2026-", idField: "Candidate_ID" },
-  Trainings: { prefix: "TRG-2026-", idField: "Training_ID" },
-  Activities: { prefix: "ACT-2026-", idField: "Activity_ID" },
-  Rehabilitation: { prefix: "REH-2026-", idField: "Rehab_ID" },
-  IIM_Raipur: { prefix: "IIM-2026-", idField: "IIM_ID" },
-  Shasan_Sahyog: { prefix: "SS-2026-", idField: "Demand_ID" },
-  RangDe_Loan: { prefix: "", idField: "SR. NO." },
-  Progress_Gallery: { prefix: "GAL-2026-", idField: "Gallery_ID" },
-  Photo_Uploads: { prefix: "PHO-2026-", idField: "ID" },
-  Users: { prefix: "USR-", idField: "User_ID" }
+// शीट्स के उपनाम (Aliases)
+const SHEET_ALIASES = {
+  "employment_registered": "Employment_Registration",
+  "youth_master": "Employment_Registration",
+  "m_form": "M_Form",
+  "m-form": "M_Form",
+  "mform": "M_Form",
+  "employment_linked": "Employed",
+  "employed": "Employed",
+  "skill_training": "Skill_Linked",
+  "skill_linked": "Skill_Linked",
+  "education": "Education_Linked",
+  "education_linked": "Education_Linked",
+  "navgurukul": "Education_Linked",
+  "entrepreneurs": "PMEGP_PMFME_Loan",
+  "pmegp_pmfme_loan": "PMEGP_PMFME_Loan",
+  "rangde_loan": "Rang_De_Loan",
+  "rang_de_loan": "Rang_De_Loan",
+  "bastar_shivir": "Bastar_Munne_Shivir",
+  "bastar_munne_shivir": "Bastar_Munne_Shivir",
+  "bastar_munne_report": "Bastar_Munne_Shivir",
+  "bastarmunnereport": "Bastar_Munne_Shivir",
+  "iim_raipur": "IIM_Candidate_List",
+  "iim_candidate_list": "IIM_Candidate_List",
+  "training_conducted": "Training_Conducted",
+  "my_bharat_registration": "MY_Bharat_Registration",
+  "youth_hub_trainings": "Youth_Hub_Trainee",
+  "youth_hub_trainee": "Youth_Hub_Trainee",
+  "youth_hub_trainees": "Youth_Hub_Trainee",
+  "youthhubtrainee": "Youth_Hub_Trainee",
+  "youthhubtrainings": "Youth_Hub_Trainee",
+  "meetings_vo_clf_trif": "VO CLF Meeting",
+  "vo_clf_meeting": "VO CLF Meeting",
+  "voclfmeeting": "VO CLF Meeting",
+  "vo_clf_meetings": "VO CLF Meeting",
+  "meetings_vo_clf": "VO CLF Meeting",
+  "startup_hunt": "Entrepreneur_Identified",
+  "startuphunt": "Entrepreneur_Identified",
+  "startup_district_ideas": "Entrepreneur_Identified",
+  "startupdistrictideas": "Entrepreneur_Identified",
+  "entrepreneur_identified": "Entrepreneur_Identified"
 };
 
-/**
- * =========================================================================
- * 1. AUTOMATIC DATABASE SETUP FUNCTION
- * Run this function ONCE from the Apps Script editor to create all sheets
- * and headers automatically.
- * =========================================================================
- */
-/**
- * Adds custom admin menu directly in Google Sheets top menu bar
- */
-function onOpen() {
-  SpreadsheetApp.getUi()
-    .createMenu("🚀 Youth Hub Admin")
-    .addItem("🔄 Update / Setup Database Columns", "menuSetupDatabase")
-    .addToUi();
+function getSpreadsheet() {
+  return SpreadsheetApp.getActiveSpreadsheet();
 }
 
-function menuSetupDatabase() {
-  const result = setupDatabase();
-  SpreadsheetApp.getUi().alert("✅ Success!\n\nAll 16 sheets and column headers are up to date with the latest system schema.");
-}
-
+/**
+ * एक क्लिक में सभी 13 शीट्स और हेडर्स ऑटो-क्रिएट करें
+ */
 function setupDatabase() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ss = getSpreadsheet();
+  const createdSheets = [];
 
-  Object.keys(SHEETS_SCHEMA).forEach(sheetName => {
-    let sheet = findSheet(ss, sheetName);
+  for (const [sheetName, template] of Object.entries(EXACT_EXCEL_TEMPLATES)) {
+    let sheet = ss.getSheetByName(sheetName);
     if (!sheet) {
       sheet = ss.insertSheet(sheetName);
     }
 
-    const headers = SHEETS_SCHEMA[sheetName];
-    const { headerRowIndex, headers: existingHeaders } = detectHeaderRow(sheet);
-    const existingLastCol = sheet.getLastColumn();
+    if (sheet.getLastRow() === 0) {
+      if (template.hasTitle) {
+        // Row 1: Title Banner
+        sheet.getRange(1, 1).setValue(template.titleText);
+        sheet.getRange(1, 1, 1, template.headers.length).merge();
+        const titleRange = sheet.getRange(1, 1, 1, template.headers.length);
+        titleRange.setBackground("#07182E");
+        titleRange.setFontColor("#FBBF24");
+        titleRange.setFontWeight("bold");
+        titleRange.setHorizontalAlignment("center");
+        titleRange.setFontSize(11);
 
-    if (existingLastCol === 0 || sheet.getLastRow() === 0 || existingHeaders.length === 0 || (existingHeaders.length === 1 && String(existingHeaders[0]).trim() === "")) {
-      sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
-      
-      // Formatting header row
-      const headerRange = sheet.getRange(1, 1, 1, headers.length);
-      headerRange.setBackground("#0B2545");
-      headerRange.setFontColor("#FFFFFF");
-      headerRange.setFontWeight("bold");
-      headerRange.setHorizontalAlignment("center");
-      sheet.setFrozenRows(1);
-    } else {
-      // Append any newly added columns if sheet already exists
-      const missingHeaders = headers.filter(h => {
-        const cleanH = String(h).replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
-        return !existingHeaders.some(eh => String(eh).replace(/[^a-zA-Z0-9]/g, "").toLowerCase() === cleanH);
-      });
-      if (missingHeaders.length > 0) {
-        sheet.getRange(headerRowIndex, existingLastCol + 1, 1, missingHeaders.length).setValues([missingHeaders]);
-        const newHeaderRange = sheet.getRange(headerRowIndex, existingLastCol + 1, 1, missingHeaders.length);
-        newHeaderRange.setBackground("#0B2545");
-        newHeaderRange.setFontColor("#FFFFFF");
-        newHeaderRange.setFontWeight("bold");
-        newHeaderRange.setHorizontalAlignment("center");
+        // Row 2: Headers
+        sheet.getRange(2, 1, 1, template.headers.length).setValues([template.headers]);
+        const headerRange = sheet.getRange(2, 1, 1, template.headers.length);
+        headerRange.setBackground("#0F294A");
+        headerRange.setFontColor("#FFFFFF");
+        headerRange.setFontWeight("bold");
+        headerRange.setFontSize(10);
+        sheet.setFrozenRows(2);
+      } else {
+        // Row 1: Headers
+        sheet.getRange(1, 1, 1, template.headers.length).setValues([template.headers]);
+        const headerRange = sheet.getRange(1, 1, 1, template.headers.length);
+        headerRange.setBackground("#0F294A");
+        headerRange.setFontColor("#FFFFFF");
+        headerRange.setFontWeight("bold");
+        headerRange.setFontSize(10);
+        sheet.setFrozenRows(1);
       }
     }
-  });
-
-  // Create Default Role-Based Users in Users sheet if empty
-  const usersSheet = ss.getSheetByName("Users");
-  if (usersSheet && usersSheet.getLastRow() <= 1) {
-    usersSheet.appendRow([
-      "USR-001",
-      "Employment Officer (जिला रोजगार अधिकारी)",
-      "eo.dantewada@gmail.com",
-      "Admin@EO2026",
-      "ADMIN",
-      "All",
-      "All",
-      "Active",
-      new Date().toISOString().split("T")[0]
-    ]);
-    usersSheet.appendRow([
-      "USR-002",
-      "Youth Hub Dantewada",
-      "youthhub.dantewada@gmail.com",
-      "Dantewada@2026",
-      "HUB_OPERATOR",
-      "Dantewada",
-      "Youth Hub Dantewada",
-      "Active",
-      new Date().toISOString().split("T")[0]
-    ]);
-    usersSheet.appendRow([
-      "USR-003",
-      "Youth Hub Geedam",
-      "youthhub.geedam@gmail.com",
-      "Geedam@2026",
-      "HUB_OPERATOR",
-      "Geedam",
-      "Youth Hub Geedam",
-      "Active",
-      new Date().toISOString().split("T")[0]
-    ]);
+    createdSheets.push(sheetName);
   }
 
-  // Create Default Progress Gallery Milestone Photos if Progress_Gallery sheet is empty
-  const galSheet = ss.getSheetByName("Progress_Gallery");
-  if (galSheet && galSheet.getLastRow() <= 1) {
-    const defaultGalleryRows = [
-      [
-        "GAL-2026-001",
-        "Electrician & Solar Technician Practical Training",
-        "Skill Training",
-        "2026-09-28",
-        "Dantewada",
-        "Chitalanka",
-        28,
-        "In Progress",
-        "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=900&q=80",
-        "Batch 1 hands-on wiring, circuit safety, and solar panel inverter installation practical sessions at Youth Hub Dantewada workshop.",
-        "Electrician, Solar, Practical Training, Batch 1",
-        "District Skill Coordinator",
-        "2026-09-28"
-      ],
-      [
-        "GAL-2026-002",
-        "Gram Panchayat Intensive Youth Mobilization Camp",
-        "Mobilization",
-        "2026-09-24",
-        "Geedam",
-        "Barsoor",
-        65,
-        "Completed",
-        "https://images.unsplash.com/photo-1577495508048-b635879837f1?auto=format&fit=crop&w=900&q=80",
-        "Special community mobilization drive organized in Barsoor Gram Panchayat. 42 youth registered on the spot with M-Form completion.",
-        "Gram Sabha, Mobilization, M-Form, Barsoor",
-        "Youth Hub Geedam",
-        "2026-09-24"
-      ],
-      [
-        "GAL-2026-003",
-        "Tribal Youth Micro-Enterprise: Tailoring & Apparel Unit",
-        "Entrepreneurship",
-        "2026-09-20",
-        "Katekalyan",
-        "Tumakpal",
-        6,
-        "Milestone Achieved",
-        "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=900&q=80",
-        "Inauguration and commercial launch of women self-help tailoring micro-enterprise supported by PMEGP loan sanction and Youth Hub mentorship.",
-        "Micro-Enterprise, Tailoring, PMEGP, Women SHG",
-        "Livelihood Officer",
-        "2026-09-20"
-      ],
-      [
-        "GAL-2026-004",
-        "District Mega Rojgar Mela & Offer Letter Distribution",
-        "Activities",
-        "2026-09-15",
-        "Dantewada",
-        "Dantewada Rural",
-        210,
-        "Completed",
-        "https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&w=900&q=80",
-        "14 participating private employers and skill partners conducted interviews at District HQ. 87 youth handed preliminary job offer letters.",
-        "Rojgar Mela, Placement, Offer Letters, District HQ",
-        "जिला रोजगार अधिकारी",
-        "2026-09-15"
-      ],
-      [
-        "GAL-2026-005",
-        "Computer Literacy & Digital Coding Batch (NavGurukul)",
-        "Skill Training",
-        "2026-09-10",
-        "Geedam",
-        "Javanga",
-        35,
-        "In Progress",
-        "https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=900&q=80",
-        "NavGurukul residential campus orientation and digital software foundation training for shortlisted rural students from across Dantewada.",
-        "NavGurukul, Coding, Software, Digital",
-        "NavGurukul Coordinator",
-        "2026-09-10"
-      ],
-      [
-        "GAL-2026-006",
-        "Rehabilitation Livelihood Toolkits Handover Ceremony",
-        "Rehabilitation",
-        "2026-09-05",
-        "Kuakonda",
-        "Palnar",
-        12,
-        "Milestone Achieved",
-        "https://images.unsplash.com/photo-1582213782179-e0d53f98f2ca?auto=format&fit=crop&w=900&q=80",
-        "Distribution of masonry, carpentry, and electrical toolkits along with financial assistance cheque disbursal for surrendered youth under district welfare package.",
-        "Rehabilitation, Toolkits, Welfare, Surrendered Youth",
-        "Rehabilitation Cell",
-        "2026-09-05"
-      ],
-      [
-        "GAL-2026-007",
-        "Field Counselling & Psychometric Aptitude Camp",
-        "Mobilization",
-        "2026-08-28",
-        "Kuakonda",
-        "Nakulnar",
-        52,
-        "Completed",
-        "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=900&q=80",
-        "Career counsellors conducted group counselling and mapped vocational aspirations for high school pass-outs in Nakulnar cluster.",
-        "Counselling, Nakulnar, Career Path",
-        "District Counsellor",
-        "2026-08-28"
-      ],
-      [
-        "GAL-2026-008",
-        "Mushroom Cultivation & Organic Farming Micro-Unit",
-        "Entrepreneurship",
-        "2026-08-18",
-        "Katekalyan",
-        "Bengpal",
-        8,
-        "Milestone Achieved",
-        "https://images.unsplash.com/photo-1592417817098-8f3d69109853?auto=format&fit=crop&w=900&q=80",
-        "Success story: 8 local youths launched cooperative oyster mushroom cultivation following 21-day skill training at KVK Dantewada.",
-        "Mushroom, Agri-Business, Bengpal, Cooperative",
-        "Agri-Skill Mentor",
-        "2026-08-18"
-      ]
-    ];
-    defaultGalleryRows.forEach(row => galSheet.appendRow(row));
-  }
-
-  // Remove default "Sheet1" if still exists
-  const defaultSheet = ss.getSheetByName("Sheet1");
-  if (defaultSheet && ss.getSheets().length > 1) {
-    try { ss.deleteSheet(defaultSheet); } catch (e) {}
-  }
-
-  Logger.log("✅ Database Setup Complete! All 17 sheets created with proper headers.");
-  return { success: true, message: "Database initialized with all 17 sheets, default users, and milestone photos." };
-}
-
-/**
- * =========================================================================
- * 2. WEB APP API ENDPOINTS (doGet & doPost)
- * =========================================================================
- */
-function doGet(e) {
-  return createJsonResponse({
+  return {
     success: true,
-    status: "online",
-    message: "Youth Hub Dantewada Google Apps Script Backend is Live & Ready.",
-    timestamp: new Date().toISOString()
-  });
-}
-
-function doPost(e) {
-  try {
-    let requestData = {};
-    if (e && e.postData && e.postData.contents) {
-      try {
-        requestData = JSON.parse(e.postData.contents);
-      } catch (err) {
-        requestData = e.parameter || {};
-      }
-    } else if (e && e.parameter) {
-      requestData = e.parameter;
-    }
-
-    const action = requestData.action || "";
-    const payload = requestData.payload || requestData;
-
-    const result = handleAction(action, payload);
-    return createJsonResponse(result);
-  } catch (error) {
-    return createJsonResponse({
-      success: false,
-      message: "Server Error: " + error.message
-    });
-  }
-}
-
-function createJsonResponse(data) {
-  return ContentService.createTextOutput(JSON.stringify(data))
-    .setMimeType(ContentService.MimeType.JSON);
-}
-
-/**
- * =========================================================================
- * 3. ACTION DISPATCHER
- * =========================================================================
- */
-function handleAction(action, payload) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-
-  // Ping / Health Check
-  if (action === "ping") {
-    return { success: true, message: "Backend is operational.", timestamp: new Date().toISOString() };
-  }
-
-  // Setup database via API
-  if (action === "setupDatabase") {
-    return setupDatabase();
-  }
-
-  // User Login
-  if (action === "login") {
-    return handleLogin(ss, payload);
-  }
-
-  // Get Table Records
-  if (action === "getTableRecords") {
-    const sheetName = payload.sheetName;
-    return getSheetRecords(ss, sheetName);
-  }
-
-  // Search Youth Master
-  if (action === "searchYouth") {
-    return searchYouthMaster(ss, payload.query || "");
-  }
-
-  // Get Youth Full Journey Profile
-  if (action === "getYouthProfile") {
-    return getYouthProfile(ss, payload.youthId);
-  }
-
-  // Delete Record
-  if (action === "deleteRecord") {
-    return deleteRecord(ss, payload.sheetName, payload.idField, payload.idValue);
-  }
-
-  // Update Record
-  if (action === "updateRecord") {
-    return updateRecord(ss, payload.sheetName, payload.idField, payload.idValue, payload.updatedData);
-  }
-
-  // Upload File to Google Drive
-  if (action === "uploadFile") {
-    return handleFileUpload(payload);
-  }
-
-  // List Users (Admin only)
-  if (action === "listUsers") {
-    return listUsers(ss);
-  }
-
-  // Get Dashboard KPIs & Charts
-  if (action === "getDashboard") {
-    return calculateDashboardKPIs(ss, payload.filters);
-  }
-
-  // Bulk Insert for any sheet
-  if (action === "bulkInsert") {
-    return bulkInsertRecords(ss, payload.sheetName, payload.records);
-  }
-
-  // Clear data rows in a sheet (leaves headers intact)
-  if (action === "clearSheetData") {
-    return clearSheetData(ss, payload.sheetName);
-  }
-
-  // Dynamic Add Form Handlers
-  const actionToSheetMap = {
-    addYouth: "Youth_Master",
-    addMobilization: "Mobilization",
-    addMForm: "M_Form",
-    addMyBharat: "My_Bharat",
-    addCounselling: "Counselling",
-    addSkillTraining: "Skill_Training",
-    addEmploymentRegistered: "Employment_Registered",
-    addEmploymentLinked: "Employment_Linked",
-    addEducation: "Education",
-    addEntrepreneur: "Entrepreneurs",
-    addEntrepreneurEstablished: "Entrepreneurs_Established",
-    addNavGurukul: "NavGurukul",
-    addTraining: "Trainings",
-    addActivity: "Activities",
-    addRehabilitation: "Rehabilitation",
-    addIIMRaipur: "IIM_Raipur",
-    addShasanSahyog: "Shasan_Sahyog",
-    addRangDeLoan: "RangDe_Loan",
-    addProgressGallery: "Progress_Gallery",
-    addPhotoUpload: "Photo_Uploads",
-    addSuccessPhoto: "Photo_Uploads",
-    addUser: "Users"
+    message: "सफलतापूर्वक सभी शीट्स (M-Form सहित) तैयार हो गईं!",
+    sheets: createdSheets
   };
-
-  if (actionToSheetMap[action]) {
-    const sheetName = actionToSheetMap[action];
-    return insertRecord(ss, sheetName, payload);
-  }
-
-  return { success: false, message: `Unknown action: ${action}` };
 }
 
-/**
- * =========================================================================
- * 4. CRUD & HELPER FUNCTIONS
- * =========================================================================
- */
+function findSheet(ss, requestedName) {
+  if (!requestedName) return null;
+  const cleanReq = String(requestedName).trim();
 
-function handleLogin(ss, payload) {
-  const email = (payload.email || "").trim().toLowerCase();
-  const password = (payload.password || "").trim();
-
-  // 1. Built-in system default accounts for immediate role-based access
-  const DEFAULT_ACCOUNTS = [
-    {
-      userId: "USR-001",
-      name: "Employment Officer (जिला रोजगार अधिकारी)",
-      email: "eo.dantewada@gmail.com",
-      password: "Admin@EO2026",
-      role: "ADMIN",
-      block: "All",
-      youthHub: "All"
-    },
-    {
-      userId: "USR-002",
-      name: "Youth Hub Dantewada",
-      email: "youthhub.dantewada@gmail.com",
-      password: "Dantewada@2026",
-      role: "HUB_OPERATOR",
-      block: "Dantewada",
-      youthHub: "Youth Hub Dantewada"
-    },
-    {
-      userId: "USR-003",
-      name: "Youth Hub Geedam",
-      email: "youthhub.geedam@gmail.com",
-      password: "Geedam@2026",
-      role: "HUB_OPERATOR",
-      block: "Geedam",
-      youthHub: "Youth Hub Geedam"
-    }
-  ];
-
-  const matchedDefault = DEFAULT_ACCOUNTS.find(a => a.email.toLowerCase() === email && a.password === password);
-  if (matchedDefault) {
-    const user = {
-      userId: matchedDefault.userId,
-      name: matchedDefault.name,
-      email: matchedDefault.email,
-      role: matchedDefault.role,
-      block: matchedDefault.block,
-      youthHub: matchedDefault.youthHub
-    };
-    const token = Utilities.base64Encode(JSON.stringify(user));
-    return { success: true, token, user };
-  }
-
-  // 2. Dynamic check in Users Google Sheet
-  const sheet = ss.getSheetByName("Users");
-  if (!sheet) return { success: false, message: "Users sheet not found. Run setupDatabase first." };
-
-  const data = sheet.getDataRange().getValues();
-  const headers = data[0];
-  const emailIdx = headers.indexOf("Email");
-  const passIdx = headers.indexOf("Password_Hash");
-
-  for (let i = 1; i < data.length; i++) {
-    const row = data[i];
-    if (String(row[emailIdx]).trim().toLowerCase() === email && String(row[passIdx]).trim() === password) {
-      const user = {
-        userId: row[headers.indexOf("User_ID")],
-        name: row[headers.indexOf("Name")],
-        email: row[emailIdx],
-        role: row[headers.indexOf("Role")],
-        block: row[headers.indexOf("Block")],
-        youthHub: row[headers.indexOf("Youth_Hub")]
-      };
-      const token = Utilities.base64Encode(JSON.stringify(user));
-      return { success: true, token, user };
-    }
-  }
-
-  return { success: false, message: "Invalid email or password." };
-}
-
-function findSheet(ss, sheetName) {
-  if (!ss) return null;
-  let sheet = ss.getSheetByName(sheetName);
+  let sheet = ss.getSheetByName(cleanReq);
   if (sheet) return sheet;
 
-  const aliases = {
-    "RangDe_Loan": ["RangDe_Loan", "Rang De Loan", "Rang De", "RangDe", "Rang_De", "RangDeLoan", "रंग दे", "रंग दे ऋण", "रंगदे"],
-    "Youth_Master": ["Youth_Master", "Youth Master", "YouthMaster"],
-    "Entrepreneurs": ["Entrepreneurs", "Entrepreneur", "PMEGP"],
-    "Entrepreneurs_Established": ["Entrepreneurs Established", "Entrepreneurs_Established", "Established Entrepreneurs", "Established"],
-    "Entrepreneurs Established": ["Entrepreneurs Established", "Entrepreneurs_Established", "Established Entrepreneurs", "Established"],
-    "Photo_Uploads": ["Photo_Uploads", "Photo Uploads", "PhotoUploads", "Progress_Gallery", "Progress Gallery", "Success_Gallery", "Success Gallery"],
-    "Progress_Gallery": ["Progress_Gallery", "Progress Gallery", "Photo_Uploads", "Photo Uploads", "Success_Gallery", "Success Gallery"],
-    "Success_Gallery": ["Photo_Uploads", "Photo Uploads", "Success_Gallery", "Success Gallery", "Progress_Gallery", "Progress Gallery"],
-    "Rehabilitation": ["Rehabilitation", "Rehab", "Rehabilitation Counselling", "Rehab Counselling"]
-  };
-
-  const list = aliases[sheetName] || [sheetName];
-  for (let i = 0; i < list.length; i++) {
-    sheet = ss.getSheetByName(list[i]);
-    if (sheet) return sheet;
+  const sheets = ss.getSheets();
+  const lowerReq = cleanReq.toLowerCase().replace(/[\s._-]+/g, "");
+  for (let i = 0; i < sheets.length; i++) {
+    const sName = sheets[i].getName().toLowerCase().replace(/[\s._-]+/g, "");
+    if (sName === lowerReq) return sheets[i];
   }
 
-  // Case-insensitive / whitespace-free fallback
-  const cleanTarget = String(sheetName).replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
-  const allSheets = ss.getSheets();
-  for (let s = 0; s < allSheets.length; s++) {
-    const curSheet = allSheets[s];
-    const cleanName = curSheet.getName().replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
-    if (cleanName === cleanTarget) return curSheet;
-  }
-
-  // If searching for RangDe_Loan and a sheet has "rang" in name
-  if (cleanTarget.includes("rang")) {
-    for (let s = 0; s < allSheets.length; s++) {
-      if (allSheets[s].getName().toLowerCase().includes("rang")) return allSheets[s];
+  // Also match ignoring leading numbers e.g. "17. M-Form" vs "M_Form"
+  const strippedReq = lowerReq.replace(/^\d+/, "");
+  if (strippedReq.length > 2) {
+    for (let i = 0; i < sheets.length; i++) {
+      const sNameStripped = sheets[i].getName().toLowerCase().replace(/[\s._-]+/g, "").replace(/^\d+/, "");
+      if (sNameStripped === strippedReq) return sheets[i];
     }
   }
 
-  // If only 1 sheet exists in workbook, fallback to it
-  if (allSheets.length === 1) return allSheets[0];
+  const aliasTarget = SHEET_ALIASES[lowerReq] || SHEET_ALIASES[cleanReq.toLowerCase()] || SHEET_ALIASES[strippedReq];
+  if (aliasTarget) {
+    sheet = ss.getSheetByName(aliasTarget);
+    if (sheet) return sheet;
+    const targetNorm = aliasTarget.toLowerCase().replace(/[\s._-]+/g, "");
+    for (let i = 0; i < sheets.length; i++) {
+      const sName = sheets[i].getName().toLowerCase().replace(/[\s._-]+/g, "").replace(/^\d+/, "");
+      if (sName === targetNorm) return sheets[i];
+    }
+  }
 
   return null;
 }
 
-function detectHeaderRow(sheet) {
-  const lastRow = sheet.getLastRow();
-  const lastCol = sheet.getLastColumn();
-  if (lastRow === 0 || lastCol === 0) return { headerRowIndex: 1, headers: [] };
+function doGet(e) {
+  const params = (e && e.parameter) || {};
+  const action = params.action || "ping";
 
-  const scanRows = Math.min(3, lastRow);
-  const rows = sheet.getRange(1, 1, scanRows, lastCol).getValues();
+  let responseData;
+  if (action === "ping") {
+    responseData = {
+      success: true,
+      status: "online",
+      spreadsheetName: getSpreadsheet().getName(),
+      message: "Dantewada Youth Portal Backend is Live & Connected.",
+      timestamp: new Date().toISOString()
+    };
+  } else {
+    responseData = handleAction(action, params);
+  }
 
-  for (let r = 0; r < rows.length; r++) {
-    const nonEmpty = rows[r].filter(v => v !== null && String(v).trim().length > 0);
-    // If this row has at least 2 non-empty cells, it is the header row
-    if (nonEmpty.length >= 2) {
+  return createJsonResponse(responseData);
+}
+
+function doPost(e) {
+  let requestData = {};
+  if (e && e.postData && e.postData.contents) {
+    try {
+      requestData = JSON.parse(e.postData.contents);
+    } catch (err) {
+      return createJsonResponse({ success: false, message: "Invalid JSON: " + err.message });
+    }
+  }
+
+  const action = requestData.action || "ping";
+  const payload = requestData.payload || {};
+
+  const responseData = handleAction(action, payload);
+  return createJsonResponse(responseData);
+}
+
+function handleAction(action, payload) {
+  const ss = getSpreadsheet();
+
+  switch (action) {
+    case "ping":
+    case "testConnection":
       return {
-        headerRowIndex: r + 1, // 1-indexed row number
-        headers: rows[r].map(v => String(v || "").trim())
+        success: true,
+        status: "online",
+        spreadsheetName: ss.getName(),
+        sheetsCount: ss.getSheets().length,
+        message: "Google Sheet Backend Connection Successful!",
+        timestamp: new Date().toISOString()
       };
-    }
-  }
 
-  return {
-    headerRowIndex: 1,
-    headers: rows[0].map(v => String(v || "").trim())
-  };
+    case "setupDatabase":
+      return setupDatabase();
+
+    case "getTableRecords":
+      return getTableRecords(ss, payload.sheetName || payload.sheet);
+
+    case "getAllData":
+      return getAllData(ss);
+
+    case "addRecord":
+    case "createRecord":
+    case "addYouth":
+    case "addEmploymentRegistered":
+    case "addRangDeLoan":
+    case "addEntrepreneur":
+    case "addEntrepreneurEstablished":
+    case "addTraining":
+    case "addPlacement":
+    case "addCounselling":
+    case "addActivity":
+    case "addPhotoUpload": {
+      let sheetName = payload.sheetName || payload.sheet;
+      if (!sheetName) {
+        if (action === "addRangDeLoan") sheetName = "Rang_De_Loan";
+        else if (action === "addEntrepreneur" || action === "addEntrepreneurEstablished") sheetName = "PMEGP_PMFME_Loan";
+        else if (action === "addTraining") sheetName = "Training_Conducted";
+        else if (action === "addPlacement") sheetName = "Employed";
+        else if (action === "addCounselling") sheetName = "Meetings_VO_CLF_TRIF";
+        else sheetName = "Employment_Registration";
+      }
+      return addRecord(ss, sheetName, payload.data || payload.record || payload);
+    }
+
+    case "updateRecord":
+    case "editRecord": {
+      const sheetName = payload.sheetName || payload.sheet || "Employment_Registration";
+      return updateRecord(ss, sheetName, payload);
+    }
+
+    case "deleteRecord":
+    case "removeRecord": {
+      const sheetName = payload.sheetName || payload.sheet || "Employment_Registration";
+      return deleteRecord(ss, sheetName, payload);
+    }
+
+    case "bulkInsert":
+    case "batchAdd":
+    case "bulkUpload": {
+      const sheetName = payload.sheetName || payload.sheet || "Employment_Registration";
+      return bulkInsert(ss, sheetName, payload);
+    }
+
+    case "clearSheet":
+    case "truncateSheet":
+    case "resetSheet": {
+      const sheetName = payload.sheetName || payload.sheet || "Employment_Registration";
+      return clearSheetData(ss, sheetName);
+    }
+
+    case "getDashboard":
+      return getDashboardKPIs(ss);
+
+    default:
+      return { success: false, message: "Unknown action: " + action };
+  }
 }
 
-function getSheetRecords(ss, sheetName) {
+/**
+ * स्मार्ट टेबल रीडर: स्वतः समझता है कि हेडर रो 1 पर है या रो 2 पर
+ */
+function getTableRecords(ss, sheetName) {
   const sheet = findSheet(ss, sheetName);
-  if (!sheet) return { success: false, message: `Sheet '${sheetName}' does not exist.` };
-
-  const lastRow = sheet.getLastRow();
-  const lastCol = sheet.getLastColumn();
-  if (lastRow <= 1 || lastCol === 0) {
-    return { success: true, sheetName, records: [] };
-  }
-
-  const { headerRowIndex, headers } = detectHeaderRow(sheet);
-  if (headers.length === 0 || lastRow <= headerRowIndex) {
-    return { success: true, sheetName, records: [] };
-  }
-
-  const dataStartRow = headerRowIndex + 1;
-  const numDataRows = lastRow - headerRowIndex;
-  const values = sheet.getRange(dataStartRow, 1, numDataRows, lastCol).getValues();
-  const records = [];
-
-  for (let i = 0; i < values.length; i++) {
-    const row = values[i];
-    // Skip completely blank rows
-    const hasData = row.some(v => v !== null && String(v).trim().length > 0);
-    if (!hasData) continue;
-
-    const item = {};
-    for (let c = 0; c < headers.length; c++) {
-      const h = headers[c];
-      if (!h) continue;
-      let val = row[c];
-      if (val instanceof Date) {
-        val = Utilities.formatDate(val, Session.getScriptTimeZone() || "GMT+5:30", "yyyy-MM-dd");
-      }
-      item[h] = val;
-    }
-
-    // Auto-map dual aliases for seamless frontend compatibility
-    if (sheetName === "RangDe_Loan" || sheet.getName().toLowerCase().includes("rang")) {
-      if (!item.Name && item["NAME"]) item.Name = item["NAME"];
-      if (!item.NAME && item.Name) item.NAME = item.Name;
-      if (!item.Address && item["ADDRESS"]) item.Address = item["ADDRESS"];
-      if (!item.ADDRESS && item.Address) item.ADDRESS = item.Address;
-      if (!item.Address && item.Village) item.Address = item.Village;
-      if (!item.Mobile && item["MOBILE NO."]) item.Mobile = item["MOBILE NO."];
-      if (!item["MOBILE NO."] && item.Mobile) item["MOBILE NO."] = item.Mobile;
-      if (!item.Activity && (item["ACTIVITY"] || item.Business)) item.Activity = item["ACTIVITY"] || item.Business;
-      if (!item.ACTIVITY && item.Activity) item.ACTIVITY = item.Activity;
-      if (!item.Business && item.Activity) item.Business = item.Activity;
-      if (!item.Amount && (item["AMOUNT"] || item["AMONT"] || item.Loan_Amount)) {
-        item.Amount = item["AMOUNT"] || item["AMONT"] || item.Loan_Amount;
-      }
-      if (!item.AMOUNT && item.Amount) item.AMOUNT = item.Amount;
-      if (!item.Loan_Amount && item.Amount) item.Loan_Amount = item.Amount;
-      if (!item.Second_Amount && (item["2ND"] || item["2nd"])) item.Second_Amount = item["2ND"] || item["2nd"];
-      if (!item["2ND"] && item.Second_Amount) item["2ND"] = item.Second_Amount;
-      if (!item.Loan_ID && item["SR. NO."]) item.Loan_ID = "RD-2026-" + String(item["SR. NO."]).padStart(5, "0");
-      if (!item["SR. NO."] && item.Loan_ID) item["SR. NO."] = item.Loan_ID;
-    }
-
-    if (sheetName === "Entrepreneurs_Established" || sheet.getName().toLowerCase().includes("established")) {
-      if (!item.Name && item["NAME"]) item.Name = item["NAME"];
-      if (!item.NAME && item.Name) item.NAME = item.Name;
-      if (!item.Father_Name && item["FATHER NAME"]) item.Father_Name = item["FATHER NAME"];
-      if (!item["FATHER NAME"] && item.Father_Name) item["FATHER NAME"] = item.Father_Name;
-      if (!item.Mobile && item["MOBILE NO."]) item.Mobile = item["MOBILE NO."];
-      if (!item["MOBILE NO."] && item.Mobile) item["MOBILE NO."] = item.Mobile;
-      if (!item.Block && item["BLOCK"]) item.Block = item["BLOCK"];
-      if (!item.BLOCK && item.Block) item.BLOCK = item.Block;
-      if (!item.Village && item["VILLAGE"]) item.Village = item["VILLAGE"];
-      if (!item.VILLAGE && item.Village) item.VILLAGE = item.Village;
-      if (!item.Business && item["BUSINESS"]) item.Business = item["BUSINESS"];
-      if (!item.BUSINESS && item.Business) item.BUSINESS = item.Business;
-      if (!item.Loan_Amount && item["LONE AMOUNT"]) item.Loan_Amount = item["LONE AMOUNT"];
-      if (!item["LONE AMOUNT"] && item.Loan_Amount) item["LONE AMOUNT"] = item.Loan_Amount;
-      if (!item.S_No && item["S.NO"]) item.S_No = item["S.NO"];
-      if (!item["S.NO"] && item.S_No) item["S.NO"] = item.S_No;
-    }
-
-    if (sheetName === "Photo_Uploads" || sheet.getName().toLowerCase().includes("photo") || sheet.getName().toLowerCase().includes("success")) {
-      if (!item.Title && item.Photo_Name) item.Title = item.Photo_Name;
-      if (!item.Photo_Name && item.Title) item.Photo_Name = item.Title;
-      if (!item.Photo_URL && item.Drive_URL) item.Photo_URL = item.Drive_URL;
-      if (!item.Drive_URL && item.Photo_URL) item.Drive_URL = item.Photo_URL;
-      if (!item.imageUrl && (item.Drive_URL || item.Photo_URL)) item.imageUrl = item.Drive_URL || item.Photo_URL;
-      if (!item.Date && item.Upload_Date) item.Date = item.Upload_Date;
-      if (!item.Upload_Date && item.Date) item.Upload_Date = item.Date;
-      if (!item.Uploaded_By && item.UploadedBy) item.Uploaded_By = item.UploadedBy;
-      if (!item.Progress_Status && item.Status) item.Progress_Status = item.Status;
-      if (!item.Status && item.Progress_Status) item.Status = item.Progress_Status;
-      if (!item.Gallery_ID && item.ID) item.Gallery_ID = item.ID;
-      if (!item.ID && item.Gallery_ID) item.ID = item.Gallery_ID;
-    }
-
-    records.push(item);
-  }
-
-  return { success: true, sheetName, records };
-}
-
-function insertRecord(ss, sheetName, payload) {
-  let sheet = findSheet(ss, sheetName);
-  if (!sheet) {
-    setupDatabase();
-    sheet = findSheet(ss, sheetName) || ss.getSheetByName(sheetName);
-  }
-
-  const { headerRowIndex, headers: existingHeaders } = detectHeaderRow(sheet);
-  const schemaHeaders = SHEETS_SCHEMA[sheetName] || [];
-  const targetHeaders = (existingHeaders && existingHeaders.length > 0 && existingHeaders.filter(Boolean).length >= 2) ? existingHeaders : schemaHeaders;
-  const config = ID_PREFIXES[sheetName];
-
-  // Handle field aliases and backward compatibility
-  if (sheetName === "Youth_Master") {
-    if (!payload.Father_Husband_Name && payload.Father_Mother_Name) {
-      payload.Father_Husband_Name = payload.Father_Mother_Name;
-    }
-    if (!payload.DOB && payload.DOB_Age) {
-      const dobVal = String(payload.DOB_Age).trim();
-      if (dobVal.includes("-") || dobVal.includes("/")) {
-        payload.DOB = dobVal;
-      } else {
-        payload.Age = dobVal;
-      }
-    }
-  }
-
-  if (sheetName === "Entrepreneurs") {
-    if (!payload.Name && payload.NAME) payload.Name = payload.NAME;
-    if (!payload.Father_Name && (payload["FATHER NAME"] || payload.Father_Husband_Name)) {
-      payload.Father_Name = payload["FATHER NAME"] || payload.Father_Husband_Name;
-    }
-    if (!payload.Mobile && (payload["MOBILE NO."] || payload.Mobile_Number)) {
-      payload.Mobile = payload["MOBILE NO."] || payload.Mobile_Number;
-    }
-    if (!payload.Business && (payload["BUSINESS"] || payload.Business_Idea || payload.Business_Type)) {
-      payload.Business = payload["BUSINESS"] || payload.Business_Idea || payload.Business_Type;
-    }
-    if (!payload.Business_Idea && payload.Business) payload.Business_Idea = payload.Business;
-    if (!payload.Loan_Amount && (payload["LONE AMOUNT"] || payload.Lone_Amount)) {
-      payload.Loan_Amount = payload["LONE AMOUNT"] || payload.Lone_Amount;
-    }
-    if (!payload.Loan_Scheme && (payload["LOAN SCHEME"] || payload.LoanScheme || payload.Scheme)) {
-      payload.Loan_Scheme = payload["LOAN SCHEME"] || payload.LoanScheme || payload.Scheme;
-    }
-    if (!payload.Udyam_Registration && (payload["UDHYAM REGISTRATION"] || payload.Udhyam_Registration)) {
-      payload.Udyam_Registration = payload["UDHYAM REGISTRATION"] || payload.Udhyam_Registration;
-    }
-    if (!payload.Bank_Documents && payload["BANK DOCUMENTS"]) payload.Bank_Documents = payload["BANK DOCUMENTS"];
-    if (!payload.Pan_Card && payload["PAN CARD"]) payload.Pan_Card = payload["PAN CARD"];
-    if (!payload.Aadhar_Card && (payload["ADHAR CARD"] || payload.Adhar_Card)) {
-      payload.Aadhar_Card = payload["ADHAR CARD"] || payload.Adhar_Card;
-    }
-    if (!payload.Voter_Card && payload["VOTER CARD"]) payload.Voter_Card = payload["VOTER CARD"];
-    if (!payload.Quotation && payload["QUOTATION"]) payload.Quotation = payload["QUOTATION"];
-    if (!payload.Remarks && (payload["REMARK"] || payload.Remark)) payload.Remarks = payload["REMARK"] || payload.Remark;
-    if (!payload["REMARK"]) {
-      if (payload.Loan_Scheme) {
-        payload["REMARK"] = payload.Loan_Scheme === "Rang De" ? "RANG DE" : payload.Loan_Scheme;
-      } else if (payload.Remarks) {
-        payload["REMARK"] = payload.Remarks;
-      }
-    }
-    if (!payload.Remarks && payload["REMARK"]) payload.Remarks = payload["REMARK"];
-    if (!payload.Updates && payload["UPDATES"]) payload.Updates = payload["UPDATES"];
-  }
-
-  if (sheetName === "Entrepreneurs_Established" || sheetName === "Entrepreneurs Established") {
-    if (!payload.NAME && (payload.Name || payload.Youth_Name)) payload.NAME = payload.Name || payload.Youth_Name;
-    if (!payload.Name && payload.NAME) payload.Name = payload.NAME;
-    if (!payload["FATHER NAME"] && (payload.Father_Name || payload.Father_Husband_Name)) {
-      payload["FATHER NAME"] = payload.Father_Name || payload.Father_Husband_Name;
-    }
-    if (!payload.Father_Name && payload["FATHER NAME"]) payload.Father_Name = payload["FATHER NAME"];
-    if (!payload["MOBILE NO."] && (payload.Mobile || payload.Mobile_Number)) {
-      payload["MOBILE NO."] = payload.Mobile || payload.Mobile_Number;
-    }
-    if (!payload.Mobile && payload["MOBILE NO."]) payload.Mobile = payload["MOBILE NO."];
-    if (!payload.BLOCK && payload.Block) payload.BLOCK = payload.Block;
-    if (!payload.Block && payload.BLOCK) payload.Block = payload.BLOCK;
-    if (!payload.VILLAGE && (payload.Village || payload.Address)) payload.VILLAGE = payload.Village || payload.Address;
-    if (!payload.Village && payload.VILLAGE) payload.Village = payload.VILLAGE;
-    if (!payload.BUSINESS && (payload.Business || payload.Business_Idea || payload.Activity)) {
-      payload.BUSINESS = payload.Business || payload.Business_Idea || payload.Activity;
-    }
-    if (!payload.Business && payload.BUSINESS) payload.Business = payload.BUSINESS;
-    if (!payload["LONE AMOUNT"] && (payload.Loan_Amount || payload.LoanAmount || payload.Amount || payload["LOAN AMOUNT"])) {
-      payload["LONE AMOUNT"] = payload.Loan_Amount || payload.LoanAmount || payload.Amount || payload["LOAN AMOUNT"];
-    }
-    if (!payload.Loan_Amount && payload["LONE AMOUNT"]) payload.Loan_Amount = payload["LONE AMOUNT"];
-    if (!payload["S.NO"] && (payload["SR. NO."] || payload.S_No || payload.SNO)) {
-      payload["S.NO"] = payload["S.NO"] || payload["SR. NO."] || payload.S_No || payload.SNO;
-    }
-  }
-
-  if (sheetName === "Employment_Linked") {
-    if (!payload.Name && (payload.NAME || payload.Youth_Name)) payload.Name = payload.NAME || payload.Youth_Name;
-    if (!payload.NAME && payload.Name) payload.NAME = payload.Name;
-    if (!payload.Youth_Name && payload.Name) payload.Youth_Name = payload.Name;
-    if (!payload.Address && (payload.ADDRESS || payload.Village || payload.Location)) payload.Address = payload.ADDRESS || payload.Village || payload.Location;
-    if (!payload.ADDRESS && payload.Address) payload.ADDRESS = payload.Address;
-    if (!payload.Location && payload.Address) payload.Location = payload.Address;
-    if (!payload.Village && payload.Address) payload.Village = payload.Address;
-    if (!payload.Mobile && (payload["MOBILE NO."] || payload.Mobile_Number || payload.Mobile_No)) payload.Mobile = payload["MOBILE NO."] || payload.Mobile_Number || payload.Mobile_No;
-    if (!payload["MOBILE NO."] && payload.Mobile) payload["MOBILE NO."] = payload.Mobile;
-    if (!payload.Remarks && (payload.REMARK || payload.Remark || payload.Job_Role || payload.Employer_Name)) payload.Remarks = payload.REMARK || payload.Remark || payload.Job_Role || payload.Employer_Name;
-    if (!payload.REMARK && payload.Remarks) payload.REMARK = payload.Remarks;
-    if (!payload.Job_Role && payload.Remarks) payload.Job_Role = payload.Remarks;
-    if (!payload["SR. NO."] && (payload["S.NO"] || payload.S_No || payload.SR_NO)) {
-      payload["SR. NO."] = payload["SR. NO."] || payload["S.NO"] || payload.S_No || payload.SR_NO;
-    }
-  }
-
-  if (sheetName === "RangDe_Loan") {
-    if (!payload.Name && payload.NAME) payload.Name = payload.NAME;
-    if (!payload.Father_Name && (payload["FATHER NAME"] || payload.Father_Husband_Name)) {
-      payload.Father_Name = payload["FATHER NAME"] || payload.Father_Husband_Name;
-    }
-    if (!payload.Mobile && (payload["MOBILE NO."] || payload.Mobile_Number)) {
-      payload.Mobile = payload["MOBILE NO."] || payload.Mobile_Number;
-    }
-    if (!payload.Address && (payload.ADDRESS || payload.Village)) {
-      payload.Address = payload.ADDRESS || payload.Village;
-    }
-    if (!payload.Activity && (payload.ACTIVITY || payload.Business || payload["BUSINESS"])) {
-      payload.Activity = payload.ACTIVITY || payload.Business || payload["BUSINESS"];
-    }
-    if (!payload.Business && payload.Activity) payload.Business = payload.Activity;
-    if (!payload.Amount && (payload.AMOUNT || payload.AMONT || payload["AMONT"] || payload.Loan_Amount || payload["LONE AMOUNT"])) {
-      payload.Amount = payload.AMOUNT || payload.AMONT || payload["AMONT"] || payload.Loan_Amount || payload["LONE AMOUNT"];
-    }
-    if (!payload.Loan_Amount && payload.Amount) payload.Loan_Amount = payload.Amount;
-    if (!payload.Second_Amount && (payload["2ND"] || payload["2nd"] || payload["2ND AMOUNT"])) {
-      payload.Second_Amount = payload["2ND"] || payload["2nd"] || payload["2ND AMOUNT"];
-    }
-    if (!payload["2ND"] && payload.Second_Amount) payload["2ND"] = payload.Second_Amount;
-    if (!payload.Remarks && (payload["REMARK"] || payload.Remark)) payload.Remarks = payload["REMARK"] || payload.Remark;
-    if (!payload.Remarks) payload.Remarks = "RANG DE";
-  }
-
-  if (sheetName === "Photo_Uploads" || sheet.getName().toLowerCase().includes("photo") || sheet.getName().toLowerCase().includes("success")) {
-    if (!payload.ID && (payload.Gallery_ID || payload.id)) payload.ID = payload.Gallery_ID || payload.id;
-    if (!payload.Photo_Name && (payload.Title || payload.Photo_Name || payload.name)) payload.Photo_Name = payload.Title || payload.Photo_Name || payload.name;
-    if (!payload.Drive_URL && (payload.Photo_URL || payload.imageUrl || payload.Url)) payload.Drive_URL = payload.Photo_URL || payload.imageUrl || payload.Url;
-    if (!payload.Drive_File_ID && payload.File_ID) payload.Drive_File_ID = payload.File_ID;
-    if (!payload.Upload_Date && (payload.Date || payload.date)) payload.Upload_Date = payload.Date || payload.date;
-    if (!payload.Uploaded_By && (payload.UploadedBy || payload.user)) payload.Uploaded_By = payload.UploadedBy || payload.user;
-    if (!payload.Status && (payload.Progress_Status || payload.status)) payload.Status = payload.Progress_Status || payload.status || "Completed";
-  }
-
-  // Generate ID if missing
-  if (config && (!payload[config.idField] || String(payload[config.idField]).trim() === "")) {
-    const nextNum = Math.max(1, sheet.getLastRow());
-    payload[config.idField] = (config.idField === "SR. NO." || config.idField === "S.NO") ? nextNum : (config.prefix + ("0000" + nextNum).slice(-4));
-  }
-
-  const rowData = targetHeaders.map(header => {
-    let val = payload[header];
-    if (val === undefined || val === null || val === "") {
-      const cleanH = String(header).replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
-      for (const k of Object.keys(payload)) {
-        if (k.replace(/[^a-zA-Z0-9]/g, "").toLowerCase() === cleanH) {
-          val = payload[k];
-          break;
-        }
-      }
-    }
-    if (val === undefined || val === null) return "";
-    return val;
-  });
-
-  sheet.appendRow(rowData);
-  return {
-    success: true,
-    message: `${sheetName.replace(/_/g, " ")} record saved successfully.`,
-    id: config ? payload[config.idField] : null
-  };
-}
-
-function bulkInsertRecords(ss, sheetName, records) {
-  if (!records || !Array.isArray(records) || records.length === 0) {
-    return { success: false, message: "No records provided for bulk insert." };
-  }
-
-  let sheet = findSheet(ss, sheetName);
-  if (!sheet) {
-    setupDatabase();
-    sheet = findSheet(ss, sheetName) || ss.getSheetByName(sheetName);
-  }
   if (!sheet) {
     return { success: false, message: `Sheet '${sheetName}' does not exist.` };
   }
 
-  const { headerRowIndex, headers: existingHeaders } = detectHeaderRow(sheet);
-  const schemaHeaders = SHEETS_SCHEMA[sheetName] || [];
-  const targetHeaders = (existingHeaders && existingHeaders.length > 0 && existingHeaders.filter(Boolean).length >= 2) ? existingHeaders : schemaHeaders;
+  const lastRow = sheet.getLastRow();
+  const lastCol = sheet.getLastColumn();
 
-  const config = ID_PREFIXES[sheetName];
-  let lastRow = Math.max(headerRowIndex, sheet.getLastRow());
+  if (lastRow <= 1 || lastCol === 0) {
+    return { success: true, sheet: sheet.getName(), records: [], total: 0 };
+  }
 
-  const rowsToAppend = [];
-  for (let i = 0; i < records.length; i++) {
-    const record = records[i];
+  const values = sheet.getRange(1, 1, lastRow, lastCol).getValues();
 
-    // Aliases & normalization
-    if (sheetName === "Youth_Master") {
-      if (!record.Father_Husband_Name && record.Father_Mother_Name) {
-        record.Father_Husband_Name = record.Father_Mother_Name;
+  // स्वतः जांचें कि क्या पहली पंक्ति एक टाइटल बैनर है
+  let headerRowIdx = 0;
+  const nonBlank0 = values[0].filter(v => v !== null && String(v).trim() !== "").length;
+  if (nonBlank0 <= 2 && values.length > 2) {
+    const nonBlank1 = values[1].filter(v => v !== null && String(v).trim() !== "").length;
+    if (nonBlank1 > nonBlank0) {
+      headerRowIdx = 1;
+    }
+  }
+
+  const rawHeaders = values[headerRowIdx];
+  const records = [];
+
+  for (let r = headerRowIdx + 1; r < values.length; r++) {
+    const row = values[r];
+    const isBlank = row.every(val => val === null || val === undefined || String(val).trim() === "");
+    if (isBlank) continue;
+
+    const record = {};
+    for (let c = 0; c < rawHeaders.length; c++) {
+      let rawH = rawHeaders[c];
+      if (rawH === null || rawH === undefined || String(rawH).trim() === "") {
+        continue;
       }
-      if (!record.DOB && record.DOB_Age) {
-        const dobVal = String(record.DOB_Age).trim();
-        if (dobVal.includes("-") || dobVal.includes("/")) {
-          record.DOB = dobVal;
-        } else {
-          record.Age = dobVal;
+      const headerKey = String(rawH).trim();
+      let val = row[c];
+
+      if (val instanceof Date) {
+        val = Utilities.formatDate(val, Session.getScriptTimeZone() || "Asia/Kolkata", "yyyy-MM-dd");
+      }
+      record[headerKey] = (val === null || val === undefined) ? "" : val;
+    }
+    records.push(record);
+  }
+
+  return {
+    success: true,
+    sheet: sheet.getName(),
+    records: records,
+    total: records.length
+  };
+}
+
+function getAllData(ss) {
+  const result = {};
+  let grandTotal = 0;
+
+  for (const sheetName of Object.keys(EXACT_EXCEL_TEMPLATES)) {
+    const sheetData = getTableRecords(ss, sheetName);
+    result[sheetName] = sheetData.records || [];
+    grandTotal += (sheetData.records || []).length;
+  }
+
+  return {
+    success: true,
+    data: result,
+    totalRecords: grandTotal,
+    timestamp: new Date().toISOString()
+  };
+}
+
+/**
+ * बुद्धिमान फ़ील्ड रिज़ॉल्वर: हेडर नाम, क्लीन नाम, और पर्यायवाची (Synonyms) द्वारा मान खोजता है
+ */
+function resolveFieldValue(item, rawH, cleanH) {
+  if (!item) return "";
+  if (item[rawH] !== undefined && item[rawH] !== null && String(item[rawH]).trim() !== "") {
+    return item[rawH];
+  }
+
+  // Exact alphanumeric match
+  for (const [k, v] of Object.entries(item)) {
+    if (k.toLowerCase().replace(/[^a-z0-9]/g, "") === cleanH) {
+      if (v !== undefined && v !== null && String(v).trim() !== "") return v;
+    }
+  }
+
+  // Comprehensive synonym mappings
+  const synonyms = {
+    name: ["foundername", "firstname", "youthname", "candidatename", "fullname", "applicantname"],
+    foundername: ["name", "firstname", "youthname", "applicantname"],
+    business: ["startupideaname", "startupname", "businessidea", "worktype", "bussiness", "activity", "trade"],
+    bussiness: ["startupideaname", "startupname", "businessidea", "worktype", "business", "activity", "trade"],
+    startupideaname: ["business", "bussiness", "businessidea", "worktype"],
+    loanamount: ["investmentneeded", "amount", "loanrequired", "loanapproved", "amountinr", "2nd"],
+    investmentneeded: ["loanamount", "amount", "loanrequired"],
+    village: ["address", "grampanchayat", "gp", "location"],
+    address: ["village", "grampanchayat", "gp", "location"],
+    block: ["district", "blockname", "taluka"],
+    district: ["block", "blockname"],
+    mobileno: ["mobilenumber", "phone", "phonenumber", "mobile", "mobilen0"],
+    mobilen0: ["mobileno", "mobilenumber", "phone", "phonenumber", "mobile"],
+    education: ["qualification", "highestqualification", "degree"],
+    highestqualification: ["education", "qualification"],
+    fathername: ["faathername", "fatherhusbandname", "fathersname"],
+    faathername: ["fathername", "fatherhusbandname", "fathersname"]
+  };
+
+  const synList = synonyms[cleanH];
+  if (synList) {
+    for (const syn of synList) {
+      for (const [k, v] of Object.entries(item)) {
+        if (k.toLowerCase().replace(/[^a-z0-9]/g, "") === syn) {
+          if (v !== undefined && v !== null && String(v).trim() !== "") return v;
         }
       }
     }
+  }
 
-    if (sheetName === "Entrepreneurs") {
-      if (!record.Name && record.NAME) record.Name = record.NAME;
-      if (!record.Father_Name && (record["FATHER NAME"] || record.Father_Husband_Name)) {
-        record.Father_Name = record["FATHER NAME"] || record.Father_Husband_Name;
-      }
-      if (!record.Mobile && (record["MOBILE NO."] || record.Mobile_Number)) {
-        record.Mobile = record["MOBILE NO."] || record.Mobile_Number;
-      }
-      if (!record.Business && (record["BUSINESS"] || record.Business_Idea || record.Business_Type)) {
-        record.Business = record["BUSINESS"] || record.Business_Idea || record.Business_Type;
-      }
-      if (!record.Business_Idea && record.Business) record.Business_Idea = record.Business;
-      if (!record.Loan_Amount && (record["LONE AMOUNT"] || record.Lone_Amount)) {
-        record.Loan_Amount = record["LONE AMOUNT"] || record.Lone_Amount;
-      }
-      if (!record.Loan_Scheme && (record["LOAN SCHEME"] || record.LoanScheme || record.Scheme)) {
-        record.Loan_Scheme = record["LOAN SCHEME"] || record.LoanScheme || record.Scheme;
-      }
-      if (!record.Udyam_Registration && (record["UDHYAM REGISTRATION"] || record.Udhyam_Registration)) {
-        record.Udyam_Registration = record["UDHYAM REGISTRATION"] || record.Udhyam_Registration;
-      }
-      if (!record.Bank_Documents && record["BANK DOCUMENTS"]) record.Bank_Documents = record["BANK DOCUMENTS"];
-      if (!record.Pan_Card && record["PAN CARD"]) record.Pan_Card = record["PAN CARD"];
-      if (!record.Aadhar_Card && (record["ADHAR CARD"] || record.Adhar_Card)) {
-        record.Aadhar_Card = record["ADHAR CARD"] || record.Adhar_Card;
-      }
-      if (!record.Voter_Card && record["VOTER CARD"]) record.Voter_Card = record["VOTER CARD"];
-      if (!record.Quotation && record["QUOTATION"]) record.Quotation = record["QUOTATION"];
-      if (!record.Remarks && (record["REMARK"] || record.Remark)) record.Remarks = record["REMARK"] || record.Remark;
-      if (!record["REMARK"]) {
-        if (record.Loan_Scheme) {
-          record["REMARK"] = record.Loan_Scheme === "Rang De" ? "RANG DE" : record.Loan_Scheme;
-        } else if (record.Remarks) {
-          record["REMARK"] = record.Remarks;
+  return "";
+}
+
+function addRecord(ss, targetSheetName, data) {
+  const sheet = findSheet(ss, targetSheetName) || ss.getSheetByName("Employment_Registration");
+  if (!sheet) {
+    return { success: false, message: `Sheet '${targetSheetName}' not found.` };
+  }
+
+  const lastRow = sheet.getLastRow();
+  const lastCol = sheet.getLastColumn();
+
+  let headers = [];
+  let headerRowIdx = 0;
+  if (lastRow > 0 && lastCol > 0) {
+    const headerScan = sheet.getRange(1, 1, Math.min(lastRow, 3), lastCol).getValues();
+    const nonBlank0 = headerScan[0].filter(v => v !== null && String(v).trim() !== "").length;
+    if (nonBlank0 <= 2 && headerScan.length > 2) {
+      const nonBlank1 = headerScan[1].filter(v => v !== null && String(v).trim() !== "").length;
+      if (nonBlank1 > nonBlank0) headerRowIdx = 1;
+    }
+    headers = headerScan[headerRowIdx].map(h => String(h || "").trim()).filter(h => h.length > 0);
+  }
+
+  if (headers.length === 0) {
+    const template = EXACT_EXCEL_TEMPLATES[sheet.getName()] || EXACT_EXCEL_TEMPLATES["Employment_Registration"];
+    headers = template ? template.headers : [];
+  }
+
+  const newRow = [];
+  const nextSerial = Math.max(1, lastRow - headerRowIdx);
+  const cleanData = (data && (data.data || data.record)) ? (data.data || data.record) : (data || {});
+
+  for (let i = 0; i < headers.length; i++) {
+    const h = headers[i];
+    const cleanH = h.toLowerCase().replace(/[^a-z0-9]/g, "");
+    let val = resolveFieldValue(cleanData, h, cleanH);
+
+    if (!val && (cleanH.includes("sr") || cleanH === "sno" || cleanH === "id")) {
+      val = nextSerial;
+    }
+
+    newRow.push(val !== undefined && val !== null ? val : "");
+  }
+
+  sheet.appendRow(newRow);
+
+  return {
+    success: true,
+    message: `Record added to '${sheet.getName()}' successfully.`,
+    rowNumber: sheet.getLastRow(),
+    record: newRow
+  };
+}
+
+function updateRecord(ss, targetSheetName, payload) {
+  const sheet = findSheet(ss, targetSheetName);
+  if (!sheet) {
+    return { success: false, message: `Sheet '${targetSheetName}' not found.` };
+  }
+
+  const lastRow = sheet.getLastRow();
+  const lastCol = sheet.getLastColumn();
+  if (lastRow <= 1 || lastCol === 0) {
+    return { success: false, message: "Sheet has no data rows to update." };
+  }
+
+  const values = sheet.getRange(1, 1, lastRow, lastCol).getValues();
+
+  let headerRowIdx = 0;
+  const nonBlank0 = values[0].filter(v => v !== null && String(v).trim() !== "").length;
+  if (nonBlank0 <= 2 && values.length > 2) {
+    const nonBlank1 = values[1].filter(v => v !== null && String(v).trim() !== "").length;
+    if (nonBlank1 > nonBlank0) headerRowIdx = 1;
+  }
+
+  const rawHeaders = values[headerRowIdx];
+  const headersClean = rawHeaders.map(h => String(h || "").trim().toLowerCase().replace(/[^a-z0-9]/g, ""));
+
+  let targetRow = null;
+  if (payload.rowNumber && typeof payload.rowNumber === "number" && payload.rowNumber > headerRowIdx + 1 && payload.rowNumber <= lastRow) {
+    targetRow = payload.rowNumber;
+  } else if (payload.rowIndex !== undefined && typeof payload.rowIndex === "number") {
+    const computedRow = headerRowIdx + 2 + payload.rowIndex;
+    if (computedRow > headerRowIdx + 1 && computedRow <= lastRow) {
+      targetRow = computedRow;
+    }
+  }
+
+  if (!targetRow && payload.idValue !== undefined && String(payload.idValue).trim() !== "") {
+    const idValStr = String(payload.idValue).trim().toLowerCase();
+    let idColIdx = -1;
+    if (payload.idField) {
+      const targetClean = String(payload.idField).trim().toLowerCase().replace(/[^a-z0-9]/g, "");
+      idColIdx = headersClean.indexOf(targetClean);
+    }
+
+    if (idColIdx !== -1) {
+      for (let r = headerRowIdx + 1; r < values.length; r++) {
+        if (String(values[r][idColIdx] || "").trim().toLowerCase() === idValStr) {
+          targetRow = r + 1;
+          break;
         }
       }
-      if (!record.Remarks && record["REMARK"]) record.Remarks = record["REMARK"];
-      if (!record.Updates && record["UPDATES"]) record.Updates = record["UPDATES"];
-    }
-
-    if (sheetName === "Entrepreneurs_Established" || sheetName === "Entrepreneurs Established") {
-      if (!record.NAME && (record.Name || record.Youth_Name)) record.NAME = record.Name || record.Youth_Name;
-      if (!record.Name && record.NAME) record.Name = record.NAME;
-      if (!record["FATHER NAME"] && (record.Father_Name || record.Father_Husband_Name)) {
-        record["FATHER NAME"] = record.Father_Name || record.Father_Husband_Name;
-      }
-      if (!record.Father_Name && record["FATHER NAME"]) record.Father_Name = record["FATHER NAME"];
-      if (!record["MOBILE NO."] && (record.Mobile || record.Mobile_Number)) {
-        record["MOBILE NO."] = record.Mobile || record.Mobile_Number;
-      }
-      if (!record.Mobile && record["MOBILE NO."]) record.Mobile = record["MOBILE NO."];
-      if (!record.BLOCK && record.Block) record.BLOCK = record.Block;
-      if (!record.Block && record.BLOCK) record.Block = record.BLOCK;
-      if (!record.VILLAGE && (record.Village || record.Address)) record.VILLAGE = record.Village || record.Address;
-      if (!record.Village && record.VILLAGE) record.Village = record.VILLAGE;
-      if (!record.BUSINESS && (record.Business || record.Business_Idea || record.Activity)) {
-        record.BUSINESS = record.Business || record.Business_Idea || record.Activity;
-      }
-      if (!record.Business && record.BUSINESS) record.Business = record.BUSINESS;
-      if (!record["LONE AMOUNT"] && (record.Loan_Amount || record.LoanAmount || record.Amount || record["LOAN AMOUNT"])) {
-        record["LONE AMOUNT"] = record.Loan_Amount || record.LoanAmount || record.Amount || record["LOAN AMOUNT"];
-      }
-      if (!record.Loan_Amount && record["LONE AMOUNT"]) record.Loan_Amount = record["LONE AMOUNT"];
-      if (!record["S.NO"] && (record["SR. NO."] || record.S_No || record.SNO)) {
-        record["S.NO"] = record["S.NO"] || record["SR. NO."] || record.S_No || record.SNO;
-      }
-    }
-
-    if (sheetName === "Employment_Linked") {
-      if (!record.Name && (record.NAME || record.Youth_Name)) record.Name = record.NAME || record.Youth_Name;
-      if (!record.NAME && record.Name) record.NAME = record.Name;
-      if (!record.Youth_Name && record.Name) record.Youth_Name = record.Name;
-      if (!record.Address && (record.ADDRESS || record.Village || record.Location)) record.Address = record.ADDRESS || record.Village || record.Location;
-      if (!record.ADDRESS && record.Address) record.ADDRESS = record.Address;
-      if (!record.Location && record.Address) record.Location = record.Address;
-      if (!record.Village && record.Address) record.Village = record.Address;
-      if (!record.Mobile && (record["MOBILE NO."] || record.Mobile_Number || record.Mobile_No)) record.Mobile = record["MOBILE NO."] || record.Mobile_Number || record.Mobile_No;
-      if (!record["MOBILE NO."] && record.Mobile) record["MOBILE NO."] = record.Mobile;
-      if (!record.Remarks && (record.REMARK || record.Remark || record.Job_Role || record.Employer_Name)) record.Remarks = record.REMARK || record.Remark || record.Job_Role || record.Employer_Name;
-      if (!record.REMARK && record.Remarks) record.REMARK = record.Remarks;
-      if (!record.Job_Role && record.Remarks) record.Job_Role = record.Remarks;
-      if (!record["SR. NO."] && (record["S.NO"] || record.S_No || record.SR_NO)) {
-        record["SR. NO."] = record["SR. NO."] || record["S.NO"] || record.S_No || record.SR_NO;
-      }
-    }
-
-    if (sheetName === "RangDe_Loan") {
-      if (!record.Name && record.NAME) record.Name = record.NAME;
-      if (!record.Father_Name && (record["FATHER NAME"] || record.Father_Husband_Name)) {
-        record.Father_Name = record["FATHER NAME"] || record.Father_Husband_Name;
-      }
-      if (!record.Mobile && (record["MOBILE NO."] || record.Mobile_Number)) {
-        record.Mobile = record["MOBILE NO."] || record.Mobile_Number;
-      }
-      if (!record.Address && (record.ADDRESS || record.Village)) {
-        record.Address = record.ADDRESS || record.Village;
-      }
-      if (!record.Activity && (record.ACTIVITY || record.Business || record["BUSINESS"])) {
-        record.Activity = record.ACTIVITY || record.Business || record["BUSINESS"];
-      }
-      if (!record.Business && record.Activity) record.Business = record.Activity;
-      if (!record.Amount && (record.AMOUNT || record.AMONT || record["AMONT"] || record.Loan_Amount || record["LONE AMOUNT"])) {
-        record.Amount = record.AMOUNT || record.AMONT || record["AMONT"] || record.Loan_Amount || record["LONE AMOUNT"];
-      }
-      if (!record.Loan_Amount && record.Amount) record.Loan_Amount = record.Amount;
-      if (!record.Second_Amount && (record["2ND"] || record["2nd"] || record["2ND AMOUNT"])) {
-        record.Second_Amount = record["2ND"] || record["2nd"] || record["2ND AMOUNT"];
-      }
-      if (!record["2ND"] && record.Second_Amount) record["2ND"] = record.Second_Amount;
-      if (!record.Remarks && (record["REMARK"] || record.Remark)) record.Remarks = record["REMARK"] || record.Remark;
-      if (!record.Remarks) record.Remarks = "RANG DE";
-    }
-
-    if (sheetName === "Photo_Uploads" || sheet.getName().toLowerCase().includes("photo") || sheet.getName().toLowerCase().includes("success")) {
-      if (!record.ID && (record.Gallery_ID || record.id)) record.ID = record.Gallery_ID || record.id;
-      if (!record.Photo_Name && (record.Title || record.Photo_Name || record.name)) record.Photo_Name = record.Title || record.Photo_Name || record.name;
-      if (!record.Drive_URL && (record.Photo_URL || record.imageUrl || record.Url)) record.Drive_URL = record.Photo_URL || record.imageUrl || record.Url;
-      if (!record.Drive_File_ID && record.File_ID) record.Drive_File_ID = record.File_ID;
-      if (!record.Upload_Date && (record.Date || record.date)) record.Upload_Date = record.Date || record.date;
-      if (!record.Uploaded_By && (record.UploadedBy || record.user)) record.Uploaded_By = record.UploadedBy || record.user;
-      if (!record.Status && (record.Progress_Status || record.status)) record.Status = record.Progress_Status || record.status || "Completed";
-    }
-
-    // Auto-generate ID if missing
-    if (config && (!record[config.idField] || String(record[config.idField]).trim() === "")) {
-      const nextNum = lastRow + i;
-      record[config.idField] = (config.idField === "SR. NO." || config.idField === "S.NO") ? nextNum : (config.prefix + ("0000" + nextNum).slice(-4));
-    }
-
-    const rowData = targetHeaders.map((header, colIdx) => {
-      let val = record[header];
-
-      // S.NO header check: use serial number
-      const isSerialHeader = /^(s\.?no|sr\.?no|sl\.?no|serial)$/i.test(String(header).trim());
-      if (isSerialHeader) {
-        if (val !== undefined && val !== null && String(val).trim() !== "" && !String(val).startsWith("ENT-") && !String(val).startsWith("YH-")) {
-          return val;
+    } else {
+      for (let r = headerRowIdx + 1; r < values.length; r++) {
+        if (values[r].some(v => String(v || "").trim().toLowerCase() === idValStr)) {
+          targetRow = r + 1;
+          break;
         }
-        return lastRow + i;
       }
+    }
+  }
 
-      if (val === undefined || val === null || val === "") {
-        const cleanH = String(header).replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
-        for (const k of Object.keys(record)) {
-          if (k.replace(/[^a-zA-Z0-9]/g, "").toLowerCase() === cleanH) {
-            val = record[k];
-            break;
+  if (!targetRow || targetRow <= headerRowIdx + 1 || targetRow > sheet.getLastRow()) {
+    return { success: false, message: `Matching record not found to update in '${sheet.getName()}'.` };
+  }
+
+  const updatedData = payload.updatedData || payload.data || payload.record || payload;
+  const currentRowValues = sheet.getRange(targetRow, 1, 1, rawHeaders.length).getValues()[0];
+
+  for (let c = 0; c < rawHeaders.length; c++) {
+    const cleanH = headersClean[c];
+    if (!cleanH) continue;
+
+    for (const [k, v] of Object.entries(updatedData)) {
+      if (k.toLowerCase().replace(/[^a-z0-9]/g, "") === cleanH) {
+        currentRowValues[c] = v;
+        break;
+      }
+    }
+  }
+
+  sheet.getRange(targetRow, 1, 1, rawHeaders.length).setValues([currentRowValues]);
+
+  return {
+    success: true,
+    message: `Record at row ${targetRow} in '${sheet.getName()}' updated successfully.`,
+    rowNumber: targetRow
+  };
+}
+
+function deleteRecord(ss, targetSheetName, payload) {
+  const sheet = findSheet(ss, targetSheetName);
+  if (!sheet) {
+    return { success: false, message: `Sheet '${targetSheetName}' not found.` };
+  }
+
+  const lastRow = sheet.getLastRow();
+  const lastCol = sheet.getLastColumn();
+  if (lastRow <= 1 || lastCol === 0) {
+    return { success: false, message: "Sheet has no data rows to delete." };
+  }
+
+  const values = sheet.getRange(1, 1, lastRow, lastCol).getValues();
+
+  let headerRowIdx = 0;
+  const nonBlank0 = values[0].filter(v => v !== null && String(v).trim() !== "").length;
+  if (nonBlank0 <= 2 && values.length > 2) {
+    const nonBlank1 = values[1].filter(v => v !== null && String(v).trim() !== "").length;
+    if (nonBlank1 > nonBlank0) headerRowIdx = 1;
+  }
+
+  const rawHeaders = values[headerRowIdx];
+  const headersClean = rawHeaders.map(h => String(h || "").trim().toLowerCase().replace(/[^a-z0-9]/g, ""));
+
+  let targetRow = null;
+
+  // 1. If rowData provided, match by primary fields (name, mobile, serial)
+  if (payload.rowData && typeof payload.rowData === "object") {
+    const rd = payload.rowData;
+    const targetName = String(rd.name || rd.NAME || rd.Youth_Name || rd['NAME '] || "").trim().toLowerCase();
+    const targetMobile = String(rd.mobile || rd.Mobile || rd['MOBILE NO.'] || rd['MOBILE N0.'] || rd.phone || "").trim().replace(/\D/g, "");
+    const targetSerial = String(rd.sNo || rd['SR. NO.'] || rd['SR.NO.'] || rd.id || "").trim();
+
+    const nameColIdx = headersClean.findIndex(h => h.includes("name") && !h.includes("father") && !h.includes("mother"));
+    const mobileColIdx = headersClean.findIndex(h => h.includes("mobile") || h.includes("phone"));
+    const serialColIdx = headersClean.findIndex(h => h.includes("sr") || h === "sno" || h === "id");
+
+    for (let r = headerRowIdx + 1; r < values.length; r++) {
+      const row = values[r];
+      let matches = false;
+
+      if (targetName && nameColIdx !== -1) {
+        const rowName = String(row[nameColIdx] || "").trim().toLowerCase();
+        if (rowName === targetName) {
+          if (targetMobile && mobileColIdx !== -1) {
+            const rowMobile = String(row[mobileColIdx] || "").trim().replace(/\D/g, "");
+            if (rowMobile && rowMobile === targetMobile) matches = true;
+            else if (!rowMobile) matches = true;
+          } else {
+            matches = true;
           }
         }
+      } else if (targetSerial && serialColIdx !== -1) {
+        const rowSerial = String(row[serialColIdx] || "").trim();
+        if (rowSerial === targetSerial) matches = true;
       }
 
-      // Explicit fallbacks for standard schema
-      if (val === undefined || val === null || val === "") {
-        const cleanH = String(header).replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
-        if (cleanH === "name") val = record.Name || record.Youth_Name || record.NAME || "";
-        else if (cleanH === "fathername") val = record.Father_Name || record["FATHER NAME"] || record.Father_Husband_Name || "";
-        else if (cleanH === "village") val = record.Village || record.VILLAGE || "";
-        else if (cleanH === "block") val = record.Block || record.BLOCK || "";
-        else if (cleanH === "mobileno" || cleanH === "mobile") val = record.Mobile || record["MOBILE NO."] || record.Mobile_Number || "";
-        else if (cleanH === "business") val = record.Business || record["BUSINESS"] || record.Business_Idea || "";
-        else if (cleanH === "loneamount" || cleanH === "loanamount") val = record.Loan_Amount || record["LONE AMOUNT"] || record.Lone_Amount || "";
-        else if (cleanH.includes("udyam") || cleanH.includes("udhyam")) val = record.Udyam_Registration || record["UDHYAM REGISTRATION"] || "";
-        else if (cleanH.includes("bankdoc")) val = record.Bank_Documents || record["BANK DOCUMENTS"] || "";
-        else if (cleanH.includes("pancard") || cleanH === "pan") val = record.Pan_Card || record["PAN CARD"] || "";
-        else if (cleanH.includes("adhar") || cleanH.includes("aadhar")) val = record.Aadhar_Card || record["ADHAR CARD"] || "";
-        else if (cleanH.includes("voter")) val = record.Voter_Card || record["VOTER CARD"] || "";
-        else if (cleanH.includes("quotation")) val = record.Quotation || record["QUOTATION"] || "";
-        else if (cleanH.includes("remark")) val = record.Remarks || record["REMARK"] || "";
-        else if (cleanH.includes("update")) val = record.Updates || record["UPDATES"] || "";
+      if (matches) {
+        targetRow = r + 1;
+        break;
       }
-
-      if (val === undefined || val === null) return "";
-      return val;
-    });
-
-    rowsToAppend.push(rowData);
-  }
-
-  if (rowsToAppend.length > 0) {
-    sheet.getRange(lastRow + 1, 1, rowsToAppend.length, targetHeaders.length).setValues(rowsToAppend);
-  }
-
-  return {
-    success: true,
-    count: rowsToAppend.length,
-    message: `Successfully added ${rowsToAppend.length} records to ${sheetName.replace(/_/g, " ")}.`
-  };
-}
-
-function clearSheetData(ss, sheetName) {
-  const sheet = ss.getSheetByName(sheetName);
-  if (!sheet) return { success: false, message: `Sheet '${sheetName}' not found.` };
-  const lastRow = sheet.getLastRow();
-  if (lastRow > 1) {
-    sheet.deleteRows(2, lastRow - 1);
-  }
-  return { success: true, message: `All data rows cleared from ${sheetName}. Headers preserved.` };
-}
-
-function listUsers(ss) {
-  const sheet = ss.getSheetByName("Users");
-  if (!sheet) return { success: false, message: "Users sheet not found." };
-  const recordsRes = getSheetRecords(ss, "Users");
-  const users = (recordsRes.records || []).map(u => {
-    const userCopy = Object.assign({}, u);
-    delete userCopy.Password_Hash;
-    return userCopy;
-  });
-  return { success: true, users };
-}
-
-function updateRecord(ss, sheetName, idField, idValue, updatedData) {
-  const sheet = findSheet(ss, sheetName);
-  if (!sheet) return { success: false, message: `Sheet ${sheetName} not found.` };
-
-  const { headerRowIndex, headers } = detectHeaderRow(sheet);
-  const lastRow = sheet.getLastRow();
-  const lastCol = sheet.getLastColumn();
-  if (lastRow <= headerRowIndex || lastCol === 0) return { success: false, message: `Record ${idValue} not found.` };
-
-  const data = sheet.getRange(headerRowIndex, 1, lastRow - headerRowIndex + 1, lastCol).getValues();
-  let idColIdx = headers.indexOf(idField);
-  if (idColIdx === -1) {
-    idColIdx = headers.findIndex(h => {
-      const cleanH = String(h).replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
-      const cleanId = String(idField).replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
-      return cleanH === cleanId || cleanH.includes("id") || cleanH === "sno" || cleanH === "srno";
-    });
-  }
-  if (idColIdx === -1) idColIdx = 0;
-
-  let targetRow = -1;
-  for (let r = 1; r < data.length; r++) {
-    const row = data[r];
-    const matchById = String(row[idColIdx]).trim() === String(idValue).trim();
-    const matchAny = row.some(cell => String(cell).trim() === String(idValue).trim());
-    if (matchById || matchAny) {
-      targetRow = headerRowIndex + r; // 1-indexed absolute sheet row
-      break;
     }
   }
 
-  if (targetRow === -1) return { success: false, message: `Record ${idValue} not found.` };
-
-  // Update cells
-  Object.keys(updatedData).forEach(key => {
-    let colIdx = headers.indexOf(key);
-    if (colIdx === -1) {
-      const cleanKey = String(key).replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
-      colIdx = headers.findIndex(h => String(h).replace(/[^a-zA-Z0-9]/g, "").toLowerCase() === cleanKey);
+  // 2. Match by idField and idValue
+  if (!targetRow && payload.idValue !== undefined && String(payload.idValue).trim() !== "") {
+    const idValStr = String(payload.idValue).trim().toLowerCase();
+    let idColIdx = -1;
+    if (payload.idField) {
+      const targetClean = String(payload.idField).trim().toLowerCase().replace(/[^a-z0-9]/g, "");
+      idColIdx = headersClean.indexOf(targetClean);
     }
-    if (colIdx !== -1) {
-      sheet.getRange(targetRow, colIdx + 1).setValue(updatedData[key]);
-    }
-  });
 
-  return { success: true, message: `Record updated successfully.` };
-}
-
-function deleteRecord(ss, sheetName, idField, idValue) {
-  const sheet = findSheet(ss, sheetName);
-  if (!sheet) return { success: false, message: `Sheet ${sheetName} not found.` };
-
-  const { headerRowIndex, headers } = detectHeaderRow(sheet);
-  const lastRow = sheet.getLastRow();
-  const lastCol = sheet.getLastColumn();
-  if (lastRow <= headerRowIndex || lastCol === 0) return { success: false, message: `Record not found.` };
-
-  const data = sheet.getRange(headerRowIndex, 1, lastRow - headerRowIndex + 1, lastCol).getValues();
-  let idColIdx = headers.indexOf(idField);
-  if (idColIdx === -1) {
-    idColIdx = headers.findIndex(h => {
-      const cleanH = String(h).replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
-      const cleanId = String(idField).replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
-      return cleanH === cleanId || cleanH.includes("id") || cleanH === "sno" || cleanH === "srno";
-    });
-  }
-  if (idColIdx === -1) idColIdx = 0;
-
-  for (let r = 1; r < data.length; r++) {
-    const row = data[r];
-    const matchById = String(row[idColIdx]).trim() === String(idValue).trim();
-    const matchAny = row.some(cell => String(cell).trim() === String(idValue).trim());
-    if (matchById || matchAny) {
-      sheet.deleteRow(headerRowIndex + r);
-      return { success: true, message: `Record deleted successfully.` };
-    }
-  }
-
-  return { success: false, message: `Record not found.` };
-}
-
-function searchYouthMaster(ss, query) {
-  const res = getSheetRecords(ss, "Youth_Master");
-  if (!res.success) return { success: false, results: [] };
-
-  const q = String(query).toLowerCase().trim();
-  const results = res.records.filter(y => {
-    return (
-      String(y.Youth_Name || "").toLowerCase().includes(q) ||
-      String(y.Youth_ID || "").toLowerCase().includes(q) ||
-      String(y.Mobile_Number || "").includes(q) ||
-      String(y.Aadhaar_Number || "").includes(q) ||
-      String(y.Block || "").toLowerCase().includes(q)
-    );
-  });
-
-  return { success: true, results: results.slice(0, 50) };
-}
-
-function getYouthProfile(ss, youthId) {
-  const youthRes = getSheetRecords(ss, "Youth_Master");
-  const youth = (youthRes.records || []).find(y => String(y.Youth_ID) === String(youthId));
-  if (!youth) return { success: false, message: "Youth not found." };
-
-  const filterByYouth = (sheet) => (getSheetRecords(ss, sheet).records || []).filter(x => String(x.Youth_ID) === String(youthId));
-
-  return {
-    success: true,
-    profile: {
-      personal: youth,
-      mforms: filterByYouth("M_Form"),
-      mybharat: filterByYouth("My_Bharat"),
-      counselling: filterByYouth("Counselling"),
-      skillTraining: filterByYouth("Skill_Training"),
-      employmentRegistered: filterByYouth("Employment_Registered"),
-      employmentLinked: filterByYouth("Employment_Linked"),
-      education: filterByYouth("Education"),
-      entrepreneurship: filterByYouth("Entrepreneurs"),
-      navgurukul: filterByYouth("NavGurukul"),
-      rehabilitation: filterByYouth("Rehabilitation")
-    }
-  };
-}
-
-function handleFileUpload(payload) {
-  try {
-    const { base64Data, fileName, mimeType, subFolder } = payload;
-    if (!base64Data) return { success: false, message: "No image data received." };
-
-    const cleanBase64 = base64Data.replace(/^data:([A-Za-z-+\/]+);base64,/, "");
-    const decodedBlob = Utilities.newBlob(Utilities.base64Decode(cleanBase64), mimeType || "image/jpeg", fileName || "upload.jpg");
-
-    // Get or create parent Drive folder
-    const folderName = "YouthHub_Dantewada_Uploads";
-    let folder;
-    const folders = DriveApp.getFoldersByName(folderName);
-    if (folders.hasNext()) {
-      folder = folders.next();
+    if (idColIdx !== -1) {
+      for (let r = headerRowIdx + 1; r < values.length; r++) {
+        if (String(values[r][idColIdx] || "").trim().toLowerCase() === idValStr) {
+          targetRow = r + 1;
+          break;
+        }
+      }
     } else {
-      folder = DriveApp.createFolder(folderName);
+      for (let r = headerRowIdx + 1; r < values.length; r++) {
+        if (values[r].some(v => String(v || "").trim().toLowerCase() === idValStr)) {
+          targetRow = r + 1;
+          break;
+        }
+      }
     }
-
-    const file = folder.createFile(decodedBlob);
-    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-
-    const fileUrl = file.getDownloadUrl() || file.getUrl();
-    return { success: true, fileUrl, fileId: file.getId(), message: "File uploaded to Google Drive." };
-  } catch (err) {
-    return { success: false, message: "Upload failed: " + err.message };
   }
+
+  // 3. Fallback to rowNumber or rowIndex
+  if (!targetRow) {
+    if (payload.rowNumber && typeof payload.rowNumber === "number" && payload.rowNumber > headerRowIdx + 1 && payload.rowNumber <= lastRow) {
+      targetRow = payload.rowNumber;
+    } else if (payload.rowIndex !== undefined && typeof payload.rowIndex === "number") {
+      const computedRow = headerRowIdx + 2 + payload.rowIndex;
+      if (computedRow > headerRowIdx + 1 && computedRow <= lastRow) {
+        targetRow = computedRow;
+      }
+    }
+  }
+
+  if (targetRow && targetRow > headerRowIdx + 1 && targetRow <= sheet.getLastRow()) {
+    sheet.deleteRow(targetRow);
+    return {
+      success: true,
+      message: `Record at row ${targetRow} deleted successfully from '${sheet.getName()}'.`,
+      deletedRow: targetRow
+    };
+  }
+
+  return {
+    success: false,
+    message: `Matching record not found to delete in sheet '${sheet.getName()}'.`
+  };
 }
 
-function calculateDashboardKPIs(ss, filters) {
-  filters = filters || {};
-  let youth = (getSheetRecords(ss, "Youth_Master").records || []);
-  let mob = (getSheetRecords(ss, "Mobilization").records || []);
-  let mform = (getSheetRecords(ss, "M_Form").records || []);
-  let mybharat = (getSheetRecords(ss, "My_Bharat").records || []);
-  let cou = (getSheetRecords(ss, "Counselling").records || []);
-  let skill = (getSheetRecords(ss, "Skill_Training").records || []);
-  let empLinked = (getSheetRecords(ss, "Employment_Linked").records || []);
-  let empReg = (getSheetRecords(ss, "Employment_Registered").records || []);
-  let edu = (getSheetRecords(ss, "Education").records || []);
-  let ent = (getSheetRecords(ss, "Entrepreneurs").records || []);
-  let entEst = (getSheetRecords(ss, "Entrepreneurs_Established").records || []);
-  let nav = (getSheetRecords(ss, "NavGurukul").records || []);
-  let trg = (getSheetRecords(ss, "Trainings").records || []);
-  let rehab = (getSheetRecords(ss, "Rehabilitation").records || []);
-  let rangde = (getSheetRecords(ss, "RangDe_Loan").records || []);
-
-  // Filter by Block if selected
-  if (filters.block && filters.block !== "All") {
-    const b = String(filters.block).toLowerCase();
-    const filterByBlock = list => list.filter(item => String(item.Block || "").toLowerCase() === b);
-    youth = filterByBlock(youth);
-    mob = filterByBlock(mob);
-    mform = filterByBlock(mform);
-    mybharat = filterByBlock(mybharat);
-    cou = filterByBlock(cou);
-    skill = filterByBlock(skill);
-    empLinked = filterByBlock(empLinked);
-    empReg = filterByBlock(empReg);
-    edu = filterByBlock(edu);
-    ent = filterByBlock(ent);
-    entEst = filterByBlock(entEst);
-    nav = filterByBlock(nav);
-    trg = filterByBlock(trg);
-    rehab = filterByBlock(rehab);
-    rangde = rangde.filter(item => {
-      const rowLoc = String(item.Block || item.BLOCK || item.Address || item.ADDRESS || item.Village || "").toLowerCase();
-      return rowLoc.includes(b);
-    });
+function clearSheetData(ss, targetSheetName) {
+  const sheet = findSheet(ss, targetSheetName);
+  if (!sheet) {
+    return { success: false, message: `Sheet '${targetSheetName}' not found.` };
   }
 
-  // Filter by Gram Panchayat if selected
-  if (filters.gramPanchayat && filters.gramPanchayat !== "All") {
-    const gp = String(filters.gramPanchayat).toLowerCase();
-    const filterByGP = list => list.filter(item => String(item.Gram_Panchayat || item.GP || "").toLowerCase() === gp);
-    youth = filterByGP(youth);
-    mob = filterByGP(mob);
-    mform = filterByGP(mform);
-    mybharat = filterByGP(mybharat);
-    ent = filterByGP(ent);
-    entEst = filterByGP(entEst);
-    nav = filterByGP(nav);
-    trg = filterByGP(trg);
-    rehab = filterByGP(rehab);
-    rangde = rangde.filter(item => {
-      const rowGp = String(item.Gram_Panchayat || item.GP || item.Village || item.Address || item.ADDRESS || "").toLowerCase();
-      return rowGp.includes(gp);
-    });
+  const lastRow = sheet.getLastRow();
+  const lastCol = sheet.getLastColumn();
+  if (lastRow <= 1) {
+    return { success: true, message: `Sheet '${sheet.getName()}' is already empty.`, deletedRows: 0 };
   }
 
-  const totMob = mob.reduce((acc, m) => acc + (Number(m.Total_Mobilized) || 0), 0) || youth.length;
-  const blocks = ["Dantewada", "Geedam", "Katekalyan", "Kuakonda"];
+  const values = sheet.getRange(1, 1, Math.min(lastRow, 3), Math.max(lastCol, 1)).getValues();
+  let headerRowIdx = 0;
+  const nonBlank0 = values[0].filter(v => v !== null && String(v).trim() !== "").length;
+  if (nonBlank0 <= 2 && values.length > 2) {
+    const nonBlank1 = values[1].filter(v => v !== null && String(v).trim() !== "").length;
+    if (nonBlank1 > nonBlank0) headerRowIdx = 1;
+  }
 
-  // Dynamic Monthly Mobilization from actual dates
-  const months = ["Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar"];
-  const mobByMonth = {};
-  months.forEach(m => { mobByMonth[m] = 0; });
-  mob.forEach(m => {
-    if (m.Date) {
-      const d = new Date(m.Date);
-      if (!isNaN(d.getTime())) {
-        const mon = d.toLocaleString("en-US", { month: "short" });
-        if (mobByMonth[mon] !== undefined) {
-          mobByMonth[mon] += (Number(m.Total_Mobilized) || 1);
-        }
+  const dataStartRow = headerRowIdx + 2;
+  const numRowsToDelete = lastRow - headerRowIdx - 1;
+
+  if (numRowsToDelete > 0) {
+    sheet.deleteRows(dataStartRow, numRowsToDelete);
+    return {
+      success: true,
+      message: `Successfully cleared ${numRowsToDelete} data rows from '${sheet.getName()}'. Headers preserved.`,
+      deletedRows: numRowsToDelete
+    };
+  }
+
+  return { success: true, message: `Sheet '${sheet.getName()}' is already clear of data.`, deletedRows: 0 };
+}
+
+function bulkInsert(ss, targetSheetName, payload) {
+  const sheet = findSheet(ss, targetSheetName);
+  if (!sheet) {
+    return { success: false, message: `Sheet '${targetSheetName}' not found.` };
+  }
+
+  const records = payload.records || payload.data || payload;
+  if (!Array.isArray(records) || records.length === 0) {
+    return { success: false, message: "No records provided for bulk insertion." };
+  }
+
+  const lastRow = sheet.getLastRow();
+  const lastCol = sheet.getLastColumn();
+  if (lastRow === 0 || lastCol === 0) {
+    return { success: false, message: "Sheet has no headers configured." };
+  }
+
+  const values = sheet.getRange(1, 1, Math.min(lastRow, 3), lastCol).getValues();
+  let headerRowIdx = 0;
+  const nonBlank0 = values[0].filter(v => v !== null && String(v).trim() !== "").length;
+  if (nonBlank0 <= 2 && values.length > 2) {
+    const nonBlank1 = values[1].filter(v => v !== null && String(v).trim() !== "").length;
+    if (nonBlank1 > nonBlank0) headerRowIdx = 1;
+  }
+
+  const rawHeaders = values[headerRowIdx];
+  const headersClean = rawHeaders.map(h => String(h || "").trim().toLowerCase().replace(/[^a-z0-9]/g, ""));
+
+  let nextSerial = Math.max(1, lastRow - headerRowIdx);
+  const rowsToInsert = [];
+
+  for (let r = 0; r < records.length; r++) {
+    const item = records[r];
+    const newRow = [];
+
+    for (let c = 0; c < rawHeaders.length; c++) {
+      const h = String(rawHeaders[c] || "").trim();
+      const cleanH = headersClean[c];
+      let val = resolveFieldValue(item, h, cleanH);
+
+      if (!val && (cleanH.includes("sr") || cleanH === "sno" || cleanH === "id")) {
+        val = nextSerial;
       }
+
+      newRow.push(val !== undefined && val !== null ? val : "");
     }
-  });
-  if (Object.values(mobByMonth).every(v => v === 0)) {
-    youth.forEach(y => {
-      if (y.Registration_Date) {
-        const d = new Date(y.Registration_Date);
-        if (!isNaN(d.getTime())) {
-          const mon = d.toLocaleString("en-US", { month: "short" });
-          if (mobByMonth[mon] !== undefined) mobByMonth[mon]++;
-        }
-      }
-    });
+
+    rowsToInsert.push(newRow);
+    nextSerial++;
   }
-  const activeMonths = months.filter(m => mobByMonth[m] > 0);
-  const displayMonths = activeMonths.length ? activeMonths : ["Apr", "May", "Jun", "Jul", "Aug", "Sep"];
 
-  // Dynamic Skill Training Providers from actual rows
-  const providerCounts = {};
-  skill.forEach(s => {
-    const p = s.Training_Provider || s.Provider || "Other";
-    providerCounts[p] = (providerCounts[p] || 0) + 1;
-  });
-  const spLabels = Object.keys(providerCounts);
+  if (rowsToInsert.length > 0) {
+    sheet.getRange(sheet.getLastRow() + 1, 1, rowsToInsert.length, rawHeaders.length).setValues(rowsToInsert);
+  }
 
-  // Dynamic Education Goals / Streams from actual rows
-  const eduCounts = {};
-  edu.forEach(e => {
-    const c = e.Course || e.Institution_Name || "Higher Education";
-    eduCounts[c] = (eduCounts[c] || 0) + 1;
-  });
-  const eduLabels = Object.keys(eduCounts);
+  return {
+    success: true,
+    message: `${rowsToInsert.length} records inserted into '${sheet.getName()}'.`,
+    insertedCount: rowsToInsert.length
+  };
+}
 
-  // Dynamic Entrepreneurs Pipeline from actual stages
-  const entStages = ["Identified", "Business Plan", "Loan Applied", "Loan Sanctioned", "Established"];
-  const entCounts = entStages.map(st => {
-    return ent.filter(e => {
-      const combined = (String(e.Stage || "") + " " + String(e.Business_Status || "") + " " + String(e.Loan_Status || "")).toLowerCase();
-      return combined.includes(st.toLowerCase());
-    }).length;
-  });
-
-  // Dynamic NavGurukul Pipeline from actual status
-  const navStages = ["Registered", "Shortlisted", "Selected", "Admitted"];
-  const navCounts = navStages.map(st => {
-    return nav.filter(n => {
-      const combined = (String(n.Selection_Status || "") + " " + String(n.Admission_Status || "")).toLowerCase();
-      return combined.includes(st.toLowerCase());
-    }).length;
-  });
-
-  // Dynamic Trainings Conducted Trend
-  const trgByMonth = {};
-  trg.forEach(t => {
-    const d = new Date(t.Date || t.Start_Date);
-    const mon = isNaN(d.getTime()) ? "Current" : d.toLocaleString("en-US", { month: "short" });
-    if (!trgByMonth[mon]) trgByMonth[mon] = { events: 0, participants: 0 };
-    trgByMonth[mon].events++;
-    trgByMonth[mon].participants += (Number(t.Total_Participants) || 0);
-  });
-  const trgLabels = Object.keys(trgByMonth);
-
-  // Dynamic Top Gram Panchayats by Mobilization & Registration
-  const gpCounts = {};
-  mob.forEach(m => {
-    const gp = m.Gram_Panchayat || m.GP;
-    if (gp) gpCounts[gp] = (gpCounts[gp] || 0) + (Number(m.Total_Mobilized) || 1);
-  });
-  youth.forEach(y => {
-    const gp = y.Gram_Panchayat || y.GP;
-    if (gp) gpCounts[gp] = (gpCounts[gp] || 0) + 1;
-  });
-  const sortedGps = Object.keys(gpCounts).sort((a, b) => gpCounts[b] - gpCounts[a]).slice(0, 6);
+function getDashboardKPIs(ss) {
+  const getCount = (name) => {
+    const s = findSheet(ss, name);
+    if (!s) return 0;
+    const t = EXACT_EXCEL_TEMPLATES[s.getName()];
+    const offset = (t && t.hasTitle) ? 2 : 1;
+    return Math.max(0, s.getLastRow() - offset);
+  };
 
   return {
     success: true,
     kpis: {
-      totalMobilized: totMob,
-      totalRegistered: youth.length,
-      youthMasterTotal: youth.length,
-      totalMForm: mform.length,
-      mForm: mform.length,
-      totalMyBharat: mybharat.length,
-      myBharat: mybharat.length,
-      totalCounselled: cou.length,
-      careerCounselling: cou.length,
-      totalSkillTrained: skill.length,
-      skillTraining: skill.length,
-      totalEmployed: empLinked.length,
-      employmentLinked: empLinked.length,
-      educationLinked: edu.length,
-      totalEducation: edu.length,
-      totalEntrepreneurs: (entEst.length > 0 ? ent.length + entEst.length : ent.length),
-      entrepreneursIdentified: ent.length,
-      entrepreneursEstablished: entEst.length > 0 ? entEst.length : ent.filter(e => String(e.Stage || "").toLowerCase() === "established").length,
-      employmentRegistered: empReg.length,
-      navgurukul: nav.length,
-      trainingConducted: trg.length,
-      totalRehabilitated: rehab.length,
-      rehabilitation: rehab.length,
-      rangde: rangde.length
+      totalYouth: getCount("Employment_Registration"),
+      employedYouth: getCount("Employed"),
+      skillTrainedYouth: getCount("Skill_Linked"),
+      educationLinked: getCount("Education_Linked"),
+      identifiedEntrepreneurs: getCount("PMEGP_PMFME_Loan"),
+      rangDeLoans: getCount("Rang_De_Loan"),
+      bastarShivir: getCount("Bastar_Munne_Shivir"),
+      communityMeetings: getCount("Meetings_VO_CLF_TRIF"),
+      iimCandidates: getCount("IIM_Candidate_List")
     },
-    charts: {
-      monthlyMobilization: {
-        labels: displayMonths,
-        values: displayMonths.map(m => mobByMonth[m] || 0)
-      },
-      blockPerformance: {
-        labels: blocks,
-        mobilized: blocks.map(b => mob.filter(m => String(m.Block || "").toLowerCase() === b.toLowerCase()).reduce((acc, x) => acc + (Number(x.Total_Mobilized) || 0), 0)),
-        youthRegistered: blocks.map(b => youth.filter(y => String(y.Block || "").toLowerCase() === b.toLowerCase()).length),
-        mform: blocks.map(b => mform.filter(m => String(m.Block || "").toLowerCase() === b.toLowerCase()).length),
-        placed: blocks.map(b => empLinked.filter(e => String(e.Block || "").toLowerCase() === b.toLowerCase()).length)
-      },
-      youthFunnel: {
-        labels: ["Mobilized", "Youth Master", "M-Form", "My Bharat", "Counselling", "Skill Training", "Emp Linked", "Entrepreneurs Est."],
-        data: [totMob, youth.length, mform.length, mybharat.length, cou.length, skill.length, empLinked.length, ent.filter(e => String(e.Stage || "").toLowerCase() === "established").length]
-      },
-      skillProviders: {
-        labels: spLabels.length ? spLabels : ["No Training Records"],
-        values: spLabels.length ? spLabels.map(k => providerCounts[k]) : [0]
-      },
-      employmentComparison: {
-        labels: blocks,
-        registered: blocks.map(b => empReg.filter(r => String(r.Block || "").toLowerCase() === b.toLowerCase()).length),
-        linked: blocks.map(b => empLinked.filter(l => String(l.Block || "").toLowerCase() === b.toLowerCase()).length)
-      },
-      educationGoals: {
-        labels: eduLabels.length ? eduLabels : ["No Education Records"],
-        values: eduLabels.length ? eduLabels.map(k => eduCounts[k]) : [0]
-      },
-      entrepreneursPipeline: {
-        labels: entStages,
-        counts: entCounts
-      },
-      navgurukulPipeline: {
-        labels: navStages,
-        counts: navCounts
-      },
-      trainingConductedTrend: {
-        labels: trgLabels.length ? trgLabels : ["No Training Records"],
-        events: trgLabels.length ? trgLabels.map(k => trgByMonth[k].events) : [0],
-        participants: trgLabels.length ? trgLabels.map(k => trgByMonth[k].participants) : [0]
-      },
-      topGps: {
-        labels: sortedGps.length ? sortedGps : ["No GP Records"],
-        values: sortedGps.length ? sortedGps.map(k => gpCounts[k]) : [0]
-      }
-    }
+    timestamp: new Date().toISOString()
   };
+}
+
+function createJsonResponse(data) {
+  const output = ContentService.createTextOutput(JSON.stringify(data));
+  output.setMimeType(ContentService.MimeType.JSON);
+  return output;
 }

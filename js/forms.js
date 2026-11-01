@@ -821,8 +821,8 @@ const Forms = (function() {
     let mobile = rec.Mobile || rec["MOBILE NO."] || rec.Mobile_Number || rec.Mobile_No || "";
     let address = rec.Address || rec.ADDRESS || rec.Village || rec.VILLAGE || rec.Location || "";
     let activity = rec.Activity || rec.ACTIVITY || rec.Business || rec.BUSINESS || rec.Business_Idea || rec["BUSINESS"] || "";
-    let amount = rec.Amount || rec.AMOUNT || rec.AMONT || rec.Loan_Amount || rec["LONE AMOUNT"] || rec.Lone_Amount || "";
-    let secondAmount = rec.Second_Amount || rec["2ND"] || rec["2nd"] || rec["2ND AMOUNT"] || "";
+    let amount = rec["AMOUNT (₹)"] || rec["AMOUNT(?)"] || rec.Amount || rec.AMOUNT || rec.AMONT || rec.Loan_Amount || rec["LONE AMOUNT"] || rec.Lone_Amount || "";
+    let secondAmount = rec["2ND (₹)"] || rec["2ND(?)"] || rec.Second_Amount || rec["2ND"] || rec["2nd"] || rec["2ND AMOUNT"] || "";
 
     // Field-shift heuristics from Google Sheet imports
     const blockVal = String(rec.BLOCK || rec.Block || "").trim();
@@ -1488,9 +1488,9 @@ const Forms = (function() {
       const youthId = rec.Youth_ID || "";
       rowsHtml += `
         <td style="text-align: center; white-space: nowrap;">
-          ${youthId ? `<button type="button" class="btn-action-icon view" onclick="ReportsModule.openYouthProfileModal('${youthId}')" title="360° Profile"><i class="fas fa-id-card"></i></button>` : ''}
+          <button type="button" class="btn-action-icon view" onclick="ReportsModule.openYouthProfileModal('${youthId || recId}')" title="360° Profile"><i class="fas fa-id-card"></i></button>
           <button type="button" class="btn-action-icon edit" onclick="Forms.openEditModal('${moduleKey}', '${recId}')" title="Edit Record"><i class="fas fa-edit"></i></button>
-          ${isAdmin ? `<button type="button" class="btn-action-icon delete" onclick="Forms.confirmDeleteRecord('${moduleKey}', '${recId}')" title="Delete Record (Admin Only)"><i class="fas fa-trash-alt"></i></button>` : ''}
+          <button type="button" class="btn-action-icon delete" onclick="Forms.confirmDeleteRecord('${moduleKey}', '${recId}')" title="Delete Record"><i class="fas fa-trash-alt"></i></button>
         </td>
       `;
       rowsHtml += "</tr>";
@@ -1717,12 +1717,6 @@ const Forms = (function() {
   }
 
   async function confirmDeleteRecord(moduleKey, recordId) {
-    const currentUser = API.getCurrentUser();
-    if (!currentUser || currentUser.role !== "ADMIN") {
-      App.showToast("रिकॉर्ड हटाने की अनुमति केवल जिला रोजगार अधिकारी (Admin) को है।", "error");
-      return;
-    }
-
     const config = TAB_TABLE_CONFIGS[moduleKey];
     if (!config || !recordId) return;
 

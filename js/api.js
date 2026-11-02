@@ -457,11 +457,18 @@ const API = (function() {
     }
 
     try {
-      const response = await fetch(apiUrl, {
+      const controller = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+      const timeoutId = controller ? setTimeout(() => controller.abort(), 15000) : null;
+
+      const fetchOptions = {
         method: "POST",
         headers: { "Content-Type": "text/plain;charset=utf-8" },
         body: JSON.stringify({ action, payload: requestPayload, token })
-      });
+      };
+      if (controller) fetchOptions.signal = controller.signal;
+
+      const response = await fetch(apiUrl, fetchOptions);
+      if (timeoutId) clearTimeout(timeoutId);
 
       if (!response.ok) {
         throw new Error(`Server returned HTTP ${response.status}`);

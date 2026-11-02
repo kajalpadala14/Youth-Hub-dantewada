@@ -4744,42 +4744,56 @@
     const sheetKey = selectEl ? selectEl.value : currentBulkSheet;
     const commitBtn = document.getElementById('bulkCommitBtn');
     const commitText = document.getElementById('bulkCommitBtnText');
-    const originalText = commitText ? commitText.textContent : '';
+    const originalText = commitText ? commitText.textContent : 'डेटा आयात करें';
 
     if (commitBtn) commitBtn.disabled = true;
     if (commitText) commitText.textContent = '⏳ Google Sheet एवं डेटाबेस में सहेजा जा रहा है...';
 
-    // 1. Commit to Local Database first
-    const result = window.DantewadaDB.commitImport(sheetKey, currentBulkPreview.validRows);
-    const count = result.insertedCount ?? result.count ?? currentBulkPreview.validRows.length;
-
-    // 2. Prepare clean records for Google Apps Script Cloud bulkInsert
-    const targetCloudSheet = getCloudSheetName(sheetKey);
-    const recordsToSend = prepareRecordsForCloud(sheetKey, currentBulkPreview.validRows);
-
+    let result = null;
+    let count = 0;
     let cloudMessage = '';
 
-    // 3. Send to Google Apps Script Backend
-    if (typeof API !== 'undefined' && API.call && recordsToSend.length > 0) {
-      try {
-        const cloudRes = await API.call('bulkInsert', {
-          sheetName: targetCloudSheet,
-          records: recordsToSend
-        });
-        console.log('Cloud bulkInsert response:', cloudRes);
-        if (cloudRes && cloudRes.success) {
-          cloudMessage = ` (Google Sheet में भी ${cloudRes.insertedCount || count} पंक्तियां सफलतापूर्वक जुड़ गईं!)`;
-        } else if (cloudRes && cloudRes.message) {
-          cloudMessage = ` (Google Sheet सूचना: ${cloudRes.message})`;
-        }
-      } catch (err) {
-        console.warn('Cloud bulkInsert notice:', err.message);
-        cloudMessage = ` (Google Sheet सिंक चेतावनी: ${err.message})`;
-      }
-    }
+    try {
+      // 1. Commit to Local Database first
+      result = window.DantewadaDB.commitImport(sheetKey, currentBulkPreview.validRows);
+      count = result.insertedCount ?? result.count ?? currentBulkPreview.validRows.length;
 
-    if (commitBtn) commitBtn.disabled = false;
-    if (commitText) commitText.textContent = originalText;
+      // 2. Prepare clean records for Google Apps Script Cloud bulkInsert
+      const targetCloudSheet = getCloudSheetName(sheetKey);
+      const recordsToSend = prepareRecordsForCloud(sheetKey, currentBulkPreview.validRows);
+
+      // 3. Send to Google Apps Script Backend (with 10s race timeout so UI never hangs)
+      if (typeof API !== 'undefined' && API.call && recordsToSend.length > 0) {
+        try {
+          const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Google Apps Script नेटवर्क टाइमआउट')), 10000)
+          );
+          const cloudRes = await Promise.race([
+            API.call('bulkInsert', {
+              sheetName: targetCloudSheet,
+              records: recordsToSend
+            }),
+            timeoutPromise
+          ]);
+          console.log('Cloud bulkInsert response:', cloudRes);
+          if (cloudRes && cloudRes.success) {
+            cloudMessage = ` (Google Sheet में भी ${cloudRes.insertedCount || count} पंक्तियां सफलतापूर्वक जुड़ गईं!)`;
+          } else if (cloudRes && cloudRes.message) {
+            cloudMessage = ` (Google Sheet सूचना: ${cloudRes.message})`;
+          }
+        } catch (err) {
+          console.warn('Cloud bulkInsert notice:', err.message);
+          cloudMessage = ` (Google Sheet सिंक सूचना: ${err.message})`;
+        }
+      }
+    } catch (err) {
+      console.error('Error in commitBulkUpload:', err);
+      alert('डेटा आयात के दौरान त्रुटि: ' + (err.message || err));
+      return;
+    } finally {
+      if (commitBtn) commitBtn.disabled = false;
+      if (commitText) commitText.textContent = originalText;
+    }
 
     if (result && result.success) {
       window.closeBulkUploadModal();
@@ -4787,7 +4801,8 @@
         renderSheetTable();
       }
       renderDashboard();
-      alert(`सफलतापूर्वक ${count} रिकॉर्ड्स [${sheetKey}] में आयात किए गए!${cloudMessage}`);
+      updateSidebarBadgeCounts();
+      alert(`✅ सफलतापूर्वक ${count} रिकॉर्ड्स [${sheetKey}] में आयात किए गए!${cloudMessage}`);
     } else {
       alert('डेटा आयात विफल: ' + (result ? (result.error || result.message) : 'Unknown error') + cloudMessage);
     }

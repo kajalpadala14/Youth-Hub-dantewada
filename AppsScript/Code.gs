@@ -54,6 +54,15 @@ const EXACT_EXCEL_TEMPLATES = {
     ]
   },
 
+  // 5. आईआईएम रायपुर उम्मीदवार सूची
+  "IIM_Candidate_List": {
+    hasTitle: false,
+    headers: [
+      "SR", "NAME ", "FATHER NAME", "GENDER", "AGE", "CAST",
+      "GP", "BLOCK", "DISTRICT", "MOBILE NO, ", "EDUCATION", "PERCENT", "AGE2"
+    ]
+  },
+
   // 6. उद्यमी पहचान (7 Parameters as in User's Sheet)
   "Entrepreneur_Identified": {
     hasTitle: false,
@@ -243,6 +252,12 @@ const SHEETS_SCHEMA = {
   ],
   Rang_De_Loan: [
     "SR. NO.", "NAME", "ADDRESS", "MOBILE NO.", "ACTIVITY", "AMOUNT (₹)", "2ND (₹)"
+  ],
+  Counselling: [
+    "Block Name", "Grampanchayat", "First Name", "Last Name",
+    "Mobile Number", "Gender", "Email", "Pin Code",
+    "Father's Name / Husband's Name", "Mother's Name",
+    "Category", "Highest Qualification", "Current Occupation", "Aspired Career"
   ],
 
   // Compatibility schemas

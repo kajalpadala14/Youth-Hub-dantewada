@@ -717,6 +717,9 @@
     M_Form: [
       "SR. NO.", "Block Name", "Grampanchayat", "First Name", "Last Name", "Mobile Number", "Gender", "Email", "Pin Code", "Father's Name / Husband's Name", "Mother's Name", "Category", "Highest Qualification", "Current Occupation", "Aspired Career"
     ],
+    Counselling: [
+      "SR. NO.", "Block Name", "Grampanchayat", "First Name", "Last Name", "Mobile Number", "Gender", "Email", "Pin Code", "Father's Name / Husband's Name", "Mother's Name", "Category", "Highest Qualification", "Current Occupation", "Aspired Career"
+    ],
     Field_Visits: [
       "VISIT ID", "DATE", "OFFICER NAME", "BLOCK", "GRAM PANCHAYAT", "LOCATION", "PURPOSE", "SCHEME", "FINDINGS", "STATUS"
     ]
@@ -1770,7 +1773,7 @@
   let currentActiveSheet = 'Employment_Registration';
 
   const SHEET_CONFIGS = {
-    Employment_Registration: {
+Employment_Registration: {
       num: 1,
       titleEn: "1. Employment_Registration",
       titleHi: "रोजगार पंजीकरण",
@@ -1827,7 +1830,8 @@
         window.DantewadaDB.persist();
       }
     },
-    Employed: {
+
+Employed: {
       num: 2,
       titleEn: "2. Employed",
       titleHi: "रोजगार प्राप्त युवा",
@@ -1874,7 +1878,8 @@
         window.DantewadaDB.persist();
       }
     },
-    Skill_Linked: {
+
+Skill_Linked: {
       num: 3,
       titleEn: "3. Skill_Linked",
       titleHi: "कौशल प्रशिक्षण से जुड़े युवा",
@@ -1909,7 +1914,8 @@
         window.DantewadaDB.persist();
       }
     },
-    Education_Linked: {
+
+Education_Linked: {
       num: 4,
       titleEn: "4. Education_Linked",
       titleHi: "शिक्षा से जुड़े युवा",
@@ -1953,9 +1959,396 @@
         window.DantewadaDB.persist();
       }
     },
-    Counselling: {
+
+IIM_Candidate_List: {
       num: 5,
-      titleEn: "5. Counselling",
+      titleEn: "5. IIM_Candidate_List",
+      titleHi: "IIM Raipur Candidate List 2025",
+      desc: "IIM रायपुर उद्यमिता एवं इन्क्यूबेशन कार्यक्रम 2025 हेतु चयनित युवा। (दोहरा AGE कॉलम नियंत्रित)",
+      collection: "iimRaipur",
+      params: [
+        "SR",
+        "NAME",
+        "FATHER NAME",
+        "GENDER",
+        "AGE",
+        "CAST",
+        "GP",
+        "BLOCK",
+        "DISTRICT",
+        "MOBILE NO.",
+        "EDUCATION",
+        "PERCENT",
+        "AGE (2)"
+      ],
+      mapRow: (item, idx) => [
+        item.id || idx + 1,
+        item.name || 'N/A',
+        item.fatherName || 'N/A',
+        item.gender || 'M',
+        item.age || '22',
+        item.category || item.cast || 'ST',
+        item.gp || item.village || 'N/A',
+        item.block || 'Dantewada',
+        item.district || 'Dantewada',
+        item.mobile || 'N/A',
+        item.education || 'Graduate',
+        item.percent || '65%',
+        item.age2 || item.age || '22'
+      ],
+      saveRecord: (formData) => {
+        if (!window.DantewadaDB.data.iimRaipur) window.DantewadaDB.data.iimRaipur = [];
+        window.DantewadaDB.data.iimRaipur.unshift({
+          id: window.DantewadaDB.data.iimRaipur.length + 1,
+          name: formData['NAME'],
+          fatherName: formData['FATHER NAME'],
+          gender: formData['GENDER'] || 'Male',
+          age: formData['AGE'],
+          category: formData['CAST'],
+          gp: formData['GP'],
+          block: formData['BLOCK'],
+          district: formData['DISTRICT'] || 'Dantewada',
+          mobile: formData['MOBILE NO.'],
+          education: formData['EDUCATION'],
+          percent: formData['PERCENT']
+        });
+        window.DantewadaDB.persist();
+      }
+    },
+
+Entrepreneur_Identified: {
+      num: 6,
+      titleEn: "6. Entrepreneur_Identified",
+      titleHi: "पहचाने गए उद्यमी (उद्यमिता / ऋण सहायता)",
+      desc: "दंतेवाड़ा जिले के स्वरोजगार व पहचाने गए युवा उद्यमी: ग्राम, ब्लॉक, ऋण राशि एवं व्यवसाय का विवरण।",
+      collection: "entrepreneursIdentified",
+      params: [
+        "SR.no",
+        "NAME",
+        "FATHER NAME",
+        "VILLAGE",
+        "BLOCK",
+        "LOAN AMOUNT",
+        "BUSSINESS"
+      ],
+      mapRow: (item, idx) => [
+        item['SR.no'] || item.sNo || item.id || idx + 1,
+        item.name || item.NAME || item.founderName || 'N/A',
+        item.fatherName || item['FATHER NAME'] || item.fatherHusband || 'N/A',
+        item.village || item.VILLAGE || item.address || 'N/A',
+        item.block || item.BLOCK || item.district || 'Dantewada',
+        item['LOAN AMOUNT'] || item.loanAmount || (item.investmentNeeded ? (String(item.investmentNeeded).startsWith('₹') ? item.investmentNeeded : `₹${item.investmentNeeded}`) : 'N/A'),
+        item.business || item.BUSSINESS || item.startupName || 'N/A'
+      ],
+      saveRecord: (formData) => {
+        if (!window.DantewadaDB.data.entrepreneursIdentified) window.DantewadaDB.data.entrepreneursIdentified = [];
+        const nextId = window.DantewadaDB.data.entrepreneursIdentified.length + 1;
+        window.DantewadaDB.data.entrepreneursIdentified.unshift({
+          id: nextId,
+          'SR.no': nextId,
+          NAME: formData['NAME'] || formData['Name'] || 'N/A',
+          name: formData['NAME'] || formData['Name'] || 'N/A',
+          'FATHER NAME': formData['FATHER NAME'] || formData['Father Name'] || 'N/A',
+          fatherName: formData['FATHER NAME'] || formData['Father Name'] || 'N/A',
+          VILLAGE: formData['VILLAGE'] || formData['Village'] || 'N/A',
+          village: formData['VILLAGE'] || formData['Village'] || 'N/A',
+          BLOCK: formData['BLOCK'] || formData['Block'] || 'Dantewada',
+          block: formData['BLOCK'] || formData['Block'] || 'Dantewada',
+          'LOAN AMOUNT': formData['LOAN AMOUNT'] || formData['Loan Amount'] || 'N/A',
+          loanAmount: formData['LOAN AMOUNT'] || formData['Loan Amount'] || 'N/A',
+          BUSSINESS: formData['BUSSINESS'] || formData['Business'] || 'N/A',
+          business: formData['BUSSINESS'] || formData['Business'] || 'N/A'
+        });
+        window.DantewadaDB.persist();
+      }
+    },
+
+PMEGP_PMFME_Loan: {
+      num: 7,
+      titleEn: "7. PMEGP_PMFME_Loan",
+      titleHi: "ऋण एवं योजना विवरण",
+      desc: "PMEGP, PMFME, MUDRA ऋण योजनांतर्गत स्वीकृत व लाभान्वित युवाओं की सूची।",
+      collection: "loans",
+      params: [
+        "SR. NO.",
+        "NAME",
+        "FATHER NAME",
+        "VILLAGE",
+        "BLOCK",
+        "LOAN AMOUNT",
+        "YOJNA",
+        "BUSSINESS"
+      ],
+      mapRow: (item, idx) => [
+        idx + 1,
+        item.name || 'N/A',
+        item.fatherName || 'N/A',
+        item.village || 'N/A',
+        item.block || 'Dantewada',
+        item.amount ? (item.amount.toString().startsWith('₹') ? item.amount : `₹${item.amount}`) : '₹1,00,000',
+        item.yojna || item.scheme || 'PMEGP',
+        item.business || 'Micro Enterprise'
+      ],
+      saveRecord: (formData) => {
+        if (!window.DantewadaDB.data.loans) window.DantewadaDB.data.loans = [];
+        window.DantewadaDB.data.loans.unshift({
+          id: window.DantewadaDB.data.loans.length + 1,
+          name: formData['NAME'],
+          fatherName: formData['FATHER NAME'],
+          village: formData['VILLAGE'],
+          block: formData['BLOCK'],
+          amount: formData['LOAN AMOUNT'],
+          scheme: formData['YOJNA'] || 'PMEGP',
+          business: formData['BUSSINESS']
+        });
+        window.DantewadaDB.persist();
+      }
+    },
+
+Training_Conducted: {
+      num: 8,
+      titleEn: "8. Training_Conducted",
+      titleHi: "आयोजित प्रशिक्षण",
+      desc: "विभिन्न प्रशिक्षण संस्थानों द्वारा युवाओं को दिए गए कौशल प्रशिक्षण का विवरण।",
+      collection: "trainingConducted",
+      params: [
+        "SR. NO.",
+        "NAME",
+        "ADDRESS",
+        "MOBILE NO.",
+        "INSTITUTE",
+        "TRAINING"
+      ],
+      mapRow: (item, idx) => [
+        idx + 1,
+        item.name || item.training || item.title || 'Training Program',
+        item.address || item.venue || 'Dantewada',
+        item.mobile || (item.duration ? `${item.duration}` : (item.date ? `${item.date}` : '-')),
+        item.institute || item.trainer || 'Livelihood College Dantewada',
+        item.training || item.name || 'Skill Training'
+      ],
+      saveRecord: (formData) => {
+        if (!window.DantewadaDB.data.trainingConducted) window.DantewadaDB.data.trainingConducted = [];
+        window.DantewadaDB.data.trainingConducted.unshift({
+          id: `TC-${Date.now().toString().slice(-4)}`,
+          name: formData['NAME'],
+          address: formData['ADDRESS'],
+          mobile: formData['MOBILE NO.'],
+          institute: formData['INSTITUTE'],
+          training: formData['TRAINING']
+        });
+        window.DantewadaDB.persist();
+      }
+    },
+
+MY_Bharat_Registration: {
+      num: 9,
+      titleEn: "9. MY_Bharat_Registration",
+      titleHi: "MY Bharat पंजीकरण",
+      desc: "राष्ट्रीय युवा पोर्टल 'MY Bharat' पर पंजीकृत युवाओं का विवरण।",
+      collection: "myBharat",
+      params: [
+        "SR. NO.",
+        "NAME",
+        "FATHER NAME",
+        "VILLAGE",
+        "BLOCK",
+        "DOB",
+        "GENDER",
+        "MOBILE NO.",
+        "CATEGORY",
+        "CURRENT OCCUPATION",
+        "REMARK"
+      ],
+      mapRow: (item, idx) => [
+        idx + 1,
+        item.name || 'N/A',
+        item.fatherName || 'N/A',
+        item.village || 'N/A',
+        item.block || 'Dantewada',
+        item.dob || '2002-05-14',
+        item.gender || 'Male',
+        item.mobile || 'N/A',
+        item.category || 'ST',
+        item.currentOccupation || 'Student / Job Seeker',
+        item.remark || 'Active Registered'
+      ],
+      saveRecord: (formData) => {
+        if (!window.DantewadaDB.data.myBharat) window.DantewadaDB.data.myBharat = [];
+        window.DantewadaDB.data.myBharat.unshift({
+          id: window.DantewadaDB.data.myBharat.length + 1,
+          name: formData['NAME'],
+          fatherName: formData['FATHER NAME'],
+          village: formData['VILLAGE'],
+          block: formData['BLOCK'],
+          dob: formData['DOB'],
+          gender: formData['GENDER'] || 'Male',
+          mobile: formData['MOBILE NO.'],
+          category: formData['CATEGORY'],
+          currentOccupation: formData['CURRENT OCCUPATION'],
+          remark: formData['REMARK'] || 'Registered'
+        });
+        window.DantewadaDB.persist();
+      }
+    },
+
+Meetings_VO_CLF_TRIF: {
+      num: 10,
+      titleEn: "10. VO CLF Meeting",
+      titleHi: "VO / CLF बैठकें (ग्राम संगठन व संकुल संघ)",
+      desc: "ग्राम संगठन (VO) एवं संकुल स्तरीय परिसंघ (CLF) की आजीविका, युवा सहभागिता एवं समीक्षा बैठकों का संपूर्ण विवरण व फोटो गैलरी।",
+      collection: "meetingsVoClfTrif",
+      params: [
+        "SR. NO.",
+        "DATE",
+        "VILLAGE",
+        "BLOCK",
+        "VO / CLF NAME",
+        "ADHAYAKSH / SACHIV",
+        "DISCUSS POINT",
+        "REMARKS",
+        "PHOTO UPLOAD"
+      ],
+      mapRow: (item, idx) => [
+        item.id || idx + 1,
+        item.date || '2026-03-01',
+        item.village || item.gp || 'Dantewada',
+        item.block || 'Dantewada',
+        item.voClfName || item.orgName || 'Prerna Mahila Gram Sangathan',
+        item.adhayakshSachiv || item.chairedBy || 'N/A',
+        item.discussPoint || item.agenda || 'Youth Livelihood Mobilization',
+        item.remarks || item.decisions || 'Action Plan Finalized',
+        item.photo || item.photoUrl || ''
+      ],
+      saveRecord: (formData) => {
+        if (!window.DantewadaDB.data.meetingsVoClfTrif) window.DantewadaDB.data.meetingsVoClfTrif = [];
+        const photoVal = formData['PHOTO UPLOAD'] || formData['PHOTO'] || formData['Photo'] || '';
+        window.DantewadaDB.data.meetingsVoClfTrif.unshift({
+          id: window.DantewadaDB.data.meetingsVoClfTrif.length + 1,
+          date: formData['DATE'] || new Date().toISOString().split('T')[0],
+          village: formData['VILLAGE'] || 'Dantewada',
+          block: formData['BLOCK'] || 'Dantewada',
+          voClfName: formData['VO / CLF NAME'] || 'Prerna Mahila Gram Sangathan',
+          adhayakshSachiv: formData['ADHAYAKSH / SACHIV'] || 'N/A',
+          discussPoint: formData['DISCUSS POINT'] || 'Youth livelihood and training mobilization',
+          remarks: formData['REMARKS'] || 'Completed',
+          photo: photoVal
+        });
+        window.DantewadaDB.persist();
+      }
+    },
+
+Youth_Hub_Trainings: {
+      num: 11,
+      titleEn: "11. Youth_Hub_Trainee",
+      titleHi: "यूथ हब प्रशिक्षणार्थी (Youth Hub Trainees)",
+      desc: "दंतेवाड़ा यूथ हब केंद्र में ओरिएंटेशन एवं क्षमता विकास प्रशिक्षण प्राप्त युवा।",
+      collection: "youthHubTrainings",
+      params: [
+        "SR. NO.",
+        "NAME",
+        "FATHER NAME",
+        "VILLAGE",
+        "BLOCK",
+        "DOB",
+        "GENDER",
+        "MOBILE NO.",
+        "REMARK"
+      ],
+      mapRow: (item, idx) => [
+        idx + 1,
+        item.name || 'N/A',
+        item.fatherName || 'N/A',
+        item.village || 'N/A',
+        item.block || 'Dantewada',
+        item.dob || '2001-11-20',
+        item.gender || 'Male',
+        item.mobile || 'N/A',
+        item.remark || 'Training Completed'
+      ],
+      saveRecord: (formData) => {
+        if (!window.DantewadaDB.data.youthHubTrainings) window.DantewadaDB.data.youthHubTrainings = [];
+        window.DantewadaDB.data.youthHubTrainings.unshift({
+          id: window.DantewadaDB.data.youthHubTrainings.length + 1,
+          name: formData['NAME'],
+          fatherName: formData['FATHER NAME'],
+          village: formData['VILLAGE'],
+          block: formData['BLOCK'],
+          dob: formData['DOB'],
+          gender: formData['GENDER'] || 'Male',
+          mobile: formData['MOBILE NO.'],
+          remark: formData['REMARK'] || 'Completed'
+        });
+        window.DantewadaDB.persist();
+      }
+    },
+
+M_Form: {
+      num: 12,
+      titleEn: "12. M-Form", // titleEn: "17. M-Form"
+      titleHi: "एम-फॉर्म सर्वे (M-Form Registration)",
+      desc: "दंतेवाड़ा जिले के ग्राम-वार एम-फॉर्म सर्वे में पंजीकृत युवाओं का संपूर्ण डेटाबेस।",
+      collection: "mFormRecords",
+      params: [
+        "SR. NO.",
+        "Block Name",
+        "Grampanchayat",
+        "First Name",
+        "Last Name",
+        "Mobile Number",
+        "Gender",
+        "Email",
+        "Pin Code",
+        "Father's Name / Husband's Name",
+        "Mother's Name",
+        "Category",
+        "Highest Qualification",
+        "Current Occupation",
+        "Aspired Career"
+      ],
+      mapRow: (item, idx) => [
+        idx + 1,
+        item.block || item['Block Name'] || 'Dantewada',
+        item.gramPanchayat || item.gp || item['Grampanchayat'] || '',
+        item.firstName || item['First Name'] || (item.name ? item.name.split(' ')[0] : ''),
+        item.lastName || item['Last Name'] || (item.name ? item.name.split(' ').slice(1).join(' ') : ''),
+        item.mobile || item['Mobile Number'] || item['Mobile'] || '',
+        item.gender || item['Gender'] || 'Male',
+        item.email || item['Email'] || '',
+        item.pinCode || item['Pin Code'] || '',
+        item.fatherHusband || item["Father's Name / Husband's Name"] || item.fatherName || '',
+        item.motherName || item["Mother's Name"] || '',
+        item.category || item['Category'] || 'ST',
+        item.qualification || item['Highest Qualification'] || '12th Pass',
+        item.currentOccupation || item['Current Occupation'] || item.occupation || 'Candidate',
+        item.aspiredCareer || item['Aspired Career'] || 'Direct Formal Jobs'
+      ],
+      saveRecord: (formData) => {
+        if (!window.DantewadaDB.data.mFormRecords) window.DantewadaDB.data.mFormRecords = [];
+        window.DantewadaDB.data.mFormRecords.unshift({
+          id: window.DantewadaDB.data.mFormRecords.length + 1,
+          block: formData['Block Name'] || 'Dantewada',
+          gramPanchayat: formData['Grampanchayat'] || '',
+          firstName: formData['First Name'] || '',
+          lastName: formData['Last Name'] || '',
+          mobile: formData['Mobile Number'] || '',
+          gender: formData['Gender'] || 'Male',
+          email: formData['Email'] || '',
+          pinCode: formData['Pin Code'] || '',
+          fatherHusband: formData["Father's Name / Husband's Name"] || '',
+          motherName: formData["Mother's Name"] || '',
+          category: formData['Category'] || 'ST',
+          qualification: formData['Highest Qualification'] || '12th Pass',
+          currentOccupation: formData['Current Occupation'] || 'Candidate',
+          aspiredCareer: formData['Aspired Career'] || 'Direct Formal Jobs'
+        });
+        window.DantewadaDB.persist();
+      }
+    },
+
+Counselling: {
+      num: 13,
+      titleEn: "13. Counselling",
       titleHi: "काउंसलिंग एवं करियर मार्गदर्शन",
       desc: "काउंसलिंग एवं करियर मार्गदर्शन अंतर्गत पंजीकृत युवाओं का संपूर्ण डेटाबेस।",
       collection: "counselling",
@@ -2016,53 +2409,60 @@
         window.DantewadaDB.persist();
       }
     },
-    Entrepreneur_Identified: {
-      num: 6,
-      titleEn: "6. Entrepreneur_Identified",
-      titleHi: "पहचाने गए उद्यमी (उद्यमिता / ऋण सहायता)",
-      desc: "दंतेवाड़ा जिले के स्वरोजगार व पहचाने गए युवा उद्यमी: ग्राम, ब्लॉक, ऋण राशि एवं व्यवसाय का विवरण।",
-      collection: "entrepreneursIdentified",
+
+Bastar_Munne_Shivir: {
+      num: 14,
+      titleEn: "14. Bastar_Munne_Shivir",
+      titleHi: "बस्तर मुन्ने शिविर में पंजीकृत युवा",
+      desc: "बस्तर मुन्ने शिविर एवं कौशल प्रशिक्षण मेले में पंजीकृत युवाओं का आधार सहित विवरण।",
+      collection: "bastarShivir",
       params: [
-        "SR.no",
+        "SR. NO.",
         "NAME",
         "FATHER NAME",
         "VILLAGE",
         "BLOCK",
-        "LOAN AMOUNT",
-        "BUSSINESS"
+        "DOB",
+        "GENDER",
+        "MOBILE NO.",
+        "AADHAR",
+        "CATEGORY",
+        "INTERESTED TRADE (इच्छुक ट्रेड)"
       ],
       mapRow: (item, idx) => [
-        item['SR.no'] || item.sNo || item.id || idx + 1,
-        item.name || item.NAME || item.founderName || 'N/A',
-        item.fatherName || item['FATHER NAME'] || item.fatherHusband || 'N/A',
-        item.village || item.VILLAGE || item.address || 'N/A',
-        item.block || item.BLOCK || item.district || 'Dantewada',
-        item['LOAN AMOUNT'] || item.loanAmount || (item.investmentNeeded ? (String(item.investmentNeeded).startsWith('₹') ? item.investmentNeeded : `₹${item.investmentNeeded}`) : 'N/A'),
-        item.business || item.BUSSINESS || item.startupName || 'N/A'
+        idx + 1,
+        item.name || 'N/A',
+        item.fatherName || 'N/A',
+        item.village || 'N/A',
+        item.block || 'Dantewada',
+        item.dob || '2003-04-12',
+        item.gender || 'Male',
+        item.mobile || 'N/A',
+        item.aadhar ? (typeof window.DantewadaDB.maskAadhaar === 'function' ? window.DantewadaDB.maskAadhaar(item.aadhar) : item.aadhar) : 'XXXXXXXX7890',
+        item.category || 'ST',
+        item.training || item.remark || 'RAJMISTRI'
       ],
       saveRecord: (formData) => {
-        if (!window.DantewadaDB.data.entrepreneursIdentified) window.DantewadaDB.data.entrepreneursIdentified = [];
-        const nextId = window.DantewadaDB.data.entrepreneursIdentified.length + 1;
-        window.DantewadaDB.data.entrepreneursIdentified.unshift({
-          id: nextId,
-          'SR.no': nextId,
-          NAME: formData['NAME'] || formData['Name'] || 'N/A',
-          name: formData['NAME'] || formData['Name'] || 'N/A',
-          'FATHER NAME': formData['FATHER NAME'] || formData['Father Name'] || 'N/A',
-          fatherName: formData['FATHER NAME'] || formData['Father Name'] || 'N/A',
-          VILLAGE: formData['VILLAGE'] || formData['Village'] || 'N/A',
-          village: formData['VILLAGE'] || formData['Village'] || 'N/A',
-          BLOCK: formData['BLOCK'] || formData['Block'] || 'Dantewada',
-          block: formData['BLOCK'] || formData['Block'] || 'Dantewada',
-          'LOAN AMOUNT': formData['LOAN AMOUNT'] || formData['Loan Amount'] || 'N/A',
-          loanAmount: formData['LOAN AMOUNT'] || formData['Loan Amount'] || 'N/A',
-          BUSSINESS: formData['BUSSINESS'] || formData['Business'] || 'N/A',
-          business: formData['BUSSINESS'] || formData['Business'] || 'N/A'
+        if (!window.DantewadaDB.data.bastarShivir) window.DantewadaDB.data.bastarShivir = [];
+        window.DantewadaDB.data.bastarShivir.unshift({
+          id: window.DantewadaDB.data.bastarShivir.length + 1,
+          name: formData['NAME'],
+          fatherName: formData['FATHER NAME'],
+          village: formData['VILLAGE'],
+          block: formData['BLOCK'],
+          dob: formData['DOB'],
+          gender: formData['GENDER'] || 'Male',
+          mobile: formData['MOBILE NO.'],
+          aadhar: formData['AADHAR'],
+          category: formData['CATEGORY'],
+          training: formData['INTERESTED TRADE (इच्छुक ट्रेड)'] || 'RAJMISTRI',
+          remark: formData['INTERESTED TRADE (इच्छुक ट्रेड)'] || 'Registered'
         });
         window.DantewadaDB.persist();
       }
     },
-    Startup_Ideas: {
+
+Startup_Ideas: {
       num: 15,
       titleEn: "15. Startup & Innovation Idea",
       titleHi: "स्टार्टअप व इनोवेशन विचार",
@@ -2114,78 +2514,10 @@
         window.DantewadaDB.persist();
       }
     },
-    Startup_District_Ideas: {
-      num: "12-B",
-      titleEn: "Startup Ideas by District",
-      titleHi: "जिलावार स्टार्टअप विचार एवं संभाग सारांश",
-      desc: "दंतेवाड़ा, सुकमा, बस्तर, कोण्डागांव एवं दुर्ग के युवा स्टार्टअप व नवाचार प्रस्तावों का जिलावार विश्लेषण।",
-      collection: "startupDistrictIdeas",
-      params: [
-        "SR. NO.",
-        "DISTRICT (जिला)",
-        "TOTAL PROPOSALS",
-        "SHORTLISTED",
-        "KEY SECTORS / DOMAINS",
-        "FLAGSHIP STARTUP PROPOSALS",
-        "INVESTMENT SOUGHT",
-        "ACTION"
-      ],
-      mapRow: (item, idx) => [
-        item.sr,
-        item.district,
-        item.totalIdeas,
-        item.shortlisted,
-        item.keySectors,
-        item.topIdeas,
-        item.totalInvestment,
-        item.sr === 'TOTAL' ? 'Summary' : 'Filter Startups'
-      ],
-      saveRecord: () => {}
-    },
-    PMEGP_PMFME_Loan: {
-      num: 11,
-      titleEn: "11. PMEGP_PMFME_Loan",
-      titleHi: "ऋण एवं योजना विवरण",
-      desc: "PMEGP, PMFME, MUDRA ऋण योजनांतर्गत स्वीकृत व लाभान्वित युवाओं की सूची।",
-      collection: "loans",
-      params: [
-        "SR. NO.",
-        "NAME",
-        "FATHER NAME",
-        "VILLAGE",
-        "BLOCK",
-        "LOAN AMOUNT",
-        "YOJNA",
-        "BUSSINESS"
-      ],
-      mapRow: (item, idx) => [
-        idx + 1,
-        item.name || 'N/A',
-        item.fatherName || 'N/A',
-        item.village || 'N/A',
-        item.block || 'Dantewada',
-        item.amount ? (item.amount.toString().startsWith('₹') ? item.amount : `₹${item.amount}`) : '₹1,00,000',
-        item.yojna || item.scheme || 'PMEGP',
-        item.business || 'Micro Enterprise'
-      ],
-      saveRecord: (formData) => {
-        if (!window.DantewadaDB.data.loans) window.DantewadaDB.data.loans = [];
-        window.DantewadaDB.data.loans.unshift({
-          id: window.DantewadaDB.data.loans.length + 1,
-          name: formData['NAME'],
-          fatherName: formData['FATHER NAME'],
-          village: formData['VILLAGE'],
-          block: formData['BLOCK'],
-          amount: formData['LOAN AMOUNT'],
-          scheme: formData['YOJNA'] || 'PMEGP',
-          business: formData['BUSSINESS']
-        });
-        window.DantewadaDB.persist();
-      }
-    },
-    Rang_De_Loan: {
-      num: 12,
-      titleEn: "12. Rang_De_Loan",
+
+Rang_De_Loan: {
+      num: 16,
+      titleEn: "16. Rang_De_Loan",
       titleHi: "रंग दे पीयर-टू-पीयर माइक्रो लोन",
       desc: "Social investment & peer-to-peer micro-credit linkages for Dantewada rural youth, SHGs & entrepreneurs.",
       collection: "rangDe",
@@ -2228,242 +2560,37 @@
         window.DantewadaDB.persist();
       }
     },
-    IIM_Candidate_List: {
-      num: 6,
-      titleEn: "6. IIM_Candidate_List",
-      titleHi: "IIM Raipur Candidate List 2025",
-      desc: "IIM रायपुर उद्यमिता एवं इन्क्यूबेशन कार्यक्रम 2025 हेतु चयनित युवा। (दोहरा AGE कॉलम नियंत्रित)",
-      collection: "iimRaipur",
-      params: [
-        "SR",
-        "NAME",
-        "FATHER NAME",
-        "GENDER",
-        "AGE",
-        "CAST",
-        "GP",
-        "BLOCK",
-        "DISTRICT",
-        "MOBILE NO.",
-        "EDUCATION",
-        "PERCENT",
-        "AGE (2)"
-      ],
-      mapRow: (item, idx) => [
-        item.id || idx + 1,
-        item.name || 'N/A',
-        item.fatherName || 'N/A',
-        item.gender || 'M',
-        item.age || '22',
-        item.category || item.cast || 'ST',
-        item.gp || item.village || 'N/A',
-        item.block || 'Dantewada',
-        item.district || 'Dantewada',
-        item.mobile || 'N/A',
-        item.education || 'Graduate',
-        item.percent || '65%',
-        item.age2 || item.age || '22'
-      ],
-      saveRecord: (formData) => {
-        if (!window.DantewadaDB.data.iimRaipur) window.DantewadaDB.data.iimRaipur = [];
-        window.DantewadaDB.data.iimRaipur.unshift({
-          id: window.DantewadaDB.data.iimRaipur.length + 1,
-          name: formData['NAME'],
-          fatherName: formData['FATHER NAME'],
-          gender: formData['GENDER'] || 'Male',
-          age: formData['AGE'],
-          category: formData['CAST'],
-          gp: formData['GP'],
-          block: formData['BLOCK'],
-          district: formData['DISTRICT'] || 'Dantewada',
-          mobile: formData['MOBILE NO.'],
-          education: formData['EDUCATION'],
-          percent: formData['PERCENT']
-        });
-        window.DantewadaDB.persist();
-      }
-    },
-    Training_Conducted: {
-      num: 7,
-      titleEn: "7. Training_Conducted",
-      titleHi: "आयोजित प्रशिक्षण",
-      desc: "विभिन्न प्रशिक्षण संस्थानों द्वारा युवाओं को दिए गए कौशल प्रशिक्षण का विवरण।",
-      collection: "trainingConducted",
+
+Startup_District_Ideas: {
+      num: "12-B",
+      titleEn: "Startup Ideas by District",
+      titleHi: "जिलावार स्टार्टअप विचार एवं संभाग सारांश",
+      desc: "दंतेवाड़ा, सुकमा, बस्तर, कोण्डागांव एवं दुर्ग के युवा स्टार्टअप व नवाचार प्रस्तावों का जिलावार विश्लेषण।",
+      collection: "startupDistrictIdeas",
       params: [
         "SR. NO.",
-        "NAME",
-        "ADDRESS",
-        "MOBILE NO.",
-        "INSTITUTE",
-        "TRAINING"
+        "DISTRICT (जिला)",
+        "TOTAL PROPOSALS",
+        "SHORTLISTED",
+        "KEY SECTORS / DOMAINS",
+        "FLAGSHIP STARTUP PROPOSALS",
+        "INVESTMENT SOUGHT",
+        "ACTION"
       ],
       mapRow: (item, idx) => [
-        idx + 1,
-        item.name || item.training || item.title || 'Training Program',
-        item.address || item.venue || 'Dantewada',
-        item.mobile || (item.duration ? `${item.duration}` : (item.date ? `${item.date}` : '-')),
-        item.institute || item.trainer || 'Livelihood College Dantewada',
-        item.training || item.name || 'Skill Training'
+        item.sr,
+        item.district,
+        item.totalIdeas,
+        item.shortlisted,
+        item.keySectors,
+        item.topIdeas,
+        item.totalInvestment,
+        item.sr === 'TOTAL' ? 'Summary' : 'Filter Startups'
       ],
-      saveRecord: (formData) => {
-        if (!window.DantewadaDB.data.trainingConducted) window.DantewadaDB.data.trainingConducted = [];
-        window.DantewadaDB.data.trainingConducted.unshift({
-          id: `TC-${Date.now().toString().slice(-4)}`,
-          name: formData['NAME'],
-          address: formData['ADDRESS'],
-          mobile: formData['MOBILE NO.'],
-          institute: formData['INSTITUTE'],
-          training: formData['TRAINING']
-        });
-        window.DantewadaDB.persist();
-      }
+      saveRecord: () => {}
     },
-    MY_Bharat_Registration: {
-      num: 8,
-      titleEn: "8. MY_Bharat_Registration",
-      titleHi: "MY Bharat पंजीकरण",
-      desc: "राष्ट्रीय युवा पोर्टल 'MY Bharat' पर पंजीकृत युवाओं का विवरण।",
-      collection: "myBharat",
-      params: [
-        "SR. NO.",
-        "NAME",
-        "FATHER NAME",
-        "VILLAGE",
-        "BLOCK",
-        "DOB",
-        "GENDER",
-        "MOBILE NO.",
-        "CATEGORY",
-        "CURRENT OCCUPATION",
-        "REMARK"
-      ],
-      mapRow: (item, idx) => [
-        idx + 1,
-        item.name || 'N/A',
-        item.fatherName || 'N/A',
-        item.village || 'N/A',
-        item.block || 'Dantewada',
-        item.dob || '2002-05-14',
-        item.gender || 'Male',
-        item.mobile || 'N/A',
-        item.category || 'ST',
-        item.currentOccupation || 'Student / Job Seeker',
-        item.remark || 'Active Registered'
-      ],
-      saveRecord: (formData) => {
-        if (!window.DantewadaDB.data.myBharat) window.DantewadaDB.data.myBharat = [];
-        window.DantewadaDB.data.myBharat.unshift({
-          id: window.DantewadaDB.data.myBharat.length + 1,
-          name: formData['NAME'],
-          fatherName: formData['FATHER NAME'],
-          village: formData['VILLAGE'],
-          block: formData['BLOCK'],
-          dob: formData['DOB'],
-          gender: formData['GENDER'] || 'Male',
-          mobile: formData['MOBILE NO.'],
-          category: formData['CATEGORY'],
-          currentOccupation: formData['CURRENT OCCUPATION'],
-          remark: formData['REMARK'] || 'Registered'
-        });
-        window.DantewadaDB.persist();
-      }
-    },
-    Youth_Hub_Trainings: {
-      num: 9,
-      titleEn: "9. Youth Hub Trainees",
-      titleHi: "यूथ हब प्रशिक्षणार्थी (Youth Hub Trainees)",
-      desc: "दंतेवाड़ा यूथ हब केंद्र में ओरिएंटेशन एवं क्षमता विकास प्रशिक्षण प्राप्त युवा।",
-      collection: "youthHubTrainings",
-      params: [
-        "SR. NO.",
-        "NAME",
-        "FATHER NAME",
-        "VILLAGE",
-        "BLOCK",
-        "DOB",
-        "GENDER",
-        "MOBILE NO.",
-        "REMARK"
-      ],
-      mapRow: (item, idx) => [
-        idx + 1,
-        item.name || 'N/A',
-        item.fatherName || 'N/A',
-        item.village || 'N/A',
-        item.block || 'Dantewada',
-        item.dob || '2001-11-20',
-        item.gender || 'Male',
-        item.mobile || 'N/A',
-        item.remark || 'Training Completed'
-      ],
-      saveRecord: (formData) => {
-        if (!window.DantewadaDB.data.youthHubTrainings) window.DantewadaDB.data.youthHubTrainings = [];
-        window.DantewadaDB.data.youthHubTrainings.unshift({
-          id: window.DantewadaDB.data.youthHubTrainings.length + 1,
-          name: formData['NAME'],
-          fatherName: formData['FATHER NAME'],
-          village: formData['VILLAGE'],
-          block: formData['BLOCK'],
-          dob: formData['DOB'],
-          gender: formData['GENDER'] || 'Male',
-          mobile: formData['MOBILE NO.'],
-          remark: formData['REMARK'] || 'Completed'
-        });
-        window.DantewadaDB.persist();
-      }
-    },
-    Bastar_Munne_Shivir: {
-      num: 13,
-      titleEn: "13. Bastar_Munne_Shivir",
-      titleHi: "बस्तर मुन्ने शिविर में पंजीकृत युवा",
-      desc: "बस्तर मुन्ने शिविर एवं कौशल प्रशिक्षण मेले में पंजीकृत युवाओं का आधार सहित विवरण।",
-      collection: "bastarShivir",
-      params: [
-        "SR. NO.",
-        "NAME",
-        "FATHER NAME",
-        "VILLAGE",
-        "BLOCK",
-        "DOB",
-        "GENDER",
-        "MOBILE NO.",
-        "AADHAR",
-        "CATEGORY",
-        "INTERESTED TRADE (इच्छुक ट्रेड)"
-      ],
-      mapRow: (item, idx) => [
-        idx + 1,
-        item.name || 'N/A',
-        item.fatherName || 'N/A',
-        item.village || 'N/A',
-        item.block || 'Dantewada',
-        item.dob || '2003-04-12',
-        item.gender || 'Male',
-        item.mobile || 'N/A',
-        item.aadhar ? (typeof window.DantewadaDB.maskAadhaar === 'function' ? window.DantewadaDB.maskAadhaar(item.aadhar) : item.aadhar) : 'XXXXXXXX7890',
-        item.category || 'ST',
-        item.training || item.remark || 'RAJMISTRI'
-      ],
-      saveRecord: (formData) => {
-        if (!window.DantewadaDB.data.bastarShivir) window.DantewadaDB.data.bastarShivir = [];
-        window.DantewadaDB.data.bastarShivir.unshift({
-          id: window.DantewadaDB.data.bastarShivir.length + 1,
-          name: formData['NAME'],
-          fatherName: formData['FATHER NAME'],
-          village: formData['VILLAGE'],
-          block: formData['BLOCK'],
-          dob: formData['DOB'],
-          gender: formData['GENDER'] || 'Male',
-          mobile: formData['MOBILE NO.'],
-          aadhar: formData['AADHAR'],
-          category: formData['CATEGORY'],
-          training: formData['INTERESTED TRADE (इच्छुक ट्रेड)'] || 'RAJMISTRI',
-          remark: formData['INTERESTED TRADE (इच्छुक ट्रेड)'] || 'Registered'
-        });
-        window.DantewadaDB.persist();
-      }
-    },
-    Bastar_Munne_Report: {
+
+Bastar_Munne_Report: {
       num: "RPT",
       titleEn: "Bastar Munne Shivir Report",
       titleHi: "बस्तर मुन्ने शिविर ग्रामवार रिपोर्ट",
@@ -2511,113 +2638,6 @@
           silai: formData['SILAI'] || '0',
           plumber: formData['PLUMBER'] || '0',
           computer: formData['COMPUTER'] || '0'
-        });
-        window.DantewadaDB.persist();
-      }
-    },
-    Meetings_VO_CLF_TRIF: {
-      num: 14,
-      titleEn: "14. VO CLF Meeting",
-      titleHi: "VO / CLF बैठकें (ग्राम संगठन व संकुल संघ)",
-      desc: "ग्राम संगठन (VO) एवं संकुल स्तरीय परिसंघ (CLF) की आजीविका, युवा सहभागिता एवं समीक्षा बैठकों का संपूर्ण विवरण व फोटो गैलरी।",
-      collection: "meetingsVoClfTrif",
-      params: [
-        "SR. NO.",
-        "DATE",
-        "VILLAGE",
-        "BLOCK",
-        "VO / CLF NAME",
-        "ADHAYAKSH / SACHIV",
-        "DISCUSS POINT",
-        "REMARKS",
-        "PHOTO UPLOAD"
-      ],
-      mapRow: (item, idx) => [
-        item.id || idx + 1,
-        item.date || '2026-03-01',
-        item.village || item.gp || 'Dantewada',
-        item.block || 'Dantewada',
-        item.voClfName || item.orgName || 'Prerna Mahila Gram Sangathan',
-        item.adhayakshSachiv || item.chairedBy || 'N/A',
-        item.discussPoint || item.agenda || 'Youth Livelihood Mobilization',
-        item.remarks || item.decisions || 'Action Plan Finalized',
-        item.photo || item.photoUrl || ''
-      ],
-      saveRecord: (formData) => {
-        if (!window.DantewadaDB.data.meetingsVoClfTrif) window.DantewadaDB.data.meetingsVoClfTrif = [];
-        const photoVal = formData['PHOTO UPLOAD'] || formData['PHOTO'] || formData['Photo'] || '';
-        window.DantewadaDB.data.meetingsVoClfTrif.unshift({
-          id: window.DantewadaDB.data.meetingsVoClfTrif.length + 1,
-          date: formData['DATE'] || new Date().toISOString().split('T')[0],
-          village: formData['VILLAGE'] || 'Dantewada',
-          block: formData['BLOCK'] || 'Dantewada',
-          voClfName: formData['VO / CLF NAME'] || 'Prerna Mahila Gram Sangathan',
-          adhayakshSachiv: formData['ADHAYAKSH / SACHIV'] || 'N/A',
-          discussPoint: formData['DISCUSS POINT'] || 'Youth livelihood and training mobilization',
-          remarks: formData['REMARKS'] || 'Completed',
-          photo: photoVal
-        });
-        window.DantewadaDB.persist();
-      }
-    },
-    M_Form: {
-      num: 15,
-      titleEn: "15. M-Form", // titleEn: "17. M-Form"
-      titleHi: "एम-फॉर्म सर्वे (M-Form Registration)",
-      desc: "दंतेवाड़ा जिले के ग्राम-वार एम-फॉर्म सर्वे में पंजीकृत युवाओं का संपूर्ण डेटाबेस।",
-      collection: "mFormRecords",
-      params: [
-        "SR. NO.",
-        "Block Name",
-        "Grampanchayat",
-        "First Name",
-        "Last Name",
-        "Mobile Number",
-        "Gender",
-        "Email",
-        "Pin Code",
-        "Father's Name / Husband's Name",
-        "Mother's Name",
-        "Category",
-        "Highest Qualification",
-        "Current Occupation",
-        "Aspired Career"
-      ],
-      mapRow: (item, idx) => [
-        idx + 1,
-        item.block || item['Block Name'] || 'Dantewada',
-        item.gramPanchayat || item.gp || item['Grampanchayat'] || '',
-        item.firstName || item['First Name'] || (item.name ? item.name.split(' ')[0] : ''),
-        item.lastName || item['Last Name'] || (item.name ? item.name.split(' ').slice(1).join(' ') : ''),
-        item.mobile || item['Mobile Number'] || item['Mobile'] || '',
-        item.gender || item['Gender'] || 'Male',
-        item.email || item['Email'] || '',
-        item.pinCode || item['Pin Code'] || '',
-        item.fatherHusband || item["Father's Name / Husband's Name"] || item.fatherName || '',
-        item.motherName || item["Mother's Name"] || '',
-        item.category || item['Category'] || 'ST',
-        item.qualification || item['Highest Qualification'] || '12th Pass',
-        item.currentOccupation || item['Current Occupation'] || item.occupation || 'Candidate',
-        item.aspiredCareer || item['Aspired Career'] || 'Direct Formal Jobs'
-      ],
-      saveRecord: (formData) => {
-        if (!window.DantewadaDB.data.mFormRecords) window.DantewadaDB.data.mFormRecords = [];
-        window.DantewadaDB.data.mFormRecords.unshift({
-          id: window.DantewadaDB.data.mFormRecords.length + 1,
-          block: formData['Block Name'] || 'Dantewada',
-          gramPanchayat: formData['Grampanchayat'] || '',
-          firstName: formData['First Name'] || '',
-          lastName: formData['Last Name'] || '',
-          mobile: formData['Mobile Number'] || '',
-          gender: formData['Gender'] || 'Male',
-          email: formData['Email'] || '',
-          pinCode: formData['Pin Code'] || '',
-          fatherHusband: formData["Father's Name / Husband's Name"] || '',
-          motherName: formData["Mother's Name"] || '',
-          category: formData['Category'] || 'ST',
-          qualification: formData['Highest Qualification'] || '12th Pass',
-          currentOccupation: formData['Current Occupation'] || 'Candidate',
-          aspiredCareer: formData['Aspired Career'] || 'Direct Formal Jobs'
         });
         window.DantewadaDB.persist();
       }

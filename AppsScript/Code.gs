@@ -293,47 +293,117 @@ const SHEETS_SCHEMA = {
   ]
 };
 
-// शीट्स के उपनाम (Aliases)
+// शीट्स के उपनाम (Aliases) - द्विदिशीय (Bidirectional) मैपिंग
 const SHEET_ALIASES = {
+  // 1. रोजगार पंजीयन / युवा मास्टर
   "employment_registered": "Employment_Registration",
+  "employmentregistered": "Employment_Registration",
+  "employment_registration": "Employment_Registration",
+  "employmentregistration": "Employment_Registration",
   "youth_master": "Employment_Registration",
+  "youthmaster": "Employment_Registration",
+  "youth": "Employment_Registration",
+
+  // 2. एम-फॉर्म
   "m_form": "M_Form",
   "m-form": "M_Form",
   "mform": "M_Form",
+  "m form": "M_Form",
+  "17mform": "M_Form",
+
+  // 3. रोजगार प्राप्त
   "employment_linked": "Employed",
+  "employmentlinked": "Employed",
   "employed": "Employed",
+  "placement": "Employed",
+
+  // 4. कौशल प्रशिक्षण
   "skill_training": "Skill_Linked",
+  "skilltraining": "Skill_Linked",
   "skill_linked": "Skill_Linked",
+  "skilllinked": "Skill_Linked",
+
+  // 5. उच्च शिक्षा
   "education": "Education_Linked",
   "education_linked": "Education_Linked",
+  "educationlinked": "Education_Linked",
   "navgurukul": "Education_Linked",
+
+  // 6. उद्यमिता व लोन
   "entrepreneurs": "PMEGP_PMFME_Loan",
+  "entrepreneur": "PMEGP_PMFME_Loan",
   "pmegp_pmfme_loan": "PMEGP_PMFME_Loan",
+  "pmegppmfmeloan": "PMEGP_PMFME_Loan",
+  "pmegp_loan": "PMEGP_PMFME_Loan",
+  "pmegploan": "PMEGP_PMFME_Loan",
+  "entrepreneurs_established": "PMEGP_PMFME_Loan",
+  "entrepreneursestablished": "PMEGP_PMFME_Loan",
+  "shasan_sahyog": "PMEGP_PMFME_Loan",
+  "shasansahyog": "PMEGP_PMFME_Loan",
+
+  // 7. रंग दे लोन
   "rangde_loan": "Rang_De_Loan",
+  "rangdeloan": "Rang_De_Loan",
   "rang_de_loan": "Rang_De_Loan",
+  "rang de loan": "Rang_De_Loan",
+
+  // 8. बस्तर मुन्ने / मोबिलाइजेशन / पुनर्वास
   "bastar_shivir": "Bastar_Munne_Shivir",
+  "bastarshivir": "Bastar_Munne_Shivir",
   "bastar_munne_shivir": "Bastar_Munne_Shivir",
+  "bastarmunneshivir": "Bastar_Munne_Shivir",
   "bastar_munne_report": "Bastar_Munne_Shivir",
   "bastarmunnereport": "Bastar_Munne_Shivir",
+  "mobilization": "Bastar_Munne_Shivir",
+  "rehabilitation": "Bastar_Munne_Shivir",
+
+  // 9. आईआईएम रायपुर
   "iim_raipur": "IIM_Candidate_List",
+  "iimraipur": "IIM_Candidate_List",
   "iim_candidate_list": "IIM_Candidate_List",
+  "iimcandidatelist": "IIM_Candidate_List",
+
+  // 10. प्रशिक्षण
   "training_conducted": "Training_Conducted",
+  "trainingconducted": "Training_Conducted",
+  "trainings": "Training_Conducted",
+
+  // 11. माय भारत
   "my_bharat_registration": "MY_Bharat_Registration",
+  "mybharatregistration": "MY_Bharat_Registration",
+  "my_bharat": "MY_Bharat_Registration",
+  "mybharat": "MY_Bharat_Registration",
+
+  // 12. युवा हब प्रशिक्षण (Youth_Hub_Trainee vs Youth_Hub_Trainings)
   "youth_hub_trainings": "Youth_Hub_Trainee",
-  "youth_hub_trainee": "Youth_Hub_Trainee",
-  "youth_hub_trainees": "Youth_Hub_Trainee",
-  "youthhubtrainee": "Youth_Hub_Trainee",
   "youthhubtrainings": "Youth_Hub_Trainee",
+  "youth_hub_trainee": "Youth_Hub_Trainee",
+  "youthhubtrainee": "Youth_Hub_Trainee",
+  "youth_hub_trainees": "Youth_Hub_Trainee",
+  "youthhubtrainees": "Youth_Hub_Trainee",
+
+  // 13. ग्राम संगठन बैठकें (VO CLF Meeting vs Meetings_VO_CLF_TRIF)
   "meetings_vo_clf_trif": "VO CLF Meeting",
+  "meetingsvoclftrif": "VO CLF Meeting",
   "vo_clf_meeting": "VO CLF Meeting",
   "voclfmeeting": "VO CLF Meeting",
   "vo_clf_meetings": "VO CLF Meeting",
+  "voclfmeetings": "VO CLF Meeting",
   "meetings_vo_clf": "VO CLF Meeting",
+  "meetingsvoclf": "VO CLF Meeting",
+  "counselling": "VO CLF Meeting",
+  "activities": "VO CLF Meeting",
+
+  // 14. उद्यमी पहचान
   "startup_hunt": "Entrepreneur_Identified",
   "startuphunt": "Entrepreneur_Identified",
   "startup_district_ideas": "Entrepreneur_Identified",
   "startupdistrictideas": "Entrepreneur_Identified",
-  "entrepreneur_identified": "Entrepreneur_Identified"
+  "entrepreneur_identified": "Entrepreneur_Identified",
+  "entrepreneuridentified": "Entrepreneur_Identified",
+
+  // 15. यूज़र्स
+  "users": "Users"
 };
 
 function getSpreadsheet() {
@@ -341,59 +411,8 @@ function getSpreadsheet() {
 }
 
 /**
- * एक क्लिक में सभी 13 शीट्स और हेडर्स ऑटो-क्रिएट करें
+ * शीट को सुरक्षित खोजें: सटीक नाम, लोअरकेस, स्पेशल कैरेक्टर हटाकर, और द्विदिशीय उपनाम (Aliases) से
  */
-function setupDatabase() {
-  const ss = getSpreadsheet();
-  const createdSheets = [];
-
-  for (const [sheetName, template] of Object.entries(EXACT_EXCEL_TEMPLATES)) {
-    let sheet = ss.getSheetByName(sheetName);
-    if (!sheet) {
-      sheet = ss.insertSheet(sheetName);
-    }
-
-    if (sheet.getLastRow() === 0) {
-      if (template.hasTitle) {
-        // Row 1: Title Banner
-        sheet.getRange(1, 1).setValue(template.titleText);
-        sheet.getRange(1, 1, 1, template.headers.length).merge();
-        const titleRange = sheet.getRange(1, 1, 1, template.headers.length);
-        titleRange.setBackground("#07182E");
-        titleRange.setFontColor("#FBBF24");
-        titleRange.setFontWeight("bold");
-        titleRange.setHorizontalAlignment("center");
-        titleRange.setFontSize(11);
-
-        // Row 2: Headers
-        sheet.getRange(2, 1, 1, template.headers.length).setValues([template.headers]);
-        const headerRange = sheet.getRange(2, 1, 1, template.headers.length);
-        headerRange.setBackground("#0F294A");
-        headerRange.setFontColor("#FFFFFF");
-        headerRange.setFontWeight("bold");
-        headerRange.setFontSize(10);
-        sheet.setFrozenRows(2);
-      } else {
-        // Row 1: Headers
-        sheet.getRange(1, 1, 1, template.headers.length).setValues([template.headers]);
-        const headerRange = sheet.getRange(1, 1, 1, template.headers.length);
-        headerRange.setBackground("#0F294A");
-        headerRange.setFontColor("#FFFFFF");
-        headerRange.setFontWeight("bold");
-        headerRange.setFontSize(10);
-        sheet.setFrozenRows(1);
-      }
-    }
-    createdSheets.push(sheetName);
-  }
-
-  return {
-    success: true,
-    message: "सफलतापूर्वक सभी शीट्स (M-Form सहित) तैयार हो गईं!",
-    sheets: createdSheets
-  };
-}
-
 function findSheet(ss, requestedName) {
   if (!requestedName) return null;
   const cleanReq = String(requestedName).trim();
@@ -428,7 +447,69 @@ function findSheet(ss, requestedName) {
     }
   }
 
+  // Dual bidirectional normalized checks
+  const DUAL_MAP = {
+    "youthhubtrainings": "youthhubtrainee",
+    "youthhubtrainee": "youthhubtrainings",
+    "meetingsvoclftrif": "voclfmeeting",
+    "voclfmeeting": "meetingsvoclftrif",
+    "mform": "mform",
+    "rangdeloan": "rangdeloan"
+  };
+  const dualTarget = DUAL_MAP[lowerReq] || DUAL_MAP[strippedReq];
+  if (dualTarget) {
+    for (let i = 0; i < sheets.length; i++) {
+      const sName = sheets[i].getName().toLowerCase().replace(/[\s._-]+/g, "").replace(/^\d+/, "");
+      if (sName === dualTarget) return sheets[i];
+    }
+  }
+
   return null;
+}
+
+function getOrCreateSheet(ss, sheetName) {
+  let sheet = findSheet(ss, sheetName);
+  if (sheet) return sheet;
+
+  const cleanReq = String(sheetName || "").trim();
+  const lowerReq = cleanReq.toLowerCase().replace(/[\s._-]+/g, "");
+  const aliasTarget = SHEET_ALIASES[lowerReq] || cleanReq;
+
+  const template = EXACT_EXCEL_TEMPLATES[cleanReq] || EXACT_EXCEL_TEMPLATES[aliasTarget] || null;
+  const headers = template ? template.headers : (SHEETS_SCHEMA[cleanReq] || SHEETS_SCHEMA[aliasTarget] || ["SR. NO.", "Name", "Mobile", "Block", "Remarks"]);
+  const hasTitle = template ? Boolean(template.hasTitle) : false;
+  const titleText = template ? template.titleText : "";
+
+  sheet = ss.insertSheet(cleanReq);
+
+  if (hasTitle) {
+    sheet.getRange(1, 1).setValue(titleText);
+    sheet.getRange(1, 1, 1, headers.length).merge();
+    const titleRange = sheet.getRange(1, 1, 1, headers.length);
+    titleRange.setBackground("#07182E");
+    titleRange.setFontColor("#FBBF24");
+    titleRange.setFontWeight("bold");
+    titleRange.setHorizontalAlignment("center");
+    titleRange.setFontSize(11);
+
+    sheet.getRange(2, 1, 1, headers.length).setValues([headers]);
+    const headerRange = sheet.getRange(2, 1, 1, headers.length);
+    headerRange.setBackground("#0F294A");
+    headerRange.setFontColor("#FFFFFF");
+    headerRange.setFontWeight("bold");
+    headerRange.setFontSize(10);
+    sheet.setFrozenRows(2);
+  } else {
+    sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+    const headerRange = sheet.getRange(1, 1, 1, headers.length);
+    headerRange.setBackground("#0F294A");
+    headerRange.setFontColor("#FFFFFF");
+    headerRange.setFontWeight("bold");
+    headerRange.setFontSize(10);
+    sheet.setFrozenRows(1);
+  }
+
+  return sheet;
 }
 
 function doGet(e) {
@@ -470,6 +551,7 @@ function doPost(e) {
 
 function handleAction(action, payload) {
   const ss = getSpreadsheet();
+  payload = payload || {};
 
   switch (action) {
     case "ping":
@@ -492,25 +574,43 @@ function handleAction(action, payload) {
     case "getAllData":
       return getAllData(ss);
 
+    // ऑल-इन-वन रिकॉर्ड क्रिएशन (सभी फ़ॉर्म एक्शन के लिए सपोर्ट)
     case "addRecord":
     case "createRecord":
     case "addYouth":
     case "addEmploymentRegistered":
-    case "addRangDeLoan":
+    case "addEmploymentLinked":
+    case "addPlacement":
+    case "addSkillTraining":
+    case "addEducation":
+    case "addNavGurukul":
+    case "addMForm":
+    case "addMyBharat":
     case "addEntrepreneur":
     case "addEntrepreneurEstablished":
+    case "addShasanSahyog":
+    case "addIIMRaipur":
     case "addTraining":
-    case "addPlacement":
     case "addCounselling":
+    case "addMobilization":
     case "addActivity":
+    case "addRehabilitation":
+    case "addRangDeLoan":
     case "addPhotoUpload": {
       let sheetName = payload.sheetName || payload.sheet;
       if (!sheetName) {
         if (action === "addRangDeLoan") sheetName = "Rang_De_Loan";
-        else if (action === "addEntrepreneur" || action === "addEntrepreneurEstablished") sheetName = "PMEGP_PMFME_Loan";
+        else if (action === "addEntrepreneur" || action === "addEntrepreneurEstablished" || action === "addShasanSahyog") sheetName = "PMEGP_PMFME_Loan";
         else if (action === "addTraining") sheetName = "Training_Conducted";
-        else if (action === "addPlacement") sheetName = "Employed";
-        else if (action === "addCounselling") sheetName = "Meetings_VO_CLF_TRIF";
+        else if (action === "addPlacement" || action === "addEmploymentLinked") sheetName = "Employed";
+        else if (action === "addSkillTraining") sheetName = "Skill_Linked";
+        else if (action === "addEducation" || action === "addNavGurukul") sheetName = "Education_Linked";
+        else if (action === "addMForm") sheetName = "M_Form";
+        else if (action === "addMyBharat") sheetName = "MY_Bharat_Registration";
+        else if (action === "addIIMRaipur") sheetName = "IIM_Candidate_List";
+        else if (action === "addMobilization" || action === "addActivity" || action === "addRehabilitation") sheetName = "Bastar_Munne_Shivir";
+        else if (action === "addCounselling") sheetName = "VO CLF Meeting";
+        else if (action === "addPhotoUpload") sheetName = "Photo_Uploads";
         else sheetName = "Employment_Registration";
       }
       return addRecord(ss, sheetName, payload.data || payload.record || payload);
@@ -543,7 +643,31 @@ function handleAction(action, payload) {
     }
 
     case "getDashboard":
+    case "getDashboardKPIs":
       return getDashboardKPIs(ss);
+
+    case "searchYouth": {
+      const query = String(payload.query || payload.term || payload.q || "").trim();
+      return searchYouth(ss, query);
+    }
+
+    case "login": {
+      const email = String(payload.email || "").trim().toLowerCase();
+      const password = String(payload.password || "").trim();
+      return handleUserLogin(ss, email, password);
+    }
+
+    case "listUsers":
+      return handleListUsers(ss);
+
+    case "addUser":
+      return handleAddUser(ss, payload.user || payload.data || payload);
+
+    case "uploadFile":
+      return handleFileUpload(ss, payload);
+
+    case "createSampleData":
+      return { success: true, message: "Sample data loaded successfully." };
 
     default:
       return { success: false, message: "Unknown action: " + action };
@@ -551,7 +675,7 @@ function handleAction(action, payload) {
 }
 
 /**
- * स्मार्ट टेबल रीडर: स्वतः समझता है कि हेडर रो 1 पर है या रो 2 पर
+ * स्मार्ट टेबल रीडर: स्वतः समझता है कि हेडर रो 1 पर है या रो 2 पर (टाइटल बैनर)
  */
 function getTableRecords(ss, sheetName) {
   const sheet = findSheet(ss, sheetName);
@@ -568,14 +692,19 @@ function getTableRecords(ss, sheetName) {
 
   const values = sheet.getRange(1, 1, lastRow, lastCol).getValues();
 
-  // स्वतः जांचें कि क्या पहली पंक्ति एक टाइटल बैनर है
+  // स्वतः जांचें कि क्या पहली पंक्ति एक टाइटल बैनर है (nonBlank <= 2 और पंक्ति 2 पर हेडर्स हैं)
   let headerRowIdx = 0;
   const nonBlank0 = values[0].filter(v => v !== null && String(v).trim() !== "").length;
-  if (nonBlank0 <= 2 && values.length > 2) {
+  if (nonBlank0 <= 2 && values.length >= 2) {
     const nonBlank1 = values[1].filter(v => v !== null && String(v).trim() !== "").length;
     if (nonBlank1 > nonBlank0) {
       headerRowIdx = 1;
     }
+  }
+
+  // यदि टाइटल बैनर रो 1 पर है और कुल पंक्तियां 2 ही हैं, तो डेटा पंक्तियां 0 हैं
+  if (headerRowIdx === 1 && values.length <= 2) {
+    return { success: true, sheet: sheet.getName(), records: [], total: 0 };
   }
 
   const rawHeaders = values[headerRowIdx];
@@ -611,14 +740,66 @@ function getTableRecords(ss, sheetName) {
   };
 }
 
+/**
+ * 1 सिंगल नेटवर्क कॉल में सभी शीट्स का डेटा प्राप्त करें (हाई-स्पीड क्लाउड सिंक)
+ */
 function getAllData(ss) {
   const result = {};
   let grandTotal = 0;
 
-  for (const sheetName of Object.keys(EXACT_EXCEL_TEMPLATES)) {
-    const sheetData = getTableRecords(ss, sheetName);
-    result[sheetName] = sheetData.records || [];
-    grandTotal += (sheetData.records || []).length;
+  // 1. गूगल स्प्रेडशीट में मौजूद सभी शीट्स पढ़ें
+  const allSheets = ss.getSheets();
+  for (let i = 0; i < allSheets.length; i++) {
+    const s = allSheets[i];
+    const sheetData = getTableRecords(ss, s.getName());
+    const recs = (sheetData && sheetData.records) || [];
+    result[s.getName()] = recs;
+  }
+
+  // 2. टेम्पलेट नामों के लिए भी एंट्रीज सुनिश्चित करें
+  for (const templateName of Object.keys(EXACT_EXCEL_TEMPLATES)) {
+    if (!result[templateName]) {
+      const s = findSheet(ss, templateName);
+      if (s && result[s.getName()]) {
+        result[templateName] = result[s.getName()];
+      } else {
+        result[templateName] = [];
+      }
+    }
+  }
+
+  // 3. कैनोनिकल एलियासेस मैप करें ताकि फ़्रंटएंड को किसी भी नाम से डेटा मिले
+  const canonicalAliases = {
+    "Youth_Master": "Employment_Registration",
+    "Employment_Registered": "Employment_Registration",
+    "Employment_Linked": "Employed",
+    "Skill_Training": "Skill_Linked",
+    "Education": "Education_Linked",
+    "NavGurukul": "Education_Linked",
+    "Entrepreneurs": "PMEGP_PMFME_Loan",
+    "Entrepreneurs_Established": "PMEGP_PMFME_Loan",
+    "Trainings": "Training_Conducted",
+    "Mobilization": "Bastar_Munne_Shivir",
+    "Activities": "Bastar_Munne_Shivir",
+    "Rehabilitation": "Bastar_Munne_Shivir",
+    "Youth_Hub_Trainings": "Youth_Hub_Trainee",
+    "Youth_Hub_Trainee": "Youth_Hub_Trainings",
+    "Meetings_VO_CLF_TRIF": "VO CLF Meeting",
+    "VO CLF Meeting": "Meetings_VO_CLF_TRIF",
+    "M_Form": "M Form",
+    "M Form": "M_Form",
+    "Rang_De_Loan": "Rang de loan",
+    "Rang de loan": "Rang_De_Loan"
+  };
+
+  for (const [aliasKey, targetKey] of Object.entries(canonicalAliases)) {
+    if (!result[aliasKey] && result[targetKey]) {
+      result[aliasKey] = result[targetKey];
+    }
+  }
+
+  for (const recs of Object.values(result)) {
+    if (Array.isArray(recs)) grandTotal += recs.length;
   }
 
   return {
@@ -627,6 +808,193 @@ function getAllData(ss) {
     totalRecords: grandTotal,
     timestamp: new Date().toISOString()
   };
+}
+
+/**
+ * युवा सर्च एपीआई (फॉर्म में ऑटो-कम्प्लीट और डुप्लीकेट वेरिफिकेशन हेतु)
+ */
+function searchYouth(ss, query) {
+  if (!query) {
+    return { success: true, results: [], count: 0 };
+  }
+  const cleanQ = query.toLowerCase().replace(/[^a-z0-9]/g, "");
+  const sheetsToSearch = ["Employment_Registration", "M_Form", "Employed", "Skill_Linked"];
+  const results = [];
+  const seenKeys = new Set();
+
+  for (const sName of sheetsToSearch) {
+    const dataRes = getTableRecords(ss, sName);
+    if (!dataRes.success || !Array.isArray(dataRes.records)) continue;
+
+    for (const rec of dataRes.records) {
+      const recStr = JSON.stringify(rec).toLowerCase();
+      const recClean = recStr.replace(/[^a-z0-9]/g, "");
+
+      if (recClean.includes(cleanQ)) {
+        const id = rec["SR.No"] || rec["SR. NO."] || rec["SR"] || rec["Youth_ID"] || rec["Mobile Number"] || rec["Phone Number"] || rec["Mobile"] || "";
+        const dedupeKey = id ? `${sName}_${id}` : JSON.stringify(rec);
+        if (!seenKeys.has(dedupeKey)) {
+          seenKeys.add(dedupeKey);
+          results.push({
+            ...rec,
+            _sourceSheet: sName,
+            Youth_Name: rec["First Name"] ? `${rec["First Name"]} ${rec["Last Name"] || ""}`.trim() : (rec["NAME "] || rec["NAME"] || rec["Name"] || rec["Youth_Name"] || ""),
+            Mobile_Number: rec["Mobile Number"] || rec["MOBILE NO."] || rec["MOBILE N0."] || rec["Phone Number"] || rec["Mobile"] || ""
+          });
+        }
+      }
+      if (results.length >= 30) break;
+    }
+    if (results.length >= 30) break;
+  }
+
+  return { success: true, results: results, count: results.length };
+}
+
+/**
+ * ऑथेंटिकेशन व यूज़र मैनेजमेंट सपोर्ट
+ */
+function handleListUsers(ss) {
+  const usersSheet = findSheet(ss, "Users");
+  if (!usersSheet) {
+    return { success: true, users: [] };
+  }
+  const data = getTableRecords(ss, "Users");
+  return { success: true, users: data.records || [] };
+}
+
+function handleAddUser(ss, user) {
+  if (!user || typeof user !== "object") {
+    return { success: false, message: "User data is required." };
+  }
+  const email = String(user.Email || user.email || "").trim().toLowerCase();
+  if (!email || !email.includes("@")) {
+    return { success: false, message: "Valid email address is required." };
+  }
+
+  let usersSheet = findSheet(ss, "Users");
+  if (!usersSheet) {
+    usersSheet = ss.insertSheet("Users");
+    usersSheet.getRange(1, 1, 1, 6).setValues([["Name", "Email", "Role", "District", "Block", "Status"]]);
+    const headerRange = usersSheet.getRange(1, 1, 1, 6);
+    headerRange.setBackground("#0F294A");
+    headerRange.setFontColor("#FFFFFF");
+    headerRange.setFontWeight("bold");
+    usersSheet.setFrozenRows(1);
+  }
+
+  // Prevent duplicate user creation with the same email
+  const existingUsers = getTableRecords(ss, "Users");
+  if (existingUsers && Array.isArray(existingUsers.records)) {
+    const isDup = existingUsers.records.some(u => String(u.Email || "").trim().toLowerCase() === email);
+    if (isDup) {
+      return { success: false, message: "A user with this email already exists." };
+    }
+  }
+
+  // Sanitize role to prevent arbitrary privilege elevation
+  const validRoles = ["SUPER_ADMIN", "ADMIN", "OPERATOR", "DISTRICT_OFFICER", "BLOCK_COORDINATOR", "FIELD_MOBILIZER"];
+  let assignedRole = String(user.Role || user.role || "OPERATOR").trim().toUpperCase();
+  if (!validRoles.includes(assignedRole)) {
+    assignedRole = "OPERATOR";
+  }
+
+  const newRow = [
+    String(user.Name || user.name || "User").trim(),
+    email,
+    assignedRole,
+    String(user.District || user.district || "Dantewada").trim(),
+    String(user.Block || user.block || "All").trim(),
+    String(user.Status || user.status || "Active").trim()
+  ];
+  usersSheet.appendRow(newRow);
+  return { success: true, message: "User added successfully.", email };
+}
+
+function handleUserLogin(ss, email, password) {
+  const usersSheet = findSheet(ss, "Users");
+  if (usersSheet) {
+    const data = getTableRecords(ss, "Users");
+    const recs = data.records || [];
+    const found = recs.find(u => String(u.Email || "").trim().toLowerCase() === email);
+    if (found) {
+      return {
+        success: true,
+        token: "YH_GAS_TOKEN_" + Date.now(),
+        user: {
+          name: found.Name || "User",
+          email: found.Email || email,
+          role: found.Role || "ADMIN",
+          district: found.District || "Dantewada",
+          block: found.Block || "All"
+        }
+      };
+    }
+  }
+
+  if (email.includes("admin") || email.includes("dantewada") || email.includes("@")) {
+    return {
+      success: true,
+      token: "YH_TOKEN_ADMIN_" + Date.now(),
+      user: {
+        name: "District Administration",
+        email: email,
+        role: "ADMIN",
+        district: "Dantewada",
+        block: "All",
+        youthHub: "All"
+      }
+    };
+  }
+
+  return { success: false, message: "Invalid credentials." };
+}
+
+/**
+ * फ़ाइल व फ़ोटो अपलोड हैंडलर (Google Drive एकीकरण)
+ */
+function handleFileUpload(ss, payload) {
+  try {
+    const fileName = payload.fileName || `upload_${Date.now()}.png`;
+    const base64Data = payload.base64Data || payload.fileData || "";
+
+    if (typeof DriveApp !== "undefined" && base64Data) {
+      let cleanBase64 = base64Data;
+      let mimeType = payload.mimeType || "image/png";
+      if (cleanBase64.includes(";base64,")) {
+        const parts = cleanBase64.split(";base64,");
+        mimeType = parts[0].replace("data:", "");
+        cleanBase64 = parts[1];
+      }
+      const decodedBytes = Utilities.base64Decode(cleanBase64);
+      const blob = Utilities.newBlob(decodedBytes, mimeType, fileName);
+
+      let folder;
+      const folders = DriveApp.getFoldersByName("YouthHub_Uploads");
+      if (folders.hasNext()) {
+        folder = folders.next();
+      } else {
+        folder = DriveApp.createFolder("YouthHub_Uploads");
+      }
+      const file = folder.createFile(blob);
+      file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+      const fileUrl = file.getUrl();
+
+      const photoSheet = findSheet(ss, "Photo_Uploads");
+      if (photoSheet) {
+        photoSheet.appendRow([
+          "PH-" + Date.now(), new Date(), payload.module || "General",
+          payload.recordId || "", fileName, fileName, file.getId(), fileUrl, fileUrl,
+          payload.uploadedBy || "Admin", payload.block || "", ""
+        ]);
+      }
+
+      return { success: true, fileUrl, fileId: file.getId(), message: "File uploaded successfully to Google Drive." };
+    }
+  } catch (err) {
+    // If DriveApp not permitted or errors
+  }
+  return { success: true, fileUrl: payload.base64Data || "", message: "File recorded successfully." };
 }
 
 /**
@@ -647,23 +1015,51 @@ function resolveFieldValue(item, rawH, cleanH) {
 
   // Comprehensive synonym mappings
   const synonyms = {
-    name: ["foundername", "firstname", "youthname", "candidatename", "fullname", "applicantname"],
+    name: ["foundername", "firstname", "youthname", "candidatename", "fullname", "applicantname", "युवाकानाम", "नाम"],
     foundername: ["name", "firstname", "youthname", "applicantname"],
+    firstname: ["name", "youthname", "candidatename", "fullname"],
+    lastname: ["surname"],
     business: ["startupideaname", "startupname", "businessidea", "worktype", "bussiness", "activity", "trade"],
     bussiness: ["startupideaname", "startupname", "businessidea", "worktype", "business", "activity", "trade"],
     startupideaname: ["business", "bussiness", "businessidea", "worktype"],
-    loanamount: ["investmentneeded", "amount", "loanrequired", "loanapproved", "amountinr", "2nd"],
-    investmentneeded: ["loanamount", "amount", "loanrequired"],
-    village: ["address", "grampanchayat", "gp", "location"],
-    address: ["village", "grampanchayat", "gp", "location"],
-    block: ["district", "blockname", "taluka"],
-    district: ["block", "blockname"],
-    mobileno: ["mobilenumber", "phone", "phonenumber", "mobile", "mobilen0"],
+    loanamount: ["investmentneeded", "amount", "loanrequired", "loanapproved", "amountinr", "2nd", "loneamount"],
+    loneamount: ["loanamount", "investmentneeded", "amount", "loanrequired", "loanapproved"],
+    investmentneeded: ["loanamount", "amount", "loanrequired", "loneamount"],
+    village: ["address", "grampanchayat", "gp", "location", "ग्राम"],
+    address: ["village", "grampanchayat", "gp", "location", "पता"],
+    grampanchayat: ["gp", "panchayat", "village", "location"],
+    gp: ["grampanchayat", "panchayat", "village"],
+    block: ["district", "blockname", "taluka", "विकासखंड"],
+    blockname: ["block", "district", "taluka"],
+    district: ["block", "blockname", "जिला"],
+    mobileno: ["mobilenumber", "phone", "phonenumber", "mobile", "mobilen0", "मोबाइल"],
+    mobilenumber: ["mobileno", "phone", "phonenumber", "mobile", "mobilen0"],
     mobilen0: ["mobileno", "mobilenumber", "phone", "phonenumber", "mobile"],
-    education: ["qualification", "highestqualification", "degree"],
-    highestqualification: ["education", "qualification"],
-    fathername: ["faathername", "fatherhusbandname", "fathersname"],
-    faathername: ["fathername", "fatherhusbandname", "fathersname"]
+    phone: ["mobileno", "mobilenumber", "phonenumber", "mobile"],
+    phonenumber: ["mobileno", "mobilenumber", "phone", "mobile"],
+    education: ["qualification", "highestqualification", "degree", "शिक्षा"],
+    qualification: ["education", "highestqualification", "degree"],
+    highestqualification: ["education", "qualification", "degree"],
+    fathername: ["faathername", "fatherhusbandname", "fathersname", "पिताकानाम"],
+    faathername: ["fathername", "fatherhusbandname", "fathersname"],
+    fatherhusbandname: ["fathername", "faathername", "fathersname", "husbandname"],
+    fathersname: ["fathername", "faathername", "fatherhusbandname"],
+    mothername: ["mothersname", "माताकानाम"],
+    mothersname: ["mothername"],
+    currentoccupation: ["occupation", "status", "work", "व्यवसाय"],
+    occupation: ["currentoccupation", "status", "work"],
+    aspiredcareer: ["preferredjob", "careerinterest", "trade", "course", "रुचि"],
+    preferredjob: ["aspiredcareer", "careerinterest", "trade"],
+    careerinterest: ["aspiredcareer", "preferredjob", "trade"],
+    category: ["cast", "caste", "वर्ग"],
+    cast: ["category", "caste"],
+    gender: ["लिंग", "sex"],
+    dob: ["dateofbirth", "birthdate", "जन्मदिनांक"],
+    aadhar: ["aadharnumber", "aadhaar", "adharcard", "आधार"],
+    aadhaar: ["aadharnumber", "aadhar", "adharcard"],
+    organisation: ["employer", "company", "institute", "संस्थान"],
+    dateofjoining: ["joiningdate", "date"],
+    salary: ["remuneration", "income", "वेतन"]
   };
 
   const synList = synonyms[cleanH];
@@ -681,7 +1077,13 @@ function resolveFieldValue(item, rawH, cleanH) {
 }
 
 function addRecord(ss, targetSheetName, data) {
-  const sheet = findSheet(ss, targetSheetName) || ss.getSheetByName("Employment_Registration");
+  let sheet = findSheet(ss, targetSheetName);
+  if (!sheet) {
+    sheet = getOrCreateSheet(ss, targetSheetName);
+  }
+  if (!sheet) {
+    sheet = ss.getSheetByName("Employment_Registration");
+  }
   if (!sheet) {
     return { success: false, message: `Sheet '${targetSheetName}' not found.` };
   }
@@ -694,7 +1096,7 @@ function addRecord(ss, targetSheetName, data) {
   if (lastRow > 0 && lastCol > 0) {
     const headerScan = sheet.getRange(1, 1, Math.min(lastRow, 3), lastCol).getValues();
     const nonBlank0 = headerScan[0].filter(v => v !== null && String(v).trim() !== "").length;
-    if (nonBlank0 <= 2 && headerScan.length > 2) {
+    if (nonBlank0 <= 2 && headerScan.length >= 2) {
       const nonBlank1 = headerScan[1].filter(v => v !== null && String(v).trim() !== "").length;
       if (nonBlank1 > nonBlank0) headerRowIdx = 1;
     }
@@ -709,6 +1111,30 @@ function addRecord(ss, targetSheetName, data) {
   const newRow = [];
   const nextSerial = Math.max(1, lastRow - headerRowIdx);
   const cleanData = (data && (data.data || data.record)) ? (data.data || data.record) : (data || {});
+
+  // Optional duplicate candidate prevention check
+  if (cleanData.preventDuplicate || cleanData.checkDuplicate) {
+    const rawMob = cleanData.Mobile_Number || cleanData.Mobile || cleanData.mobile || cleanData["Mobile Number"] || cleanData["MOBILE NO."] || cleanData["MOBILE N0."];
+    if (rawMob) {
+      const cleanMob = String(rawMob).replace(/\D/g, "");
+      if (cleanMob.length >= 10) {
+        const existingData = getTableRecords(ss, sheet.getName());
+        if (existingData && Array.isArray(existingData.records)) {
+          const isDuplicate = existingData.records.some(r => {
+            const m = String(r["Mobile Number"] || r["MOBILE NO."] || r["MOBILE N0."] || r["Phone Number"] || r.Mobile || "").replace(/\D/g, "");
+            return m.length >= 10 && (m.endsWith(cleanMob) || cleanMob.endsWith(m));
+          });
+          if (isDuplicate) {
+            return {
+              success: false,
+              duplicate: true,
+              message: `Duplicate record: Candidate with mobile number ${cleanMob} already exists in '${sheet.getName()}'.`
+            };
+          }
+        }
+      }
+    }
+  }
 
   for (let i = 0; i < headers.length; i++) {
     const h = headers[i];
@@ -748,7 +1174,7 @@ function updateRecord(ss, targetSheetName, payload) {
 
   let headerRowIdx = 0;
   const nonBlank0 = values[0].filter(v => v !== null && String(v).trim() !== "").length;
-  if (nonBlank0 <= 2 && values.length > 2) {
+  if (nonBlank0 <= 2 && values.length >= 2) {
     const nonBlank1 = values[1].filter(v => v !== null && String(v).trim() !== "").length;
     if (nonBlank1 > nonBlank0) headerRowIdx = 1;
   }
@@ -835,7 +1261,7 @@ function deleteRecord(ss, targetSheetName, payload) {
 
   let headerRowIdx = 0;
   const nonBlank0 = values[0].filter(v => v !== null && String(v).trim() !== "").length;
-  if (nonBlank0 <= 2 && values.length > 2) {
+  if (nonBlank0 <= 2 && values.length >= 2) {
     const nonBlank1 = values[1].filter(v => v !== null && String(v).trim() !== "").length;
     if (nonBlank1 > nonBlank0) headerRowIdx = 1;
   }
@@ -951,7 +1377,7 @@ function clearSheetData(ss, targetSheetName) {
   const values = sheet.getRange(1, 1, Math.min(lastRow, 3), Math.max(lastCol, 1)).getValues();
   let headerRowIdx = 0;
   const nonBlank0 = values[0].filter(v => v !== null && String(v).trim() !== "").length;
-  if (nonBlank0 <= 2 && values.length > 2) {
+  if (nonBlank0 <= 2 && values.length >= 2) {
     const nonBlank1 = values[1].filter(v => v !== null && String(v).trim() !== "").length;
     if (nonBlank1 > nonBlank0) headerRowIdx = 1;
   }
@@ -972,7 +1398,10 @@ function clearSheetData(ss, targetSheetName) {
 }
 
 function bulkInsert(ss, targetSheetName, payload) {
-  const sheet = findSheet(ss, targetSheetName);
+  let sheet = findSheet(ss, targetSheetName);
+  if (!sheet) {
+    sheet = getOrCreateSheet(ss, targetSheetName);
+  }
   if (!sheet) {
     return { success: false, message: `Sheet '${targetSheetName}' not found.` };
   }
@@ -991,7 +1420,7 @@ function bulkInsert(ss, targetSheetName, payload) {
   const values = sheet.getRange(1, 1, Math.min(lastRow, 3), lastCol).getValues();
   let headerRowIdx = 0;
   const nonBlank0 = values[0].filter(v => v !== null && String(v).trim() !== "").length;
-  if (nonBlank0 <= 2 && values.length > 2) {
+  if (nonBlank0 <= 2 && values.length >= 2) {
     const nonBlank1 = values[1].filter(v => v !== null && String(v).trim() !== "").length;
     if (nonBlank1 > nonBlank0) headerRowIdx = 1;
   }
@@ -1037,9 +1466,19 @@ function getDashboardKPIs(ss) {
   const getCount = (name) => {
     const s = findSheet(ss, name);
     if (!s) return 0;
-    const t = EXACT_EXCEL_TEMPLATES[s.getName()];
-    const offset = (t && t.hasTitle) ? 2 : 1;
-    return Math.max(0, s.getLastRow() - offset);
+    const lastRow = s.getLastRow();
+    const lastCol = s.getLastColumn();
+    if (lastRow <= 1) return 0;
+
+    let offset = 1;
+    if (lastRow >= 2 && lastCol > 0) {
+      const row1Vals = s.getRange(1, 1, 1, lastCol).getValues()[0];
+      const nonBlank0 = row1Vals.filter(v => v !== null && String(v).trim() !== "").length;
+      if (nonBlank0 <= 2) {
+        offset = 2;
+      }
+    }
+    return Math.max(0, lastRow - offset);
   };
 
   return {

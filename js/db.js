@@ -1494,7 +1494,57 @@
     // -------------------------------------------------------------
     // Live Google Apps Script Cloud Sync
     // -------------------------------------------------------------
+    async _fetchWithTimeoutAndRetry(url, bodyObj, maxRetries = 2, timeoutMs = 15000) {
+      for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        let timer = null;
+        try {
+          const controller = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+          if (controller) {
+            timer = setTimeout(() => controller.abort(), timeoutMs);
+          }
+          const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify(bodyObj),
+            signal: controller ? controller.signal : undefined
+          });
+          if (timer) clearTimeout(timer);
+
+          if (res.status === 429 || res.status >= 500) {
+            if (attempt < maxRetries) {
+              const backoff = Math.pow(2, attempt) * 800 + Math.random() * 300;
+              await new Promise(r => setTimeout(r, backoff));
+              continue;
+            }
+          }
+
+          if (!res.ok) {
+            throw new Error(`HTTP ${res.status}`);
+          }
+          return await res.json();
+        } catch (err) {
+          if (timer) clearTimeout(timer);
+          if (attempt < maxRetries) {
+            const backoff = Math.pow(2, attempt) * 800 + Math.random() * 300;
+            await new Promise(r => setTimeout(r, backoff));
+            continue;
+          }
+          throw err;
+        }
+      }
+    }
+
     async syncFromGoogleSheet(customUrl) {
+      if (this._syncInProgressPromise) {
+        return this._syncInProgressPromise;
+      }
+      this._syncInProgressPromise = this._doSyncFromGoogleSheet(customUrl).finally(() => {
+        this._syncInProgressPromise = null;
+      });
+      return this._syncInProgressPromise;
+    }
+
+    async _doSyncFromGoogleSheet(customUrl) {
       const url = customUrl || (typeof window !== 'undefined' && window.ENV && window.ENV.GOOGLE_SCRIPT_URL) || (typeof localStorage !== 'undefined' && localStorage.getItem('YH_DANTEWADA_API_URL')) || '';
       if (!url) {
         return { success: false, message: 'Google Apps Script URL is not configured. Please set GOOGLE_SCRIPT_URL in .env or js/env.js.' };
@@ -1530,35 +1580,60 @@
 
       let totalSynced = 0;
       const stats = {};
-
-      const fetchPromises = sheetsToFetch.map(async (sheetName) => {
-        try {
-          const res = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({ action: 'getTableRecords', payload: { sheetName } })
-          });
-          const d = await res.json();
-          return { sheetName, success: d && d.success, records: (d && Array.isArray(d.records)) ? d.records : [] };
-        } catch (err) {
-          console.warn(`Failed to fetch sheet ${sheetName}:`, err.message);
-          return { sheetName, success: false, records: [] };
-        }
-      });
-
-      const settled = await Promise.allSettled(fetchPromises);
       const sheetDataMap = {};
       const fetchedSheets = new Set();
 
-      settled.forEach(item => {
-        if (item.status === 'fulfilled' && item.value.success) {
-          const recs = item.value.records || [];
-          sheetDataMap[item.value.sheetName] = recs;
-          fetchedSheets.add(item.value.sheetName);
-          stats[item.value.sheetName] = recs.length;
-          totalSynced += recs.length;
+      // 1. First attempt fast single-call sync using 'getAllData'
+      let fastSyncSuccess = false;
+      try {
+        const fastJson = await this._fetchWithTimeoutAndRetry(url, { action: 'getAllData', payload: {} }, 2, 18000);
+        if (fastJson && fastJson.success && fastJson.data && typeof fastJson.data === 'object') {
+          for (const [k, recs] of Object.entries(fastJson.data)) {
+            if (Array.isArray(recs)) {
+              sheetDataMap[k] = recs;
+              fetchedSheets.add(k);
+              stats[k] = recs.length;
+              totalSynced += recs.length;
+            }
+          }
+          fastSyncSuccess = true;
+          console.log(`⚡ Live Google Sheets synced in 1 call: ${totalSynced} records loaded.`);
         }
-      });
+      } catch (fastErr) {
+        console.warn('Fast getAllData sync failed, falling back to chunked sheets:', fastErr.message);
+      }
+
+      // 2. Safe fallback: Chunk sheets in batches of 4 with delays to avoid Google quota limits
+      if (!fastSyncSuccess) {
+        const CHUNK_SIZE = 4;
+        for (let i = 0; i < sheetsToFetch.length; i += CHUNK_SIZE) {
+          const chunk = sheetsToFetch.slice(i, i + CHUNK_SIZE);
+          const chunkPromises = chunk.map(async (sheetName) => {
+            try {
+              const d = await this._fetchWithTimeoutAndRetry(url, { action: 'getTableRecords', payload: { sheetName } }, 1, 10000);
+              return { sheetName, success: d && d.success, records: (d && Array.isArray(d.records)) ? d.records : [] };
+            } catch (err) {
+              console.warn(`Failed to fetch sheet ${sheetName}:`, err.message);
+              return { sheetName, success: false, records: [] };
+            }
+          });
+
+          const chunkSettled = await Promise.allSettled(chunkPromises);
+          chunkSettled.forEach(item => {
+            if (item.status === 'fulfilled' && item.value.success) {
+              const recs = item.value.records || [];
+              sheetDataMap[item.value.sheetName] = recs;
+              fetchedSheets.add(item.value.sheetName);
+              stats[item.value.sheetName] = recs.length;
+              totalSynced += recs.length;
+            }
+          });
+
+          if (i + CHUNK_SIZE < sheetsToFetch.length) {
+            await new Promise(r => setTimeout(r, 150));
+          }
+        }
+      }
 
       // 1. Employment_Registration / M_Form
       const empRecords = sheetDataMap['Employment_Registration'] || sheetDataMap['Employment_Registered'] || [];

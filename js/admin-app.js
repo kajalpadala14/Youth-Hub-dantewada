@@ -1934,8 +1934,8 @@
       }
     },
     Entrepreneur_Identified: {
-      num: 12,
-      titleEn: "12. Startup Hunt",
+      num: 9,
+      titleEn: "9. Startup Hunt",
       titleHi: "स्टार्टअप हंट (चयनित उद्यमी एवं स्टार्टअप विचार)",
       desc: "दंतेवाड़ा एवं बस्तर संभाग के चयनित युवा उद्यमी, उनके स्टार्टअप विचार, बिज़नेस मॉडल, लक्षित ग्राहक, आवश्यक निवेश एवं पिच डेक की संपूर्ण सूची।",
       collection: "entrepreneurIdeas",
@@ -2014,8 +2014,8 @@
       saveRecord: () => {}
     },
     PMEGP_PMFME_Loan: {
-      num: 13,
-      titleEn: "13. PMEGP_PMFME_Loan",
+      num: 10,
+      titleEn: "10. PMEGP_PMFME_Loan",
       titleHi: "ऋण एवं योजना विवरण",
       desc: "PMEGP, PMFME, MUDRA ऋण योजनांतर्गत स्वीकृत व लाभान्वित युवाओं की सूची।",
       collection: "loans",
@@ -2055,8 +2055,8 @@
       }
     },
     Rang_De_Loan: {
-      num: 14,
-      titleEn: "14. Rang_De_Loan",
+      num: 11,
+      titleEn: "11. Rang_De_Loan",
       titleHi: "रंग दे पीयर-टू-पीयर माइक्रो लोन",
       desc: "Social investment & peer-to-peer micro-credit linkages for Dantewada rural youth, SHGs & entrepreneurs.",
       collection: "rangDe",
@@ -2284,8 +2284,8 @@
       }
     },
     Bastar_Munne_Shivir: {
-      num: 15,
-      titleEn: "15. Bastar_Munne_Shivir",
+      num: 12,
+      titleEn: "12. Bastar_Munne_Shivir",
       titleHi: "बस्तर मुन्ने शिविर में पंजीकृत युवा",
       desc: "बस्तर मुन्ने शिविर एवं कौशल प्रशिक्षण मेले में पंजीकृत युवाओं का आधार सहित विवरण।",
       collection: "bastarShivir",
@@ -2387,8 +2387,8 @@
       }
     },
     Meetings_VO_CLF_TRIF: {
-      num: 16,
-      titleEn: "16. VO CLF Meeting",
+      num: 13,
+      titleEn: "13. VO CLF Meeting",
       titleHi: "VO / CLF बैठकें (ग्राम संगठन व संकुल संघ)",
       desc: "ग्राम संगठन (VO) एवं संकुल स्तरीय परिसंघ (CLF) की आजीविका, युवा सहभागिता एवं समीक्षा बैठकों का संपूर्ण विवरण व फोटो गैलरी।",
       collection: "meetingsVoClfTrif",
@@ -2432,8 +2432,8 @@
       }
     },
     M_Form: {
-      num: 17,
-      titleEn: "17. M-Form",
+      num: 14,
+      titleEn: "14. M-Form", // titleEn: "17. M-Form"
       titleHi: "एम-फॉर्म सर्वे (M-Form Registration)",
       desc: "दंतेवाड़ा जिले के ग्राम-वार एम-फॉर्म सर्वे में पंजीकृत युवाओं का संपूर्ण डेटाबेस।",
       collection: "mFormRecords",

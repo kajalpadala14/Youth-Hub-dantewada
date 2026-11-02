@@ -80,7 +80,22 @@
     } else if (sheetKey === 'PMEGP_PMFME_Loan') {
       const biz = clean['BUSSINESS'] || clean['BUSINESS'] || clean['business'] || '';
       if (biz) { clean['BUSSINESS'] = biz; clean['BUSINESS'] = biz; }
-    } else if (sheetKey === 'Employed' || sheetKey === 'Skill_Linked' || sheetKey === 'Training_Conducted' || sheetKey === 'IIM_Candidate_List') {
+    } else if (sheetKey === 'Training_Conducted') {
+      const trName = clean['TRAINING NAME'] || clean['Training Name'] || clean['TRAINING'] || clean['training'] || '';
+      const trainer = clean['TRAINNER'] || clean['Trainner'] || clean['TRAINER'] || clean['trainer'] || '';
+      const org = clean['ORAGANISATION'] || clean['Oraganisation'] || clean['ORGANISATION'] || clean['Organisation'] || clean['INSTITUTE'] || clean['institute'] || '';
+      const venue = clean['VANUE'] || clean['Vanue'] || clean['VENUE'] || clean['Venue'] || clean['ADDRESS'] || clean['address'] || '';
+      const mob = clean['MOBILE NO.'] || clean['MOBILE NO'] || clean['MOBILE N0.'] || clean['mobile'] || clean['DURATION'] || clean['DATE'] || '';
+
+      const nm = clean['NAME '] || clean['NAME'] || clean['name'] || trName || trainer || 'Training Session';
+      clean['NAME'] = nm;
+      clean['NAME '] = nm;
+      clean['ADDRESS'] = clean['ADDRESS'] || venue || 'Dantewada';
+      clean['INSTITUTE'] = clean['INSTITUTE'] || org || 'District Livelihood College';
+      clean['TRAINING'] = clean['TRAINING'] || trName || 'Skill Training';
+      clean['MOBILE NO.'] = clean['MOBILE NO.'] || mob || '-';
+      clean['MOBILE N0.'] = clean['MOBILE NO.'];
+    } else if (sheetKey === 'Employed' || sheetKey === 'Skill_Linked' || sheetKey === 'IIM_Candidate_List') {
       const nm = clean['NAME '] || clean['NAME'] || clean['name'] || '';
       if (nm) { clean['NAME '] = nm; clean['NAME'] = nm; }
       const mob = clean['MOBILE N0.'] || clean['MOBILE NO, '] || clean['MOBILE NO.'] || clean['mobile'] || '';
@@ -2284,11 +2299,11 @@
       ],
       mapRow: (item, idx) => [
         idx + 1,
-        item.name || item.title || 'Candidate Name',
+        item.name || item.training || item.title || 'Training Program',
         item.address || item.venue || 'Dantewada',
-        item.mobile || '9876543210',
+        item.mobile || (item.duration ? `${item.duration}` : (item.date ? `${item.date}` : '-')),
         item.institute || item.trainer || 'Livelihood College Dantewada',
-        item.training || item.category || 'Skill Training'
+        item.training || item.name || 'Skill Training'
       ],
       saveRecord: (formData) => {
         if (!window.DantewadaDB.data.trainingConducted) window.DantewadaDB.data.trainingConducted = [];
@@ -4499,7 +4514,7 @@
       PMEGP_PMFME_Loan: ['loan amount', 'yojna', 'bussiness'],
       Rang_De_Loan: ['rang de', '2nd (₹)', 'activity'],
       IIM_Candidate_List: ['candidate list iim raipur', 'education,percent', 'cast,gp', 'mobile no, '],
-      Training_Conducted: ['training', 'institute', 'address'],
+      Training_Conducted: ['training', 'institute', 'address', 'duration', 'vanue', 'venue', 'trainner', 'trainer', 'oraganisation'],
       MY_Bharat_Registration: ['my bharat', 'current occupation,remark'],
       Youth_Hub_Trainings: ['youths attended trainings', 'dob,gender,mobile no.,remark'],
       Bastar_Munne_Shivir: ['bastar munne', 'aadhar,category,remark'],

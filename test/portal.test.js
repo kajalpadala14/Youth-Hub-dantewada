@@ -439,6 +439,51 @@ test('Dantewada Youth Development Portal - Backend & Data Integrity Test', async
     assert.strictEqual(preview.validRows[0]._normalized.organisation, 'TRI MOBILIZER');
   });
 
+  await t.test('Training_Conducted Bulk Upload: Handles session format (TRAINING NAME, VANUE, ORAGANISATION, TRAINNER)', () => {
+    const dbJs = fs.readFileSync('js/db.js', 'utf8');
+    const mockWindow = { localStorage: { getItem: () => null, setItem: () => {} }, dispatchEvent: () => {} };
+    const runSandbox = new Function('window', 'localStorage', dbJs);
+    runSandbox(mockWindow, mockWindow.localStorage);
+    const db = mockWindow.DantewadaDB;
+
+    const rawTrainingRows = [
+      {
+        '__EMPTY': 1,
+        'TRAINING NAME': 'ENTERPRENEURSHIP DEVELOPMENT',
+        'ORAGANISATION': 'MAYTREE SCHOOL OF ENTEPRINEURSHIP',
+        'DURATION': '7 DAYS',
+        'DATE': '15 TO 22.01.2025',
+        'VANUE': 'YOUTH HUB DANTEWADA',
+        'TRAINNER': 'ROHIT KASHYAP, ANURAG',
+        'SUPPORTING STAFF': 'YOUTH HUB STAFF'
+      },
+      {
+        '__EMPTY': 40,
+        'TRAINING NAME': '',
+        'ORAGANISATION': '',
+        'DURATION': '',
+        'DATE': '',
+        'VANUE': '',
+        'TRAINNER': '',
+        'SUPPORTING STAFF': ''
+      }
+    ];
+
+    const preview = db.previewImport('Training_Conducted', rawTrainingRows);
+    assert.strictEqual(preview.totalCount, 2);
+    assert.strictEqual(preview.validRows.length, 1);
+    assert.strictEqual(preview.invalidRows.length, 1);
+    assert.strictEqual(preview.validRows[0]._normalized.name, 'ENTERPRENEURSHIP DEVELOPMENT');
+    assert.strictEqual(preview.validRows[0]._normalized.village, 'YOUTH HUB DANTEWADA');
+    assert.strictEqual(preview.validRows[0]._normalized.institute, 'MAYTREE SCHOOL OF ENTEPRINEURSHIP');
+
+    const commitRes = db.commitImport('Training_Conducted', preview.validRows);
+    assert.strictEqual(commitRes.success, true);
+    assert.strictEqual(commitRes.insertedCount, 1);
+    assert.strictEqual(db.data.trainingConducted[0].name, 'ENTERPRENEURSHIP DEVELOPMENT');
+    assert.strictEqual(db.data.trainingConducted[0].address, 'YOUTH HUB DANTEWADA');
+  });
+
   await t.test('Cloud Synchronization & Dual Header Compatibility Verification', () => {
     const adminAppCode = fs.readFileSync('js/admin-app.js', 'utf8');
     const mockWindow = {};

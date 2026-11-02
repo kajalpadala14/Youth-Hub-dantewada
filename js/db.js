@@ -1015,6 +1015,12 @@
           return '';
         };
 
+        const hasAnyContent = Object.entries(row).some(([k, v]) => {
+          const cleanK = k.toLowerCase().replace(/[^a-z0-9]/g, '');
+          if (['empty', 'sr', 'srno', 'sno', 'sl', 'id', 'rownum'].some(p => cleanK.includes(p))) return false;
+          return v !== undefined && v !== null && String(v).trim() !== '';
+        });
+
         // 1. Name resolution
         let name = '';
         const firstName = getFieldVal(['First Name', 'firstname', 'First_Name']);
@@ -1025,6 +1031,7 @@
         if (!name) {
           name = getFieldVal([
             'NAME', 'NAME ', 'Name', 'Full Name', 'fullName', 'Youth_Name', 'Candidate_Name',
+            'TRAINING NAME', 'Training Name', 'TRAINNER', 'Trainner', 'TRAINER', 'Trainer',
             'FOUNDER NAME', 'Founder Name', 'पूरा नाम (Full Name)',
             'STARTUP / IDEA NAME', 'आपके स्टार्टअप/आइडिया का नाम (Name of your Startup/Idea)',
             'VO / CLF NAME', 'VO/CLF NAME', 'VO CLF NAME', 'VO_CLF_NAME', 'ORGANIZATION / CLF NAME',
@@ -1033,9 +1040,23 @@
         }
         if (!name) {
           if (sheetName === 'Meetings_VO_CLF_TRIF' || sheetName === 'VO CLF Meeting') {
-            name = getFieldVal(['VO / CLF NAME', 'VILLAGE', 'Village', 'ADHAYAKSH / SACHIV']) || `Meeting Record #${idx + 1}`;
+            name = getFieldVal(['VO / CLF NAME', 'VILLAGE', 'Village', 'ADHAYAKSH / SACHIV']) || (hasAnyContent ? `Meeting Record #${idx + 1}` : '');
           } else if (sheetName === 'Bastar_Munne_Report') {
-            name = getFieldVal(['VILLAGE NAME', 'Village', 'VILLAGE']) || `Village Report #${idx + 1}`;
+            name = getFieldVal(['VILLAGE NAME', 'Village', 'VILLAGE']) || (hasAnyContent ? `Village Report #${idx + 1}` : '');
+          } else if (sheetName === 'Training_Conducted' || sheetName === 'training_conducted' || sheetName === 'Youth_Hub_Trainings') {
+            const trProg = getFieldVal(['TRAINING NAME', 'Training Name', 'TRAINING', 'Training', 'Course', 'INTERESTED TRADE (इच्छुक ट्रेड)']);
+            const trTrainer = getFieldVal(['TRAINNER', 'Trainner', 'TRAINER', 'Trainer']);
+            const trVenue = getFieldVal(['VANUE', 'Vanue', 'VENUE', 'Venue', 'ADDRESS', 'Address', 'VILLAGE', 'Village']);
+            const trOrg = getFieldVal(['ORAGANISATION', 'Oraganisation', 'ORGANISATION', 'Organisation', 'INSTITUTE', 'Institute']);
+            if (trProg) {
+              name = trProg;
+            } else if (trTrainer) {
+              name = `${trTrainer} (Trainer)`;
+            } else if (trVenue || trOrg) {
+              name = `Training at ${trVenue || trOrg}`;
+            } else if (hasAnyContent) {
+              name = `Training Session #${idx + 1}`;
+            }
           } else if (getFieldVal(['MOBILE NO.', 'MOBILE NO', 'MOBILE N0.', 'Mobile Number', 'Phone Number', 'ORGANISATION'])) {
             name = `Candidate #${idx + 1}`;
           }
@@ -1060,11 +1081,15 @@
         // 5. Village / Address / GP
         const village = getFieldVal([
           'Grampanchayat', 'Gram Panchayat', 'GP', 'VILLAGE', 'Village',
-          'ADDRESS', 'Address', 'Village Of Candidate', 'Location', 'Panchayat'
+          'ADDRESS', 'Address', 'Village Of Candidate', 'Location', 'Panchayat',
+          'VANUE', 'Vanue', 'VENUE', 'Venue'
         ]);
 
         // 6. Organization & Salary for Employed
-        const organisation = getFieldVal(['ORGANISATION', 'Organisation', 'Organization', 'Company', 'Employer', 'INSTITUTE', 'Institute', 'Agency']);
+        const organisation = getFieldVal([
+          'ORGANISATION', 'Organisation', 'Organization', 'Company', 'Employer',
+          'INSTITUTE', 'Institute', 'Agency', 'ORAGANISATION', 'Oraganisation'
+        ]);
         const salary = getFieldVal(['SALARY', 'Salary', 'Remuneration', 'Income', 'Pay', 'Package']);
         const joiningDate = getFieldVal(['DATE OF JOINING', 'Date of Joining', 'Joining Date', 'Date', 'DOJ']);
 
@@ -1074,8 +1099,17 @@
         const yojana = getFieldVal(['YOJNA', 'Yojna', 'Scheme', 'SCHEME', 'Yojana']);
 
         // 8. Skill & Training
-        const institute = getFieldVal(['INSTITUTE', 'Institute', 'Training Center', 'College']);
-        const training = getFieldVal(['SKILL TRAINING', 'TRAINING', 'Training', 'INTERESTED TRADE (इच्छुक ट्रेड)', 'Trade', 'Course']);
+        const institute = getFieldVal([
+          'INSTITUTE', 'Institute', 'Training Center', 'College',
+          'ORAGANISATION', 'Oraganisation', 'ORGANISATION', 'Organisation', 'Agency'
+        ]);
+        const training = getFieldVal([
+          'SKILL TRAINING', 'TRAINING', 'Training', 'TRAINING NAME', 'Training Name',
+          'INTERESTED TRADE (इच्छुक ट्रेड)', 'Trade', 'Course'
+        ]);
+        const trainer = getFieldVal(['TRAINNER', 'Trainner', 'TRAINER', 'Trainer']);
+        const duration = getFieldVal(['DURATION', 'Duration']);
+        const supportingStaff = getFieldVal(['SUPPORTING STAFF', 'Supporting Staff']);
 
         // 9. Personal details
         let age = getFieldVal(['AGE', 'Age']);
@@ -1105,6 +1139,9 @@
           yojana,
           institute,
           training,
+          trainer,
+          duration,
+          supportingStaff,
           organisation,
           salary,
           joiningDate,
@@ -1280,13 +1317,23 @@
           });
         } else if (sheetName === 'Training_Conducted') {
           if (!this.data.trainingConducted) this.data.trainingConducted = [];
+          const trName = norm.training || norm.name || row['TRAINING NAME'] || row['Training Name'] || 'Skill Training';
+          const venue = norm.village || row['VANUE'] || row['VENUE'] || row['Vanue'] || row['Venue'] || row['ADDRESS'] || 'Dantewada';
+          const org = norm.institute || norm.organisation || row['ORAGANISATION'] || row['ORGANISATION'] || 'District Livelihood College Dantewada';
+          const trainer = norm.trainer || row['TRAINNER'] || row['TRAINER'] || '';
+          const mob = norm.mobile || (row['DURATION'] ? `Duration: ${row['DURATION']}` : (row['DATE'] ? `Date: ${row['DATE']}` : '-'));
+
           this.data.trainingConducted.unshift({
-            name: norm.name,
-            address: norm.village,
-            mobile: norm.mobile,
-            institute: norm.institute || 'District Livelihood College',
-            training: norm.training || 'Skill Training',
-            block: norm.block
+            name: norm.name || trName || trainer || 'Training Program',
+            address: venue,
+            mobile: mob,
+            institute: org,
+            training: trName,
+            block: norm.block || 'Dantewada',
+            duration: row['DURATION'] || norm.duration || '',
+            date: row['DATE'] || norm.joiningDate || '',
+            trainer: trainer,
+            supportingStaff: row['SUPPORTING STAFF'] || norm.supportingStaff || ''
           });
         } else if (sheetName === 'MY_Bharat_Registration') {
           if (!this.data.myBharat) this.data.myBharat = [];

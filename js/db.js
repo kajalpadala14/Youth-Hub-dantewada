@@ -1146,7 +1146,7 @@
 
       let insertedCount = 0;
       let updatedCount = 0;
-      validRows.forEach(row => {
+      validRows.forEach((row, idx) => {
         const norm = row._normalized || {
           name: (row['First Name'] ? `${row['First Name']} ${row['Last Name'] || ''}`.trim() : (row.NAME || row.Name || row.Youth_Name || '')),
           fatherName: (row["Father's Name / Husband's Name"] || row['FATHER NAME'] || row['Father Name'] || ''),

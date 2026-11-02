@@ -139,6 +139,14 @@ body {
   color: #cbd5e1;
 }
 
+.bilingual-nav-btn > div:first-child {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
 .bilingual-nav-btn:hover {
   background-color: #132238;
   color: #ffffff;
@@ -176,6 +184,20 @@ body {
   font-weight: 700;
   line-height: 1.2;
   color: inherit;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bilingual-nav-btn .sheet-count-badge {
+  flex-shrink: 0;
+  margin-left: 0.5rem;
+  font-variant-numeric: tabular-nums;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.5rem;
+  text-align: center;
 }
 
 .bilingual-nav-btn .subtitle-hi {

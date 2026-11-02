@@ -101,6 +101,7 @@
     setupAdminModalBackdrops();
     setupEventListeners();
     renderActiveTab();
+    updateSidebarBadgeCounts();
   }
 
   function setupAdminModalBackdrops() {
@@ -2099,8 +2100,8 @@
       }
     },
     IIM_Candidate_List: {
-      num: 8,
-      titleEn: "8. IIM_Candidate_List",
+      num: 5,
+      titleEn: "5. IIM_Candidate_List",
       titleHi: "IIM Raipur Candidate List 2025",
       desc: "IIM रायपुर उद्यमिता एवं इन्क्यूबेशन कार्यक्रम 2025 हेतु चयनित युवा। (दोहरा AGE कॉलम नियंत्रित)",
       collection: "iimRaipur",
@@ -2154,8 +2155,8 @@
       }
     },
     Training_Conducted: {
-      num: 9,
-      titleEn: "9. Training_Conducted",
+      num: 6,
+      titleEn: "6. Training_Conducted",
       titleHi: "आयोजित प्रशिक्षण",
       desc: "विभिन्न प्रशिक्षण संस्थानों द्वारा युवाओं को दिए गए कौशल प्रशिक्षण का विवरण।",
       collection: "trainingConducted",
@@ -2189,8 +2190,8 @@
       }
     },
     MY_Bharat_Registration: {
-      num: 10,
-      titleEn: "10. MY_Bharat_Registration",
+      num: 7,
+      titleEn: "7. MY_Bharat_Registration",
       titleHi: "MY Bharat पंजीकरण",
       desc: "राष्ट्रीय युवा पोर्टल 'MY Bharat' पर पंजीकृत युवाओं का विवरण।",
       collection: "myBharat",
@@ -2239,8 +2240,8 @@
       }
     },
     Youth_Hub_Trainings: {
-      num: 11,
-      titleEn: "11. Youth Hub Trainees",
+      num: 8,
+      titleEn: "8. Youth Hub Trainees",
       titleHi: "यूथ हब प्रशिक्षणार्थी (Youth Hub Trainees)",
       desc: "दंतेवाड़ा यूथ हब केंद्र में ओरिएंटेशन एवं क्षमता विकास प्रशिक्षण प्राप्त युवा।",
       collection: "youthHubTrainings",
@@ -2520,6 +2521,7 @@
     }
     switchTab('sheet-viewer');
     renderSheetViewer();
+    updateSidebarBadgeCounts();
 
     // Highlight matching sidebar button
     document.querySelectorAll('.bilingual-nav-btn[data-sheet]').forEach(btn => {
@@ -4640,5 +4642,6 @@
   });
   window.addEventListener('db:changed', () => {
     renderActiveTab();
+    updateSidebarBadgeCounts();
   });
 })();

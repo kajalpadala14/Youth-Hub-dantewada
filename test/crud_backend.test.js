@@ -38,6 +38,9 @@ describe('Google Apps Script Backend CRUD Tests', () => {
                 }
               }
             },
+            setValue(val) {
+              this.setValues([[val]]);
+            },
             setBackground() {},
             setFontColor() {},
             setFontWeight() {},
@@ -86,6 +89,9 @@ describe('Google Apps Script Backend CRUD Tests', () => {
                     self.rows[targetRowIdx][col - 1 + c] = vals[r][c];
                   }
                 }
+              },
+              setValue(val) {
+                this.setValues([[val]]);
               },
               setBackground() {},
               setFontColor() {},
@@ -427,5 +433,17 @@ describe('Google Apps Script Backend CRUD Tests', () => {
     assert.equal(res.success, true);
     assert.equal(res.total, 0);
     assert.equal(res.records.length, 0);
+  });
+
+  test('setupDatabase: initializes all 16 target sheets and Users table correctly', () => {
+    const mockSs = createMockSpreadsheet({});
+    const ctx = setupVm(mockSs);
+
+    const res = ctx.handleAction('setupDatabase', {});
+    assert.equal(res.success, true);
+    assert.ok(res.sheetsProcessed >= 16);
+    assert.ok(mockSs.getSheetByName('Employment_Registration'));
+    assert.ok(mockSs.getSheetByName('Counselling'));
+    assert.ok(mockSs.getSheetByName('Users'));
   });
 });

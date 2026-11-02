@@ -54,34 +54,32 @@ const EXACT_EXCEL_TEMPLATES = {
     ]
   },
 
-  // 5. PMEGP / PMFME लोन
+  // 6. उद्यमी पहचान (7 Parameters as in User's Sheet)
+  "Entrepreneur_Identified": {
+    hasTitle: false,
+    headers: [
+      "SR.no", "NAME", "FATHER NAME", "VILLAGE", "BLOCK", "LOAN AMOUNT", "BUSSINESS"
+    ]
+  },
+
+  // 7. PMEGP / PMFME लोन
   "PMEGP_PMFME_Loan": {
     hasTitle: false,
     headers: [
-      "SR. NO.", "NAME", "FATHER NAME", "VILLAGE", "BLOCK",
+      "Sr.No", "NAME", "FATHER NAME", "VILLAGE", "BLOCK",
       "LOAN AMOUNT", "YOJNA", "BUSSINESS"
     ]
   },
 
-  // 6. आईआईएम रायपुर
-  "IIM_Candidate_List": {
-    hasTitle: true,
-    titleText: "CANDIDATE LIST IIM RAIPUR 2025",
-    headers: [
-      "SR", "NAME ", "FATHER NAME", "GENDER", "AGE", "CAST",
-      "GP", "BLOCK", "DISTRICT", "MOBILE NO, ", "EDUCATION", "PERCENT", "AGE"
-    ]
-  },
-
-  // 7. आयोजित प्रशिक्षण
+  // 8. आयोजित प्रशिक्षण
   "Training_Conducted": {
     hasTitle: false,
     headers: [
-      "SR. NO.", "NAME ", "ADDRESS", "MOBILE NO.", "INSTITUTE", "TRAINING"
+      "Sr.No", "NAME ", "ADDRESS", "MOBILE NO.", "INSTITUTE", "TRAINING"
     ]
   },
 
-  // 8. माई भारत पंजीयन
+  // 9. माई भारत पंजीयन
   "MY_Bharat_Registration": {
     hasTitle: true,
     titleText: "MY BHARAT REGISTRATION LIST",
@@ -91,17 +89,69 @@ const EXACT_EXCEL_TEMPLATES = {
     ]
   },
 
-  // 9. युवा हब प्रशिक्षण
+  // 10. ग्राम संगठन (VO/CLF) बैठकें
+  "VO CLF Meeting": {
+    hasTitle: false,
+    headers: [
+      "DATE", "VILLAGE", "BLOCK", "VO / CLF NAME", "ADHAYAKSH / SACHIV",
+      "DISCUSS POINT", "REMARKS", "PHOTO"
+    ]
+  },
+  "Meetings_VO_CLF_TRIF": {
+    hasTitle: false,
+    headers: [
+      "DATE", "VILLAGE", "BLOCK", "VO / CLF NAME", "ADHAYAKSH / SACHIV",
+      "DISCUSS POINT", "REMARKS", "PHOTO"
+    ]
+  },
+
+  // 11. युवा हब प्रशिक्षण (Youth_Hub_Trainee)
+  "Youth_Hub_Trainee": {
+    hasTitle: true,
+    titleText: "YOUTHS ATTENDED TRAININGS AT  YOUTH HUBS",
+    headers: [
+      "NAME", "FATHER NAME", "VILLAGE", "BLOCK", "DOB",
+      "GENDER", "MOBILE NO.", "REMARK"
+    ]
+  },
   "Youth_Hub_Trainings": {
     hasTitle: true,
-    titleText: "YOUTHS ATTENDED TRAININGS AT YOUTH HUBS",
+    titleText: "YOUTHS ATTENDED TRAININGS AT  YOUTH HUBS",
     headers: [
       "NAME", "FATHER NAME", "VILLAGE", "BLOCK", "DOB",
       "GENDER", "MOBILE NO.", "REMARK"
     ]
   },
 
-  // 10. बस्तर मुन्ने विशेष शिविर
+  // 12. एम-फॉर्म सर्वे (M Form)
+  "M_Form": {
+    hasTitle: false,
+    headers: [
+      "Block Name", "Grampanchayat", "First Name", "Last Name",
+      "Mobile Number", "Gender", "Email", "Pin Code", "Father's Name / Husband's Name",
+      "Mother's Name", "Category", "Highest Qualification", "Current Occupation", "Aspired Career"
+    ]
+  },
+  "M Form": {
+    hasTitle: false,
+    headers: [
+      "Block Name", "Grampanchayat", "First Name", "Last Name",
+      "Mobile Number", "Gender", "Email", "Pin Code", "Father's Name / Husband's Name",
+      "Mother's Name", "Category", "Highest Qualification", "Current Occupation", "Aspired Career"
+    ]
+  },
+
+  // 13. काउंसलिंग (Counselling)
+  "Counselling": {
+    hasTitle: false,
+    headers: [
+      "Block Name", "Grampanchayat", "First Name", "Last Name",
+      "Mobile Number", "Gender", "Email", "Pin Code", "Father's Name / Husband's Name",
+      "Mother's Name", "Category", "Highest Qualification", "Current Occupation", "Aspired Career"
+    ]
+  },
+
+  // 14. बस्तर मुन्ने विशेष शिविर
   "Bastar_Munne_Shivir": {
     hasTitle: true,
     titleText: "BASTAR MUNNE SHIVIR REGISTERED YOUTH LIST FOR SKILL TRAINING",
@@ -111,17 +161,8 @@ const EXACT_EXCEL_TEMPLATES = {
     ]
   },
 
-  // 11. ग्राम संगठन (VO/CLF) बैठकें
-  "Meetings_VO_CLF_TRIF": {
-    hasTitle: false,
-    headers: [
-      "DATE", "VILLAGE", "BLOCK", "VO / CLF NAME", "ADHAYAKSH / SACHIV",
-      "DISCUSS POINT", "REMARKS", "PHOTO"
-    ]
-  },
-
-  // 12. उद्यमी व स्टार्टअप विचार
-  "Entrepreneur_Identified": {
+  // 15. स्टार्टअप व इनोवेशन विचार
+  "Startup & Innovation Idea": {
     hasTitle: false,
     headers: [
       "SR. NO.", "STARTUP / IDEA NAME", "DISTRICT", "FOUNDER NAME", "AGE",
@@ -129,31 +170,17 @@ const EXACT_EXCEL_TEMPLATES = {
     ]
   },
 
-  // 13. रंग दे ऋण लाभार्थी
+  // 16. रंग दे ऋण लाभार्थी
   "Rang_De_Loan": {
     hasTitle: false,
     headers: [
       "SR. NO.", "NAME", "ADDRESS", "MOBILE NO.", "ACTIVITY", "AMOUNT (₹)", "2ND (₹)"
     ]
   },
-
-  // 14. एम-फॉर्म सर्वे (17. M-Form)
-  "M_Form": {
+  "Rang de loan": {
     hasTitle: false,
     headers: [
-      "SR. NO.", "Block Name", "Grampanchayat", "First Name", "Last Name",
-      "Mobile Number", "Gender", "Email", "Pin Code", "Father's Name / Husband's Name",
-      "Mother's Name", "Category", "Highest Qualification", "Current Occupation", "Aspired Career"
-    ]
-  },
-
-  // 15. काउंसलिंग (Counselling)
-  "Counselling": {
-    hasTitle: false,
-    headers: [
-      "SR. NO.", "Block Name", "Grampanchayat", "First Name", "Last Name",
-      "Mobile Number", "Gender", "Email", "Pin Code", "Father's Name / Husband's Name",
-      "Mother's Name", "Category", "Highest Qualification", "Current Occupation", "Aspired Career"
+      "SR. NO.", "NAME", "ADDRESS", "MOBILE NO.", "ACTIVITY", "AMOUNT (₹)", "2ND (₹)"
     ]
   }
 };
@@ -408,13 +435,19 @@ const SHEET_ALIASES = {
   "career_counselling": "Counselling",
   "careercounselling": "Counselling",
 
-  // 14. उद्यमी पहचान
+  // 14. उद्यमी पहचान व स्टार्टअप्स
   "startup_hunt": "Entrepreneur_Identified",
   "startuphunt": "Entrepreneur_Identified",
   "startup_district_ideas": "Entrepreneur_Identified",
   "startupdistrictideas": "Entrepreneur_Identified",
   "entrepreneur_identified": "Entrepreneur_Identified",
   "entrepreneuridentified": "Entrepreneur_Identified",
+  "startup_and_innovation_idea": "Startup & Innovation Idea",
+  "startupandinnovationidea": "Startup & Innovation Idea",
+  "startup_innovation_idea": "Startup & Innovation Idea",
+  "startupinnovationidea": "Startup & Innovation Idea",
+  "startup_ideas": "Startup & Innovation Idea",
+  "startupideas": "Startup & Innovation Idea",
 
   // 15. यूज़र्स
   "users": "Users"
@@ -497,7 +530,7 @@ function getOrCreateSheet(ss, sheetName) {
   sheet = ss.insertSheet(cleanReq);
 
   if (hasTitle) {
-    sheet.getRange(1, 1).setValue(titleText);
+    sheet.getRange(1, 1).setValues([[titleText]]);
     sheet.getRange(1, 1, 1, headers.length).merge();
     const titleRange = sheet.getRange(1, 1, 1, headers.length);
     titleRange.setBackground("#07182E");
@@ -524,6 +557,95 @@ function getOrCreateSheet(ss, sheetName) {
   }
 
   return sheet;
+}
+
+/**
+ * =========================================================================
+ * DATABASE INITIALIZATION / SETUP FUNCTION
+ * =========================================================================
+ * आपकी Google Sheet में सभी 16 शीट्स को उनके सटीक हेडर्स, फॉर्मेटिंग व टाइटल बैनर के साथ स्वतः तैयार करें।
+ * Apps Script एडिटर में फ़ंक्शन चुनकर 'Run' दबाएं, या API द्वारा कॉल करें।
+ */
+function setupDatabase(optionalSs) {
+  const ss = optionalSs || getSpreadsheet();
+  if (!ss) {
+    return { success: false, message: "No active spreadsheet found." };
+  }
+
+  const results = [];
+  const targetSheets = [
+    "Employment_Registration",
+    "Employed",
+    "Skill_Linked",
+    "Education_Linked",
+    "IIM_Candidate_List",
+    "Entrepreneur_Identified",
+    "PMEGP_PMFME_Loan",
+    "Training_Conducted",
+    "MY_Bharat_Registration",
+    "VO CLF Meeting",
+    "Youth_Hub_Trainee",
+    "M_Form",
+    "Counselling",
+    "Bastar_Munne_Shivir",
+    "Startup & Innovation Idea",
+    "Rang_De_Loan"
+  ];
+
+  for (let i = 0; i < targetSheets.length; i++) {
+    const sheetKey = targetSheets[i];
+    let sheet = findSheet(ss, sheetKey);
+    if (!sheet) {
+      sheet = getOrCreateSheet(ss, sheetKey);
+      results.push(`Created: '${sheetKey}'`);
+    } else {
+      results.push(`Exists: '${sheet.getName()}'`);
+    }
+  }
+
+  // Ensure Users sheet also exists for secure authentication
+  let usersSheet = findSheet(ss, "Users");
+  if (!usersSheet) {
+    usersSheet = ss.insertSheet("Users");
+    const userHeaders = ["User_ID", "Email", "Password_Hash", "Salt", "Role", "Name", "Designation", "Mobile", "Block", "Status", "Created_At", "Last_Login"];
+    usersSheet.getRange(1, 1, 1, userHeaders.length).setValues([userHeaders]);
+    const headerRange = usersSheet.getRange(1, 1, 1, userHeaders.length);
+    headerRange.setBackground("#1E293B");
+    headerRange.setFontColor("#FFFFFF");
+    headerRange.setFontWeight("bold");
+    usersSheet.setFrozenRows(1);
+
+    const salt = (typeof Utilities !== "undefined" && Utilities.getUuid) ? Utilities.getUuid().slice(0, 8) : "salt2026";
+    const defaultHash = typeof hashPassword === "function" ? hashPassword("admin123", salt) : "admin123";
+    usersSheet.appendRow([
+      "USR-1001",
+      "admin@dantewada.gov.in",
+      defaultHash,
+      salt,
+      "superadmin",
+      "जिला नोडल अधिकारी (Super Admin)",
+      "Nodal Officer",
+      "9876543210",
+      "Dantewada",
+      "active",
+      new Date().toISOString(),
+      ""
+    ]);
+    results.push("Created: 'Users' (with default admin account)");
+  } else {
+    results.push(`Exists: '${usersSheet.getName()}'`);
+  }
+
+  if (typeof Logger !== "undefined" && Logger.log) {
+    Logger.log("Database Setup Log:\n" + results.join("\n"));
+  }
+
+  return {
+    success: true,
+    message: "Database initialization completed successfully.",
+    sheetsProcessed: results.length,
+    log: results
+  };
 }
 
 function doGet(e) {

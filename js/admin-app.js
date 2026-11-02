@@ -1933,9 +1933,72 @@
         window.DantewadaDB.persist();
       }
     },
+    Counselling: {
+      num: 5,
+      titleEn: "5. Counselling",
+      titleHi: "काउंसलिंग एवं करियर मार्गदर्शन",
+      desc: "काउंसलिंग एवं करियर मार्गदर्शन अंतर्गत पंजीकृत युवाओं का संपूर्ण डेटाबेस।",
+      collection: "counselling",
+      params: [
+        "SR. NO.",
+        "Block Name",
+        "Grampanchayat",
+        "First Name",
+        "Last Name",
+        "Mobile Number",
+        "Gender",
+        "Email",
+        "Pin Code",
+        "Father's Name / Husband's Name",
+        "Mother's Name",
+        "Category",
+        "Highest Qualification",
+        "Current Occupation",
+        "Aspired Career"
+      ],
+      mapRow: (item, idx) => [
+        idx + 1,
+        item.block || item['Block Name'] || 'Dantewada',
+        item.gramPanchayat || item.Grampanchayat || item.village || 'N/A',
+        item.firstName || item['First Name'] || (item.name ? item.name.split(' ')[0] : 'N/A'),
+        item.lastName || item['Last Name'] || (item.name ? item.name.split(' ').slice(1).join(' ') : ''),
+        item.mobile || item['Mobile Number'] || 'N/A',
+        item.gender || item.Gender || 'Male',
+        item.email || item.Email || '',
+        item.pinCode || item['Pin Code'] || '494441',
+        item.fatherHusband || item["Father's Name / Husband's Name"] || item.fatherName || 'N/A',
+        item.motherName || item["Mother's Name"] || 'N/A',
+        item.category || item.Category || 'ST',
+        item.qualification || item['Highest Qualification'] || '12th Pass',
+        item.currentOccupation || item['Current Occupation'] || item.occupation || 'Student / Job Seeker',
+        item.aspiredCareer || item['Aspired Career'] || 'Direct Formal Jobs'
+      ],
+      saveRecord: (formData) => {
+        if (!window.DantewadaDB.data.counselling) window.DantewadaDB.data.counselling = [];
+        window.DantewadaDB.data.counselling.unshift({
+          id: window.DantewadaDB.data.counselling.length + 1,
+          block: formData['Block Name'] || 'Dantewada',
+          gramPanchayat: formData['Grampanchayat'] || 'N/A',
+          firstName: formData['First Name'] || 'N/A',
+          lastName: formData['Last Name'] || '',
+          name: ((formData['First Name'] || '') + ' ' + (formData['Last Name'] || '')).trim() || 'N/A',
+          mobile: formData['Mobile Number'] || 'N/A',
+          gender: formData['Gender'] || 'Male',
+          email: formData['Email'] || '',
+          pinCode: formData['Pin Code'] || '494441',
+          fatherHusband: formData["Father's Name / Husband's Name"] || 'N/A',
+          motherName: formData["Mother's Name"] || 'N/A',
+          category: formData['Category'] || 'ST',
+          qualification: formData['Highest Qualification'] || '12th Pass',
+          currentOccupation: formData['Current Occupation'] || 'Student / Job Seeker',
+          aspiredCareer: formData['Aspired Career'] || 'Direct Formal Jobs'
+        });
+        window.DantewadaDB.persist();
+      }
+    },
     Entrepreneur_Identified: {
-      num: 9,
-      titleEn: "9. Startup Hunt",
+      num: 10,
+      titleEn: "10. Startup Hunt",
       titleHi: "स्टार्टअप हंट (चयनित उद्यमी एवं स्टार्टअप विचार)",
       desc: "दंतेवाड़ा एवं बस्तर संभाग के चयनित युवा उद्यमी, उनके स्टार्टअप विचार, बिज़नेस मॉडल, लक्षित ग्राहक, आवश्यक निवेश एवं पिच डेक की संपूर्ण सूची।",
       collection: "entrepreneurIdeas",
@@ -2014,8 +2077,8 @@
       saveRecord: () => {}
     },
     PMEGP_PMFME_Loan: {
-      num: 10,
-      titleEn: "10. PMEGP_PMFME_Loan",
+      num: 11,
+      titleEn: "11. PMEGP_PMFME_Loan",
       titleHi: "ऋण एवं योजना विवरण",
       desc: "PMEGP, PMFME, MUDRA ऋण योजनांतर्गत स्वीकृत व लाभान्वित युवाओं की सूची।",
       collection: "loans",
@@ -2055,8 +2118,8 @@
       }
     },
     Rang_De_Loan: {
-      num: 11,
-      titleEn: "11. Rang_De_Loan",
+      num: 12,
+      titleEn: "12. Rang_De_Loan",
       titleHi: "रंग दे पीयर-टू-पीयर माइक्रो लोन",
       desc: "Social investment & peer-to-peer micro-credit linkages for Dantewada rural youth, SHGs & entrepreneurs.",
       collection: "rangDe",
@@ -2100,8 +2163,8 @@
       }
     },
     IIM_Candidate_List: {
-      num: 5,
-      titleEn: "5. IIM_Candidate_List",
+      num: 6,
+      titleEn: "6. IIM_Candidate_List",
       titleHi: "IIM Raipur Candidate List 2025",
       desc: "IIM रायपुर उद्यमिता एवं इन्क्यूबेशन कार्यक्रम 2025 हेतु चयनित युवा। (दोहरा AGE कॉलम नियंत्रित)",
       collection: "iimRaipur",
@@ -2155,8 +2218,8 @@
       }
     },
     Training_Conducted: {
-      num: 6,
-      titleEn: "6. Training_Conducted",
+      num: 7,
+      titleEn: "7. Training_Conducted",
       titleHi: "आयोजित प्रशिक्षण",
       desc: "विभिन्न प्रशिक्षण संस्थानों द्वारा युवाओं को दिए गए कौशल प्रशिक्षण का विवरण।",
       collection: "trainingConducted",
@@ -2190,8 +2253,8 @@
       }
     },
     MY_Bharat_Registration: {
-      num: 7,
-      titleEn: "7. MY_Bharat_Registration",
+      num: 8,
+      titleEn: "8. MY_Bharat_Registration",
       titleHi: "MY Bharat पंजीकरण",
       desc: "राष्ट्रीय युवा पोर्टल 'MY Bharat' पर पंजीकृत युवाओं का विवरण।",
       collection: "myBharat",
@@ -2240,8 +2303,8 @@
       }
     },
     Youth_Hub_Trainings: {
-      num: 8,
-      titleEn: "8. Youth Hub Trainees",
+      num: 9,
+      titleEn: "9. Youth Hub Trainees",
       titleHi: "यूथ हब प्रशिक्षणार्थी (Youth Hub Trainees)",
       desc: "दंतेवाड़ा यूथ हब केंद्र में ओरिएंटेशन एवं क्षमता विकास प्रशिक्षण प्राप्त युवा।",
       collection: "youthHubTrainings",
@@ -2284,8 +2347,8 @@
       }
     },
     Bastar_Munne_Shivir: {
-      num: 12,
-      titleEn: "12. Bastar_Munne_Shivir",
+      num: 13,
+      titleEn: "13. Bastar_Munne_Shivir",
       titleHi: "बस्तर मुन्ने शिविर में पंजीकृत युवा",
       desc: "बस्तर मुन्ने शिविर एवं कौशल प्रशिक्षण मेले में पंजीकृत युवाओं का आधार सहित विवरण।",
       collection: "bastarShivir",
@@ -2387,8 +2450,8 @@
       }
     },
     Meetings_VO_CLF_TRIF: {
-      num: 13,
-      titleEn: "13. VO CLF Meeting",
+      num: 14,
+      titleEn: "14. VO CLF Meeting",
       titleHi: "VO / CLF बैठकें (ग्राम संगठन व संकुल संघ)",
       desc: "ग्राम संगठन (VO) एवं संकुल स्तरीय परिसंघ (CLF) की आजीविका, युवा सहभागिता एवं समीक्षा बैठकों का संपूर्ण विवरण व फोटो गैलरी।",
       collection: "meetingsVoClfTrif",
@@ -2432,8 +2495,8 @@
       }
     },
     M_Form: {
-      num: 14,
-      titleEn: "14. M-Form", // titleEn: "17. M-Form"
+      num: 15,
+      titleEn: "15. M-Form", // titleEn: "17. M-Form"
       titleHi: "एम-फॉर्म सर्वे (M-Form Registration)",
       desc: "दंतेवाड़ा जिले के ग्राम-वार एम-फॉर्म सर्वे में पंजीकृत युवाओं का संपूर्ण डेटाबेस।",
       collection: "mFormRecords",

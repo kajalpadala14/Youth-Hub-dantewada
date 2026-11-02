@@ -315,7 +315,8 @@ describe('Google Apps Script Backend CRUD Tests', () => {
       'Bastar_Munne_Shivir': [['SR. NO.', 'NAME', 'FATHER NAME', 'VILLAGE', 'BLOCK', 'DOB', 'GENDER', 'MOBILE NO.', 'AADHAR', 'CATEGORY', 'INTERESTED TRADE (इच्छुक ट्रेड)']],
       'IIM_Candidate_List': [['SR', 'NAME ', 'FATHER NAME', 'GENDER', 'AGE', 'CAST', 'GP', 'BLOCK', 'DISTRICT', 'MOBILE NO, ', 'EDUCATION', 'PERCENT', 'AGE2']],
       'PMEGP_PMFME_Loan': [['SR. NO.', 'NAME', 'FATHER NAME', 'VILLAGE', 'BLOCK', 'LOAN AMOUNT', 'YOJNA', 'BUSSINESS']],
-      'Training_Conducted': [['SR. NO.', 'NAME ', 'ADDRESS', 'MOBILE NO.', 'INSTITUTE', 'TRAINING']]
+      'Training_Conducted': [['SR. NO.', 'NAME ', 'ADDRESS', 'MOBILE NO.', 'INSTITUTE', 'TRAINING']],
+      'Counselling': [['SR. NO.', 'Block Name', 'Grampanchayat', 'First Name', 'Last Name', 'Mobile Number', 'Gender', 'Email', 'Pin Code', "Father's Name / Husband's Name", "Mother's Name", 'Category', 'Highest Qualification', 'Current Occupation', 'Aspired Career']]
     });
     const ctx = setupVm(mockSs);
 
@@ -328,7 +329,8 @@ describe('Google Apps Script Backend CRUD Tests', () => {
       { action: 'addRehabilitation', payload: { NAME: 'Suresh', 'MOBILE NO.': '9876543215' }, target: 'Bastar_Munne_Shivir' },
       { action: 'addIIMRaipur', payload: { 'NAME ': 'Deepak', 'MOBILE NO, ': '9876543216' }, target: 'IIM_Candidate_List' },
       { action: 'addShasanSahyog', payload: { NAME: 'Gita', 'BUSSINESS': 'Dairy' }, target: 'PMEGP_PMFME_Loan' },
-      { action: 'addTraining', payload: { 'NAME ': 'Sanjay', 'TRAINING': 'Welding' }, target: 'Training_Conducted' }
+      { action: 'addTraining', payload: { 'NAME ': 'Sanjay', 'TRAINING': 'Welding' }, target: 'Training_Conducted' },
+      { action: 'addCounselling', payload: { 'First Name': 'Pooja', 'Mobile Number': '9876543299' }, target: 'Counselling' }
     ];
 
     for (const a of actions) {

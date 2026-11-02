@@ -48,6 +48,7 @@
       youth: [],
       placed: [],
       skills: [],
+      counselling: [],
       navgurukul: [],
       loans: [],
       iimRaipur: [],
@@ -308,6 +309,25 @@
             education: e.education || 'Graduate',
             phone: e.phone || e.mobile || 'N/A',
             address: e.address || 'Dantewada'
+          }));
+          break;
+
+        case 'Counselling':
+          list = (this.data.counselling || []).map(c => ({
+            block: c.block || 'Dantewada',
+            gramPanchayat: c.gramPanchayat || c.village || 'N/A',
+            firstName: c.firstName || (c.name ? c.name.split(' ')[0] : 'N/A'),
+            lastName: c.lastName || (c.name ? c.name.split(' ').slice(1).join(' ') : ''),
+            mobile: c.mobile || c.phone || 'N/A',
+            gender: c.gender || 'Male',
+            email: c.email || '',
+            pinCode: c.pinCode || '494441',
+            fatherHusband: c.fatherHusband || c.fatherName || 'N/A',
+            motherName: c.motherName || 'N/A',
+            category: c.category || 'ST',
+            qualification: c.qualification || '12th Pass',
+            currentOccupation: c.currentOccupation || 'Student / Job Seeker',
+            aspiredCareer: c.aspiredCareer || 'Skill Training'
           }));
           break;
 
@@ -1688,10 +1708,22 @@
       if (fetchedSheets.has('Counselling')) {
         this.data.counselling = counsellingRecords.map((c, idx) => ({
           id: String(c.Counselling_ID || ('COU-' + (1000 + idx))),
-          name: String(c.Youth_Name || c.Name || 'परामर्शित युवा'),
-          date: String(c.Date || '2025-02-07'),
-          block: this.standardizeBlock(c.Block || c.Counselling_Type),
-          careerInterest: String(c.Career_Interest || 'Vocational Training'),
+          block: this.standardizeBlock(c['Block Name'] || c.Block || c.Counselling_Type),
+          gramPanchayat: String(c.Grampanchayat || c.GP || c.Village || 'N/A').trim(),
+          firstName: String(c['First Name'] || (c.Youth_Name || c.Name ? String(c.Youth_Name || c.Name).split(' ')[0] : 'N/A')).trim(),
+          lastName: String(c['Last Name'] || (c.Youth_Name || c.Name ? String(c.Youth_Name || c.Name).split(' ').slice(1).join(' ') : '')).trim(),
+          name: String(c.Youth_Name || c.Name || ((c['First Name'] || '') + ' ' + (c['Last Name'] || '')).trim() || 'परामर्शित युवा'),
+          mobile: String(c['Mobile Number'] || c.Mobile || c['MOBILE NO.'] || 'N/A').trim(),
+          gender: String(c.Gender || 'Male').trim(),
+          email: String(c.Email || '').trim(),
+          pinCode: String(c['Pin Code'] || c.PinCode || '494441').trim(),
+          fatherHusband: String(c["Father's Name / Husband's Name"] || c['Father Name'] || 'N/A').trim(),
+          motherName: String(c["Mother's Name"] || c['Mother Name'] || 'N/A').trim(),
+          category: String(c.Category || 'ST').trim(),
+          qualification: String(c['Highest Qualification'] || c.Qualification || '12th Pass').trim(),
+          currentOccupation: String(c['Current Occupation'] || c.Occupation || 'Student / Job Seeker').trim(),
+          aspiredCareer: String(c['Aspired Career'] || c.Career_Interest || 'Skill Training').trim(),
+          date: String(c.Date || new Date().toISOString().split('T')[0]),
           outcome: String(c.Counselling_Outcome || 'Referred for Training')
         }));
       }

@@ -145,6 +145,16 @@ const EXACT_EXCEL_TEMPLATES = {
       "Mobile Number", "Gender", "Email", "Pin Code", "Father's Name / Husband's Name",
       "Mother's Name", "Category", "Highest Qualification", "Current Occupation", "Aspired Career"
     ]
+  },
+
+  // 15. काउंसलिंग (Counselling)
+  "Counselling": {
+    hasTitle: false,
+    headers: [
+      "SR. NO.", "Block Name", "Grampanchayat", "First Name", "Last Name",
+      "Mobile Number", "Gender", "Email", "Pin Code", "Father's Name / Husband's Name",
+      "Mother's Name", "Category", "Highest Qualification", "Current Occupation", "Aspired Career"
+    ]
   }
 };
 
@@ -223,10 +233,9 @@ const SHEETS_SCHEMA = {
     "Block", "GP", "MyBharat_Reg_No", "Status", "Remarks"
   ],
   Counselling: [
-    "Counselling_ID", "Youth_ID", "Youth_Name", "Date", "Block", "Counselling_Type",
-    "Career_Interest", "Counsellor_Name", "Counselling_Outcome",
-    "Follow_Up_Required", "Follow_Up_Date", "Follow_Up_Status",
-    "Pending_Issue", "Recommended_Action", "Remarks"
+    "Counselling_ID", "Block Name", "Grampanchayat", "First Name", "Last Name",
+    "Mobile Number", "Gender", "Email", "Pin Code", "Father's Name / Husband's Name",
+    "Mother's Name", "Category", "Highest Qualification", "Current Occupation", "Aspired Career"
   ],
   Skill_Training: [
     "Training_Record_ID", "Youth_ID", "Youth_Name", "Training_Name", "Skill_Trade",
@@ -391,8 +400,13 @@ const SHEET_ALIASES = {
   "voclfmeetings": "VO CLF Meeting",
   "meetings_vo_clf": "VO CLF Meeting",
   "meetingsvoclf": "VO CLF Meeting",
-  "counselling": "VO CLF Meeting",
   "activities": "VO CLF Meeting",
+
+  // काउंसलिंग
+  "counselling": "Counselling",
+  "counseling": "Counselling",
+  "career_counselling": "Counselling",
+  "careercounselling": "Counselling",
 
   // 14. उद्यमी पहचान
   "startup_hunt": "Entrepreneur_Identified",
@@ -609,7 +623,7 @@ function handleAction(action, payload) {
         else if (action === "addMyBharat") sheetName = "MY_Bharat_Registration";
         else if (action === "addIIMRaipur") sheetName = "IIM_Candidate_List";
         else if (action === "addMobilization" || action === "addActivity" || action === "addRehabilitation") sheetName = "Bastar_Munne_Shivir";
-        else if (action === "addCounselling") sheetName = "VO CLF Meeting";
+        else if (action === "addCounselling") sheetName = "Counselling";
         else if (action === "addPhotoUpload") sheetName = "Photo_Uploads";
         else sheetName = "Employment_Registration";
       }

@@ -231,6 +231,13 @@ const SHEETS_SCHEMA = {
     "DISCUSS POINT", "REMARKS", "PHOTO"
   ],
   Entrepreneur_Identified: [
+    "SR.no", "NAME", "FATHER NAME", "VILLAGE", "BLOCK", "LOAN AMOUNT", "BUSSINESS"
+  ],
+  "Startup & Innovation Idea": [
+    "SR. NO.", "STARTUP / IDEA NAME", "DISTRICT", "FOUNDER NAME", "AGE",
+    "ADDRESS", "EDUCATION", "MOBILE NO.", "INVESTMENT NEEDED", "WORK TYPE", "BUSINESS MODEL / PROBLEM"
+  ],
+  Startup_Ideas: [
     "SR. NO.", "STARTUP / IDEA NAME", "DISTRICT", "FOUNDER NAME", "AGE",
     "ADDRESS", "EDUCATION", "MOBILE NO.", "INVESTMENT NEEDED", "WORK TYPE", "BUSINESS MODEL / PROBLEM"
   ],

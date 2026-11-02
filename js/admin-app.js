@@ -29,6 +29,8 @@
       meetings_vo_clf_trif: 'VO CLF Meeting',
       Startup_District_Ideas: 'Entrepreneur_Identified',
       startup_district_ideas: 'Entrepreneur_Identified',
+      Startup_Ideas: 'Startup & Innovation Idea',
+      startup_ideas: 'Startup & Innovation Idea',
       Bastar_Munne_Report: 'Bastar_Munne_Shivir',
       bastar_munne_report: 'Bastar_Munne_Shivir',
       Rang_De_Loan: 'Rang de loan',
@@ -665,6 +667,9 @@
       "Name", "Faather Name", "Mother Name", "Email", "Gender", "Education", "Phone Number", "Address"
     ],
     Entrepreneur_Identified: [
+      "SR.no", "NAME", "FATHER NAME", "VILLAGE", "BLOCK", "LOAN AMOUNT", "BUSSINESS"
+    ],
+    Startup_Ideas: [
       "SR. NO.", "STARTUP / IDEA NAME", "DISTRICT", "FOUNDER NAME", "AGE", "ADDRESS", "EDUCATION", "MOBILE NO.", "INVESTMENT NEEDED", "WORK TYPE", "BUSINESS MODEL / PROBLEM"
     ],
     Startup_District_Ideas: [
@@ -1997,9 +2002,55 @@
       }
     },
     Entrepreneur_Identified: {
-      num: 10,
-      titleEn: "10. Startup Hunt",
-      titleHi: "स्टार्टअप हंट (चयनित उद्यमी एवं स्टार्टअप विचार)",
+      num: 6,
+      titleEn: "6. Entrepreneur_Identified",
+      titleHi: "पहचाने गए उद्यमी (उद्यमिता / ऋण सहायता)",
+      desc: "दंतेवाड़ा जिले के स्वरोजगार व पहचाने गए युवा उद्यमी: ग्राम, ब्लॉक, ऋण राशि एवं व्यवसाय का विवरण।",
+      collection: "entrepreneursIdentified",
+      params: [
+        "SR.no",
+        "NAME",
+        "FATHER NAME",
+        "VILLAGE",
+        "BLOCK",
+        "LOAN AMOUNT",
+        "BUSSINESS"
+      ],
+      mapRow: (item, idx) => [
+        item['SR.no'] || item.sNo || item.id || idx + 1,
+        item.name || item.NAME || item.founderName || 'N/A',
+        item.fatherName || item['FATHER NAME'] || item.fatherHusband || 'N/A',
+        item.village || item.VILLAGE || item.address || 'N/A',
+        item.block || item.BLOCK || item.district || 'Dantewada',
+        item['LOAN AMOUNT'] || item.loanAmount || (item.investmentNeeded ? (String(item.investmentNeeded).startsWith('₹') ? item.investmentNeeded : `₹${item.investmentNeeded}`) : 'N/A'),
+        item.business || item.BUSSINESS || item.startupName || 'N/A'
+      ],
+      saveRecord: (formData) => {
+        if (!window.DantewadaDB.data.entrepreneursIdentified) window.DantewadaDB.data.entrepreneursIdentified = [];
+        const nextId = window.DantewadaDB.data.entrepreneursIdentified.length + 1;
+        window.DantewadaDB.data.entrepreneursIdentified.unshift({
+          id: nextId,
+          'SR.no': nextId,
+          NAME: formData['NAME'] || formData['Name'] || 'N/A',
+          name: formData['NAME'] || formData['Name'] || 'N/A',
+          'FATHER NAME': formData['FATHER NAME'] || formData['Father Name'] || 'N/A',
+          fatherName: formData['FATHER NAME'] || formData['Father Name'] || 'N/A',
+          VILLAGE: formData['VILLAGE'] || formData['Village'] || 'N/A',
+          village: formData['VILLAGE'] || formData['Village'] || 'N/A',
+          BLOCK: formData['BLOCK'] || formData['Block'] || 'Dantewada',
+          block: formData['BLOCK'] || formData['Block'] || 'Dantewada',
+          'LOAN AMOUNT': formData['LOAN AMOUNT'] || formData['Loan Amount'] || 'N/A',
+          loanAmount: formData['LOAN AMOUNT'] || formData['Loan Amount'] || 'N/A',
+          BUSSINESS: formData['BUSSINESS'] || formData['Business'] || 'N/A',
+          business: formData['BUSSINESS'] || formData['Business'] || 'N/A'
+        });
+        window.DantewadaDB.persist();
+      }
+    },
+    Startup_Ideas: {
+      num: 15,
+      titleEn: "15. Startup & Innovation Idea",
+      titleHi: "स्टार्टअप व इनोवेशन विचार",
       desc: "दंतेवाड़ा एवं बस्तर संभाग के चयनित युवा उद्यमी, उनके स्टार्टअप विचार, बिज़नेस मॉडल, लक्षित ग्राहक, आवश्यक निवेश एवं पिच डेक की संपूर्ण सूची।",
       collection: "entrepreneurIdeas",
       params: [
@@ -2017,18 +2068,18 @@
       ],
       mapRow: (item, idx) => [
         item.id || idx + 1,
-        item.startupName || 'Startup Idea',
-        item.district || 'Dantewada',
-        item.founderName || item.name || 'N/A',
+        item.startupName || item.business || item.BUSSINESS || 'Startup Idea',
+        item.district || item.block || item.BLOCK || 'Dantewada',
+        item.founderName || item.name || item.NAME || 'N/A',
         item.age || 'N/A',
-        item.address || 'Dantewada',
+        item.address || item.village || item.VILLAGE || 'Dantewada',
         item.education || '12th',
         item.mobile || 'N/A',
-        item.investmentNeeded ? (item.investmentNeeded.toString().startsWith('₹') ? item.investmentNeeded : `₹${item.investmentNeeded}`) : '₹5 Lakh',
+        item.investmentNeeded ? (item.investmentNeeded.toString().startsWith('₹') ? item.investmentNeeded : `₹${item.investmentNeeded}`) : (item.loanAmount ? `₹${item.loanAmount}` : '₹5 Lakh'),
         item.workType || 'FULL TIME',
         item.businessModel && item.businessModel !== 'N/A' 
           ? (item.businessModel.length > 55 ? item.businessModel.slice(0, 55) + '...' : item.businessModel)
-          : (item.problemSolved && item.problemSolved !== 'N/A' ? (item.problemSolved.length > 55 ? item.problemSolved.slice(0, 55) + '...' : item.problemSolved) : 'Direct Selling / Service')
+          : (item.problemSolved && item.problemSolved !== 'N/A' ? (item.problemSolved.length > 55 ? item.problemSolved.slice(0, 55) + '...' : item.problemSolved) : (item.business || 'Direct Selling / Service'))
       ],
       saveRecord: (formData) => {
         if (!window.DantewadaDB.data.entrepreneurIdeas) window.DantewadaDB.data.entrepreneurIdeas = [];
@@ -4443,7 +4494,8 @@
       Employed: ['organisation', 'date of joining', 'salary'],
       Skill_Linked: ['skill training', 'institute', 'village'],
       Education_Linked: ['faather name', 'mother name', 'email'],
-      Entrepreneur_Identified: ['startup / idea name', 'founder name', 'investment needed', 'business model'],
+      Entrepreneur_Identified: ['loan amount', 'bussiness', 'village', 'block', 'father name'],
+      Startup_Ideas: ['startup / idea name', 'founder name', 'investment needed', 'business model'],
       PMEGP_PMFME_Loan: ['loan amount', 'yojna', 'bussiness'],
       Rang_De_Loan: ['rang de', '2nd (₹)', 'activity'],
       IIM_Candidate_List: ['candidate list iim raipur', 'education,percent', 'cast,gp', 'mobile no, '],

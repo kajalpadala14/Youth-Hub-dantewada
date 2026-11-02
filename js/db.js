@@ -59,7 +59,9 @@
       bastarVillageCandidates: [],
       bastarMunneVillageReport: [],
       trainingConducted: [],
+      entrepreneursIdentified: [],
       entrepreneurIdeas: [],
+      startupIdeas: [],
       meetingsVoClfTrif: [],
       mFormRecords: (typeof window !== 'undefined' && Array.isArray(window.DANTEWADA_MFORM_DATA)) ? window.DANTEWADA_MFORM_DATA : [],
       rangDe: [],
@@ -367,40 +369,67 @@
           break;
 
         case 'Entrepreneur_Identified':
-          list = (this.data.entrepreneurIdeas || [])
-            .filter(e => {
-              const f = (e.founderName || e.name || '').trim();
-              const s = (e.startupName || '').trim();
-              if (!f && !s) return false;
-              if (f === 'उद्यमी' && s === 'उद्यम विचार') return false;
-              if (f === 'N/A' && s === 'Startup Idea') return false;
-              return true;
-            })
-            .map(e => ({
-            id: e.id,
-            name: e.founderName || 'N/A',
-            startupName: e.startupName || 'Startup Idea',
-            founderName: e.founderName || 'N/A',
-            district: e.district || 'Dantewada',
-            block: e.district || 'Dantewada',
-            age: e.age || 'N/A',
-            education: e.education || 'N/A',
-            address: e.address || 'Dantewada',
-            village: e.address || 'Dantewada',
-            mobile: e.mobile || 'N/A',
-            email: e.email || 'N/A',
-            description: e.description || 'N/A',
-            problemSolved: e.problemSolved || 'N/A',
-            targetCustomer: e.targetCustomer || 'N/A',
-            investedSoFar: e.investedSoFar || '0',
-            investmentNeeded: e.investmentNeeded || 'N/A',
-            teamMembers: e.teamMembers || '1',
-            workType: e.workType || 'FULL TIME',
-            businessModel: e.businessModel || 'N/A',
-            futureGoals: e.futureGoals || 'N/A',
-            socialLinks: e.socialLinks || 'N/A',
-            businessPlanLink: e.businessPlanLink || 'N/A'
-          }));
+          if (this.data.entrepreneursIdentified && this.data.entrepreneursIdentified.length > 0) {
+            list = this.data.entrepreneursIdentified.map((e, idx) => ({
+              id: e.id || idx + 1,
+              'SR.no': e['SR.no'] || e.sNo || e.id || idx + 1,
+              NAME: e.NAME || e.name || 'N/A',
+              name: e.NAME || e.name || 'N/A',
+              'FATHER NAME': e['FATHER NAME'] || e.fatherName || 'N/A',
+              fatherName: e['FATHER NAME'] || e.fatherName || 'N/A',
+              VILLAGE: e.VILLAGE || e.village || e.address || 'N/A',
+              village: e.VILLAGE || e.village || e.address || 'N/A',
+              BLOCK: e.BLOCK || e.block || 'Dantewada',
+              block: e.BLOCK || e.block || 'Dantewada',
+              'LOAN AMOUNT': e['LOAN AMOUNT'] || e.loanAmount || 'N/A',
+              loanAmount: e['LOAN AMOUNT'] || e.loanAmount || 'N/A',
+              BUSSINESS: e.BUSSINESS || e.business || 'N/A',
+              business: e.BUSSINESS || e.business || 'N/A'
+            }));
+          } else {
+            list = (this.data.entrepreneurIdeas || [])
+              .filter(e => {
+                const f = (e.founderName || e.name || '').trim();
+                const s = (e.startupName || '').trim();
+                if (!f && !s) return false;
+                if (f === 'उद्यमी' && s === 'उद्यम विचार') return false;
+                if (f === 'N/A' && s === 'Startup Idea') return false;
+                return true;
+              })
+              .map((e, idx) => ({
+                id: e.id || idx + 1,
+                'SR.no': e.id || idx + 1,
+                NAME: e.founderName || e.name || 'N/A',
+                name: e.founderName || e.name || 'N/A',
+                'FATHER NAME': e.fatherName || 'N/A',
+                fatherName: e.fatherName || 'N/A',
+                VILLAGE: e.address || e.village || 'N/A',
+                village: e.address || e.village || 'N/A',
+                BLOCK: e.district || e.block || 'Dantewada',
+                block: e.district || e.block || 'Dantewada',
+                'LOAN AMOUNT': e.investmentNeeded || e.loanAmount || 'N/A',
+                loanAmount: e.investmentNeeded || e.loanAmount || 'N/A',
+                BUSSINESS: e.startupName || e.business || 'N/A',
+                business: e.startupName || e.business || 'N/A',
+                startupName: e.startupName || 'Startup Idea',
+                founderName: e.founderName || 'N/A',
+                district: e.district || 'Dantewada',
+                age: e.age || 'N/A',
+                education: e.education || 'N/A',
+                address: e.address || 'Dantewada',
+                mobile: e.mobile || 'N/A',
+                investmentNeeded: e.investmentNeeded || 'N/A',
+                workType: e.workType || 'FULL TIME',
+                businessModel: e.businessModel || 'N/A'
+              }));
+          }
+          break;
+
+        case 'Startup_Ideas':
+        case 'Startup & Innovation Idea':
+          list = (this.data.startupIdeas && this.data.startupIdeas.length > 0)
+            ? this.data.startupIdeas
+            : (this.data.entrepreneurIdeas || []);
           break;
 
         case 'Startup_District_Ideas': {
@@ -1301,12 +1330,38 @@
             status: 'Applied'
           });
         } else if (sheetName === 'Entrepreneur_Identified') {
+          if (!this.data.entrepreneursIdentified) this.data.entrepreneursIdentified = [];
           if (!this.data.entrepreneurIdeas) this.data.entrepreneurIdeas = [];
-          const rawStartup = row['आपके स्टार्टअप/आइडिया का नाम (Name of your Startup/Idea)'] || row['STARTUP / IDEA NAME'] || row['STARTUP NAME'] || norm.business || 'Startup Idea';
-          const rawFounder = row['पूरा नाम (Full Name)'] || row['FOUNDER NAME'] || norm.name || 'N/A';
-          const rawDistrict = row['DISTRICT (जिला)'] || row['DISTRICT'] || row['DISTRICT (ftyk)'] || norm.block || 'Dantewada';
+          const sNo = row['SR.no'] || row['Sr.No'] || row['SR. NO.'] || row['S.NO'] || idx + 1;
+          const name = row['NAME'] || row['NAME '] || row['Name'] || row['FOUNDER NAME'] || norm.name || 'N/A';
+          const father = row['FATHER NAME'] || row['Father Name'] || norm.fatherName || 'N/A';
+          const village = row['VILLAGE'] || row['Village'] || row['ADDRESS'] || norm.village || 'N/A';
+          const block = row['BLOCK'] || row['Block'] || row['DISTRICT'] || norm.block || 'Dantewada';
+          const loanAmt = row['LOAN AMOUNT'] || row['Loan Amount'] || row['INVESTMENT NEEDED'] || norm.loanAmount || 'N/A';
+          const biz = row['BUSSINESS'] || row['BUSINESS'] || row['Business'] || row['STARTUP / IDEA NAME'] || norm.business || 'N/A';
+
+          this.data.entrepreneursIdentified.unshift({
+            id: String(sNo),
+            'SR.no': sNo,
+            NAME: name,
+            name: name,
+            'FATHER NAME': father,
+            fatherName: father,
+            VILLAGE: village,
+            village: village,
+            BLOCK: block,
+            block: block,
+            'LOAN AMOUNT': loanAmt,
+            loanAmount: loanAmt,
+            BUSSINESS: biz,
+            business: biz
+          });
+
+          const rawStartup = row['आपके स्टार्टअप/आइडिया का नाम (Name of your Startup/Idea)'] || row['STARTUP / IDEA NAME'] || row['STARTUP NAME'] || biz || 'Startup Idea';
+          const rawFounder = row['पूरा नाम (Full Name)'] || row['FOUNDER NAME'] || name || 'N/A';
+          const rawDistrict = row['DISTRICT (जिला)'] || row['DISTRICT'] || row['DISTRICT (ftyk)'] || block || 'Dantewada';
           const rawAge = row['उम्र (Age)'] || row['AGE'] || norm.age || '22';
-          const rawAddress = row['पता (Address)'] || row['ADDRESS'] || norm.village || 'Dantewada';
+          const rawAddress = row['पता (Address)'] || row['ADDRESS'] || village || 'Dantewada';
           const rawEdu = row['शैक्षणिक योग्यता (Educational Qualification)'] || row['QUALIFICATION'] || row['EDUCATION'] || norm.qualification || '12th';
           const rawMobile = row['संपर्क नंबर (Mobile Number)'] || row['MOBILE NO.'] || norm.mobile || 'N/A';
           const rawEmail = row['ईमेल आईडी (Email ID)'] || row['EMAIL'] || row['EMAIL ID'] || 'N/A';
@@ -1314,7 +1369,7 @@
           const rawProblem = row['आपका आइडिया किस समस्या का समाधान करता है? (What problem does your idea solve?)'] || row['PROBLEM SOLVED'] || 'N/A';
           const rawTarget = row['आपका लक्षित ग्राहक समूह कौन है? (Who is your target customer group?)'] || row['TARGET CUSTOMER'] || 'N/A';
           const rawInvested = row['आप अब तक कितना निवेश कर चुके हैं? (How much have you invested so far?)'] || row['INVESTED SO FAR'] || '0';
-          const rawNeeded = row['आपको कितने निवेश (Investment) की आवश्यकता है? (How much investment are you seeking?)'] || row['INVESTMENT NEEDED'] || norm.loanAmount || '₹5 Lakh';
+          const rawNeeded = row['आपको कितने निवेश (Investment) की आवश्यकता है? (How much investment are you seeking?)'] || row['INVESTMENT NEEDED'] || loanAmt || '₹5 Lakh';
           const rawTeam = row['टीम में कुल कितने सदस्य हैं? (Total number of team members)'] || row['TEAM MEMBERS'] || '1';
           const rawWork = row['क्या आप फुल-टाइम इस आइडिया पर काम कर रहे हैं? (Are you working full-time on this idea?)'] || row['WORK TYPE'] || 'FULL TIME';
           const rawModel = row['आपका बिजनेस मॉडल क्या है? (What is your business model?)'] || row['BUSINESS MODEL'] || row['BUSINESS MODEL / PROBLEM'] || 'Direct Selling / Service';
@@ -1900,11 +1955,28 @@
           return true;
         });
 
+        this.data.entrepreneursIdentified = validEnt.map((r, idx) => ({
+          id: String(r['SR.no'] || r['SR. NO.'] || r['S.NO'] || idx + 1),
+          'SR.no': String(r['SR.no'] || r['SR. NO.'] || r['S.NO'] || idx + 1),
+          NAME: String(r.NAME || r['NAME '] || r['FOUNDER NAME'] || 'N/A').trim(),
+          name: String(r.NAME || r['NAME '] || r['FOUNDER NAME'] || 'N/A').trim(),
+          'FATHER NAME': String(r['FATHER NAME'] || r.Father_Name || 'N/A').trim(),
+          fatherName: String(r['FATHER NAME'] || r.Father_Name || 'N/A').trim(),
+          VILLAGE: String(r.VILLAGE || r.Village || r.Address || 'N/A').trim(),
+          village: String(r.VILLAGE || r.Village || r.Address || 'N/A').trim(),
+          BLOCK: this.standardizeBlock(r.BLOCK || r.Block),
+          block: this.standardizeBlock(r.BLOCK || r.Block),
+          'LOAN AMOUNT': String(r['LOAN AMOUNT'] || r.Loan_Amount || r['INVESTMENT NEEDED'] || 'N/A').trim(),
+          loanAmount: String(r['LOAN AMOUNT'] || r.Loan_Amount || r['INVESTMENT NEEDED'] || 'N/A').trim(),
+          BUSSINESS: String(r.BUSSINESS || r.BUSINESS || r['STARTUP / IDEA NAME'] || 'N/A').trim(),
+          business: String(r.BUSSINESS || r.BUSINESS || r['STARTUP / IDEA NAME'] || 'N/A').trim()
+        }));
+
         this.data.entrepreneurIdeas = validEnt.map((r, idx) => ({
           id: String(r['SR.no'] || r['SR. NO.'] || r['S.NO'] || idx + 1),
           startupName: String(r['STARTUP / IDEA NAME'] || r.BUSSINESS || r.BUSINESS || r.Startup_Name || r.NAME || 'Startup Idea').trim(),
           founderName: String(r['FOUNDER NAME'] || r.NAME || r['NAME '] || r.Founder || 'N/A').trim(),
-          district: String(r.DISTRICT || r.District || 'Dantewada').trim(),
+          district: String(r.DISTRICT || r.District || r.BLOCK || 'Dantewada').trim(),
           block: this.standardizeBlock(r.BLOCK || r.Block),
           village: String(r.VILLAGE || r.Village || '').trim(),
           age: String(r.AGE || r.Age || 'N/A'),

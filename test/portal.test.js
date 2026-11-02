@@ -408,6 +408,37 @@ test('Dantewada Youth Development Portal - Backend & Data Integrity Test', async
     assert.strictEqual(mRows[0].aspiredCareer, 'Direct Formal Jobs');
   });
 
+  await t.test('Employed Bulk Upload: Handles trailing space in NAME and MOBILE N0. cleanly', () => {
+    const dbJs = fs.readFileSync('js/db.js', 'utf8');
+    const mockWindow = { localStorage: { getItem: () => null, setItem: () => {} }, dispatchEvent: () => {} };
+    const runSandbox = new Function('window', 'localStorage', dbJs);
+    runSandbox(mockWindow, mockWindow.localStorage);
+    const db = mockWindow.DantewadaDB;
+
+    const rawEmployedRows = [
+      {
+        'SR. NO.': 1,
+        'NAME ': 'Sanjay Kumar',
+        'FATHER NAME': 'Ramu Ram',
+        'ADDRESS': 'MOFALNAR',
+        'BLOCK': 'Dantewada',
+        'DISTRICT': 'Dantewada',
+        'MOBILE N0.': '8225886404',
+        'ORGANISATION': 'TRI MOBILIZER',
+        'DATE OF JOINING': '2024-05-01',
+        'SALARY': '15000'
+      }
+    ];
+
+    const preview = db.previewImport('Employed', rawEmployedRows);
+    assert.strictEqual(preview.totalCount, 1);
+    assert.strictEqual(preview.validRows.length, 1);
+    assert.strictEqual(preview.invalidRows.length, 0);
+    assert.strictEqual(preview.validRows[0]._normalized.name, 'Sanjay Kumar');
+    assert.strictEqual(preview.validRows[0]._normalized.mobile, '8225886404');
+    assert.strictEqual(preview.validRows[0]._normalized.organisation, 'TRI MOBILIZER');
+  });
+
   await t.test('Cloud Synchronization & Dual Header Compatibility Verification', () => {
     const adminAppCode = fs.readFileSync('js/admin-app.js', 'utf8');
     const mockWindow = {};

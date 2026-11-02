@@ -4436,7 +4436,20 @@
               break;
             }
           }
-          const rows = XLSX.utils.sheet_to_json(targetSheet, { range: headerRowIndex, defval: '' });
+          const rawRows = XLSX.utils.sheet_to_json(targetSheet, { range: headerRowIndex, defval: '' });
+          // Header keys normalization: Trim trailing/leading whitespace and standardize keys
+          const rows = rawRows.map(r => {
+            const clean = {};
+            for (const [k, v] of Object.entries(r)) {
+              const trimmedK = String(k || '').trim();
+              if (trimmedK) {
+                clean[trimmedK] = v;
+                // Also retain exact raw key if it had trailing spaces (e.g. "NAME ")
+                if (trimmedK !== k) clean[k] = v;
+              }
+            }
+            return clean;
+          });
           displayBulkPreview(rows, sheetKey, file.name);
         } catch (err) {
           alert('Excel फ़ाइल पढ़ने में त्रुटि: ' + err.message);

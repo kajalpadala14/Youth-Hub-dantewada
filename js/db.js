@@ -929,105 +929,101 @@
       rawRows.forEach((row, idx) => {
         const cleanRow = { ...row, _rowNum: idx + 2 };
 
-        // 1. Employment_Registration: First Name, Last Name, Father's Name / Husband's Name, Grampanchayat, Block Name, Mobile Number, Gender, Category, Highest Qualification, Current Occupation, Aspired Career
+        // Helper to extract value by multiple possible aliases with trimming and case/space-insensitivity
+        const getFieldVal = (aliases) => {
+          // 1. Direct key match
+          for (const a of aliases) {
+            if (row[a] !== undefined && row[a] !== null && String(row[a]).trim() !== '') {
+              return String(row[a]).trim();
+            }
+          }
+          // 2. Fuzzy clean match (ignore spaces, punctuation, case)
+          const clean = s => String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+          const rowEntries = Object.entries(row);
+          for (const a of aliases) {
+            const cleanA = clean(a);
+            for (const [rk, rv] of rowEntries) {
+              if (clean(rk) === cleanA && rv !== undefined && rv !== null && String(rv).trim() !== '') {
+                return String(rv).trim();
+              }
+            }
+          }
+          return '';
+        };
+
+        // 1. Name resolution
         let name = '';
-        if (row['First Name'] || row['Last Name']) {
-          name = `${row['First Name'] || ''} ${row['Last Name'] || ''}`.trim();
+        const firstName = getFieldVal(['First Name', 'firstname', 'First_Name']);
+        const lastName = getFieldVal(['Last Name', 'lastname', 'Last_Name', 'Surname']);
+        if (firstName || lastName) {
+          name = `${firstName} ${lastName}`.trim();
         }
         if (!name) {
-          name = (
-            row['NAME'] ||
-            row['Name'] ||
-            row['Full Name'] ||
-            row['fullName'] ||
-            row['Youth_Name'] ||
-            row['FOUNDER NAME'] ||
-            row['Founder Name'] ||
-            row['पूरा नाम (Full Name)'] ||
-            row['STARTUP / IDEA NAME'] ||
-            row['आपके स्टार्टअप/आइडिया का नाम (Name of your Startup/Idea)'] ||
-            row['VO / CLF NAME'] ||
-            row['VO/CLF NAME'] ||
-            row['VO CLF NAME'] ||
-            row['VO_CLF_NAME'] ||
-            row['ORGANIZATION / CLF NAME'] ||
-            row['ADHAYAKSH / SACHIV'] ||
-            row['ADHAYAKSH SACHIV'] ||
-            row['Adhayaksh / Sachiv'] ||
-            ''
-          ).toString().trim();
+          name = getFieldVal([
+            'NAME', 'NAME ', 'Name', 'Full Name', 'fullName', 'Youth_Name', 'Candidate_Name',
+            'FOUNDER NAME', 'Founder Name', 'पूरा नाम (Full Name)',
+            'STARTUP / IDEA NAME', 'आपके स्टार्टअप/आइडिया का नाम (Name of your Startup/Idea)',
+            'VO / CLF NAME', 'VO/CLF NAME', 'VO CLF NAME', 'VO_CLF_NAME', 'ORGANIZATION / CLF NAME',
+            'ADHAYAKSH / SACHIV', 'ADHAYAKSH SACHIV', 'Adhayaksh / Sachiv', 'VILLAGE NAME', 'Village Name'
+          ]);
+        }
+        if (!name) {
+          if (sheetName === 'Meetings_VO_CLF_TRIF' || sheetName === 'VO CLF Meeting') {
+            name = getFieldVal(['VO / CLF NAME', 'VILLAGE', 'Village', 'ADHAYAKSH / SACHIV']) || `Meeting Record #${idx + 1}`;
+          } else if (sheetName === 'Bastar_Munne_Report') {
+            name = getFieldVal(['VILLAGE NAME', 'Village', 'VILLAGE']) || `Village Report #${idx + 1}`;
+          } else if (getFieldVal(['MOBILE NO.', 'MOBILE NO', 'MOBILE N0.', 'Mobile Number', 'Phone Number', 'ORGANISATION'])) {
+            name = `Candidate #${idx + 1}`;
+          }
         }
 
-        // 4. Education_Linked: handle 'Faather Name' (double 'aa')
-        const fatherName = (
-          row["Father's Name / Husband's Name"] ||
-          row['FATHER NAME'] ||
-          row['Father Name'] ||
-          row['Faather Name'] ||
-          row['fatherHusband'] ||
-          ''
-        ).toString().trim();
+        // 2. Father / Husband name
+        const fatherName = getFieldVal([
+          "Father's Name / Husband's Name", 'FATHER NAME', 'Father Name', 'Faather Name',
+          'fatherHusband', 'Father_Name', "Father's Name", 'Husband Name'
+        ]);
 
-        // Mobile normalization
-        const mobile = (
-          row['Mobile Number'] ||
-          row['MOBILE NO.'] ||
-          row['MOBILE NO'] ||
-          row['Phone Number'] ||
-          row['Mobile'] ||
-          row['mobile'] ||
-          ''
-        ).toString().replace(/\D/g, '').trim();
+        // 3. Mobile normalization
+        const rawMobile = getFieldVal([
+          'Mobile Number', 'MOBILE NO.', 'MOBILE NO', 'MOBILE N0.', 'Phone Number',
+          ' Phone Number', 'Mobile', 'mobile', 'Phone', 'phone', 'Contact Number', 'TELEPHONE'
+        ]);
+        const mobile = rawMobile.replace(/\D/g, '').trim();
 
-        // Block normalization
-        const block = (
-          row['Block Name'] ||
-          row['BLOCK'] ||
-          row['Block'] ||
-          row['block'] ||
-          'Dantewada'
-        ).toString().trim();
+        // 4. Block
+        const block = getFieldVal(['Block Name', 'BLOCK', 'Block', 'block', 'District', 'DISTRICT', 'Taluka']) || 'Dantewada';
 
-        // Village / Grampanchayat
-        const village = (
-          row['Grampanchayat'] ||
-          row['Gram Panchayat'] ||
-          row['GP'] ||
-          row['VILLAGE'] ||
-          row['Village'] ||
-          row['ADDRESS'] ||
-          row['Address'] ||
-          ''
-        ).toString().trim();
+        // 5. Village / Address / GP
+        const village = getFieldVal([
+          'Grampanchayat', 'Gram Panchayat', 'GP', 'VILLAGE', 'Village',
+          'ADDRESS', 'Address', 'Village Of Candidate', 'Location', 'Panchayat'
+        ]);
 
-        // Handle duplicate AGE column in IIM_Candidate_List
-        let age = row['AGE'];
-        if (row['AGE_1'] && row['AGE_1'] !== row['AGE']) {
-          age = `${row['AGE']} / ${row['AGE_1']}`;
+        // 6. Organization & Salary for Employed
+        const organisation = getFieldVal(['ORGANISATION', 'Organisation', 'Organization', 'Company', 'Employer', 'INSTITUTE', 'Institute', 'Agency']);
+        const salary = getFieldVal(['SALARY', 'Salary', 'Remuneration', 'Income', 'Pay', 'Package']);
+        const joiningDate = getFieldVal(['DATE OF JOINING', 'Date of Joining', 'Joining Date', 'Date', 'DOJ']);
+
+        // 7. Business & Loan
+        const business = getFieldVal(['BUSSINESS', 'Business', 'business', 'ACTIVITY', 'Activity', 'Trade', 'Startup Idea']);
+        const loanAmount = getFieldVal(['LOAN AMOUNT', 'Loan Amount', 'AMOUNT (₹)', 'Amount', 'AMOUNT', 'INVESTMENT NEEDED']);
+        const yojana = getFieldVal(['YOJNA', 'Yojna', 'Scheme', 'SCHEME', 'Yojana']);
+
+        // 8. Skill & Training
+        const institute = getFieldVal(['INSTITUTE', 'Institute', 'Training Center', 'College']);
+        const training = getFieldVal(['SKILL TRAINING', 'TRAINING', 'Training', 'INTERESTED TRADE (इच्छुक ट्रेड)', 'Trade', 'Course']);
+
+        // 9. Personal details
+        let age = getFieldVal(['AGE', 'Age']);
+        const age2 = getFieldVal(['AGE_1', 'AGE (2)', 'AGE2']);
+        if (age2 && age2 !== age) {
+          age = `${age} / ${age2}`;
         }
-
-        // Scheme & business details for loans
-        const business = (row['BUSSINESS'] || row['Business'] || row['business'] || '').toString().trim();
-        const loanAmount = (row['LOAN AMOUNT'] || row['Loan Amount'] || '').toString().trim();
-        const yojana = (row['YOJNA'] || row['Yojna'] || row['Scheme'] || '').toString().trim();
-
-        // Skill & Training details
-        const institute = (row['INSTITUTE'] || row['Institute'] || '').toString().trim();
-        const training = (row['SKILL TRAINING'] || row['TRAINING'] || row['Training'] || '').toString().trim();
-
-        // Organization & Salary for Employed
-        const organisation = (row['ORGANISATION'] || row['Organisation'] || '').toString().trim();
-        const salary = (row['SALARY'] || row['Salary'] || '').toString().trim();
-        const joiningDate = (row['DATE OF JOINING'] || row['Joining Date'] || '').toString().trim();
-
-        // Education linked specifics
-        const motherName = (row['Mother Name'] || '').toString().trim();
-        const email = (row['Email'] || '').toString().trim();
-
-        // Government registration numbers
-        const aadhar = (row['AADHAR'] || row['Aadhar'] || '').toString().trim();
-        const dob = (row['DOB'] || '').toString().trim();
-        const remark = (row['REMARK'] || row['Remark'] || '').toString().trim();
+        const motherName = getFieldVal(['Mother Name', 'Mother_Name', 'Mothers Name']);
+        const email = getFieldVal(['Email', 'EMAIL', 'Email ID', 'EMAIL ID']);
+        const aadhar = getFieldVal(['AADHAR', 'Aadhar', 'Aadhaar', 'Aadhar Number']);
+        const dob = getFieldVal(['DOB', 'Date of Birth', 'Birth Date']);
+        const remark = getFieldVal(['REMARK', 'Remark', 'Remarks', 'REMARKS']);
 
         cleanRow._normalized = {
           name,

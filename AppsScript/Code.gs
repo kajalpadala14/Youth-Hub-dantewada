@@ -764,6 +764,13 @@ function handleAction(action, payload) {
       return deleteRecord(ss, sheetName, payload);
     }
 
+    case "bulkDelete":
+    case "deleteMultiple":
+    case "deleteMultipleRecords": {
+      const sheetName = payload.sheetName || payload.sheet || "Employment_Registration";
+      return bulkDeleteRecords(ss, sheetName, payload);
+    }
+
     case "bulkInsert":
     case "batchAdd":
     case "bulkUpload": {
@@ -1531,6 +1538,72 @@ function clearSheetData(ss, targetSheetName) {
   }
 
   return { success: true, message: `Sheet '${sheet.getName()}' is already clear of data.`, deletedRows: 0 };
+}
+
+function bulkDeleteRecords(ss, targetSheetName, payload) {
+  if (!payload) return { success: false, message: "No payload provided." };
+  if (payload.deleteAll === true || payload.clearAll === true) {
+    return clearSheetData(ss, targetSheetName);
+  }
+
+  const sheet = findSheet(ss, targetSheetName);
+  if (!sheet) {
+    return { success: false, message: `Sheet '${targetSheetName}' not found.` };
+  }
+
+  const items = payload.records || payload.rows || payload.items || [];
+  const ids = Array.isArray(payload.ids) ? payload.ids : (Array.isArray(payload.idValues) ? payload.idValues : []);
+  const rowNumbers = Array.isArray(payload.rowNumbers) ? payload.rowNumbers.slice() : [];
+
+  let deletedCount = 0;
+
+  // 1. If row numbers provided, sort descending and delete
+  if (rowNumbers.length > 0) {
+    rowNumbers.sort((a, b) => Number(b) - Number(a));
+    for (let i = 0; i < rowNumbers.length; i++) {
+      const r = Number(rowNumbers[i]);
+      if (r > 1 && r <= sheet.getLastRow()) {
+        sheet.deleteRow(r);
+        deletedCount++;
+      }
+    }
+    return {
+      success: true,
+      message: `${deletedCount} records deleted from '${sheet.getName()}'.`,
+      deletedCount: deletedCount
+    };
+  }
+
+  // 2. If records/payload items provided, delete matching rows
+  if (Array.isArray(items) && items.length > 0) {
+    for (let i = 0; i < items.length; i++) {
+      const it = items[i];
+      const deletePayload = (typeof it === 'object' && it !== null) ? (it.rowData ? it : { rowData: it, idValue: it.idValue || it.id || it.name || it.NAME || '' }) : { idValue: it };
+      const res = deleteRecord(ss, targetSheetName, deletePayload);
+      if (res && res.success) deletedCount++;
+    }
+    return {
+      success: true,
+      message: `${deletedCount} out of ${items.length} records deleted from '${sheet.getName()}'.`,
+      deletedCount: deletedCount
+    };
+  }
+
+  // 3. If ids provided
+  if (Array.isArray(ids) && ids.length > 0) {
+    for (let i = 0; i < ids.length; i++) {
+      const idVal = ids[i];
+      const res = deleteRecord(ss, targetSheetName, { idValue: idVal, idField: payload.idField });
+      if (res && res.success) deletedCount++;
+    }
+    return {
+      success: true,
+      message: `${deletedCount} out of ${ids.length} records deleted from '${sheet.getName()}'.`,
+      deletedCount: deletedCount
+    };
+  }
+
+  return { success: false, message: "No records or row numbers provided for bulk deletion." };
 }
 
 function bulkInsert(ss, targetSheetName, payload) {

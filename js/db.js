@@ -157,6 +157,41 @@
       return true;
     }
 
+    clearSheetData(collectionName) {
+      if (this.data && Array.isArray(this.data[collectionName])) {
+        const count = this.data[collectionName].length;
+        this.data[collectionName] = [];
+        this.persist();
+        this.logAudit('SHEET_CLEARED', 'System', collectionName, `Cleared all ${count} records from ${collectionName}`);
+        window.dispatchEvent(new CustomEvent('db:changed'));
+        return { success: true, count };
+      }
+      return { success: false, message: 'Collection not found' };
+    }
+
+    bulkDeleteSheetRecords(collectionName, itemsOrIndices) {
+      if (!this.data || !Array.isArray(this.data[collectionName])) {
+        return { success: false, message: 'Collection not found' };
+      }
+      const arr = this.data[collectionName];
+      let deletedCount = 0;
+      if (Array.isArray(itemsOrIndices) && itemsOrIndices.length > 0) {
+        const toDeleteSet = new Set(itemsOrIndices);
+        this.data[collectionName] = arr.filter((item, idx) => {
+          if (toDeleteSet.has(item) || toDeleteSet.has(idx)) {
+            deletedCount++;
+            return false;
+          }
+          return true;
+        });
+        this.persist();
+        this.logAudit('BULK_DELETE', 'System', collectionName, `Bulk deleted ${deletedCount} records from ${collectionName}`);
+        window.dispatchEvent(new CustomEvent('db:changed'));
+        return { success: true, count: deletedCount };
+      }
+      return { success: false, message: 'No items provided for deletion' };
+    }
+
     resetToDefaults() {
       if (window.DANTEWADA_SEED_DATA) {
         this.data = JSON.parse(JSON.stringify(window.DANTEWADA_SEED_DATA));

@@ -489,5 +489,58 @@ test('Dantewada Youth Development Portal - Backend & Data Integrity Test', async
     assert.ok(adminHtml.includes('value="Youth_Hub_Trainings"'));
     assert.ok(adminHtml.includes('value="Meetings_VO_CLF_TRIF"'));
   });
+
+  test('Bulk Delete UI & Database Service Verification: Supports row selection, clearSheetData, and bulkDeleteSheetRecords', () => {
+    const adminHtml = fs.readFileSync('admin.html', 'utf8');
+    assert.ok(adminHtml.includes('confirmClearActiveSheetData'), 'admin.html has bulk delete/clear sheet button');
+    assert.ok(adminHtml.includes('bulkDeleteSelectedBar'), 'admin.html has bulk delete selected rows action bar');
+    assert.ok(adminHtml.includes('deleteSelectedSheetRows'), 'admin.html has deleteSelectedSheetRows trigger');
+
+    const adminAppJs = fs.readFileSync('js/admin-app.js', 'utf8');
+    assert.ok(adminAppJs.includes('toggleSelectAllSheetRows'), 'admin-app.js has toggleSelectAllSheetRows');
+    assert.ok(adminAppJs.includes('updateBulkDeleteSelection'), 'admin-app.js has updateBulkDeleteSelection');
+    assert.ok(adminAppJs.includes('deleteSelectedSheetRows'), 'admin-app.js has deleteSelectedSheetRows implementation');
+    assert.ok(adminAppJs.includes('confirmClearActiveSheetData'), 'admin-app.js has confirmClearActiveSheetData implementation');
+
+    const dbJs = fs.readFileSync('js/db.js', 'utf8');
+    assert.ok(dbJs.includes('clearSheetData'), 'db.js has clearSheetData');
+    assert.ok(dbJs.includes('bulkDeleteSheetRecords'), 'db.js has bulkDeleteSheetRecords');
+
+    // Run db.js and verify clearSheetData and bulkDeleteSheetRecords behavior
+    const mockStorage = {};
+    const mockWindow = {
+      localStorage: {
+        getItem: (k) => mockStorage[k] || null,
+        setItem: (k, v) => { mockStorage[k] = v; },
+        removeItem: (k) => { delete mockStorage[k]; }
+      },
+      dispatchEvent: () => {}
+    };
+    const runSandbox = new Function('window', 'localStorage', dbJs);
+    runSandbox(mockWindow, mockWindow.localStorage);
+    const db = mockWindow.DantewadaDB;
+
+    // Test bulk deletion
+    db.data.placed = [
+      { id: '1', name: 'Youth 1', organisation: 'Org 1' },
+      { id: '2', name: 'Youth 2', organisation: 'Org 2' },
+      { id: '3', name: 'Youth 3', organisation: 'Org 3' }
+    ];
+    assert.strictEqual(db.data.placed.length, 3);
+
+    // Delete item 2
+    const delRes = db.bulkDeleteSheetRecords('placed', [db.data.placed[1]]);
+    assert.strictEqual(delRes.success, true);
+    assert.strictEqual(delRes.count, 1);
+    assert.strictEqual(db.data.placed.length, 2);
+    assert.strictEqual(db.data.placed[0].name, 'Youth 1');
+    assert.strictEqual(db.data.placed[1].name, 'Youth 3');
+
+    // Clear entire sheet
+    const clearRes = db.clearSheetData('placed');
+    assert.strictEqual(clearRes.success, true);
+    assert.strictEqual(clearRes.count, 2);
+    assert.strictEqual(db.data.placed.length, 0);
+  });
 });
 

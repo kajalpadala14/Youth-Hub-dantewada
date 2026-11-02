@@ -55,6 +55,9 @@ describe('Google Apps Script Backend CRUD Tests', () => {
         deleteRow(rowIdx) {
           this.rows.splice(rowIdx - 1, 1);
         },
+        deleteRows(rowIdx, count = 1) {
+          this.rows.splice(rowIdx - 1, count);
+        },
         setFrozenRows() {}
       };
     }
@@ -106,6 +109,9 @@ describe('Google Apps Script Backend CRUD Tests', () => {
           },
           deleteRow(rowIdx) {
             this.rows.splice(rowIdx - 1, 1);
+          },
+          deleteRows(rowIdx, count = 1) {
+            this.rows.splice(rowIdx - 1, count);
           },
           setFrozenRows() {}
         };
@@ -228,6 +234,36 @@ describe('Google Apps Script Backend CRUD Tests', () => {
     assert.equal(sheet.rows.length, 3);
     assert.equal(sheet.rows[1][1], 'Anita');
     assert.equal(sheet.rows[2][1], 'Suresh');
+  });
+
+  test('Bulk Delete: bulkDelete removes selected records or clears all data', () => {
+    const mockSs = createMockSpreadsheet({
+      'Employment_Registration': [
+        ['SR.No', 'Youth_Name', "Father's Name / Husband's Name", 'Mobile Number', 'Block Name', 'Village'],
+        [1, 'Anita', 'Father1', '9111111111', 'Dantewada', 'Village1'],
+        [2, 'Suresh', 'Father2', '9222222222', 'Geedam', 'Village2'],
+        [3, 'Ramesh', 'Father3', '9333333333', 'Katekalyan', 'Village3']
+      ]
+    });
+    const ctx = setupVm(mockSs);
+
+    // 1. Delete selected by IDs / records
+    const res1 = ctx.handleAction('bulkDelete', {
+      sheetName: 'Employment_Registration',
+      ids: ['Anita']
+    });
+    assert.equal(res1.success, true);
+    assert.equal(res1.deletedCount, 1);
+    const sheet = mockSs.getSheetByName('Employment_Registration');
+    assert.equal(sheet.rows.length, 3); // Anita removed
+
+    // 2. Clear all data
+    const res2 = ctx.handleAction('bulkDelete', {
+      sheetName: 'Employment_Registration',
+      deleteAll: true
+    });
+    assert.equal(res2.success, true);
+    assert.equal(sheet.rows.length, 1); // Only header remains
   });
 
   test('Title Banner: getTableRecords correctly handles 2-row title sheets with 0 records', () => {

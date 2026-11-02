@@ -2697,11 +2697,30 @@
     const recordCountEl = document.getElementById('sheetRecordCount');
     if (recordCountEl) recordCountEl.textContent = rawRecords.length;
 
+    const isCalculatedSheet = currentActiveSheet === 'Bastar_Munne_Report' || currentActiveSheet === 'Startup_District_Ideas';
+
+    // Reset selection checkboxes and action bar
+    const selectAllCb = document.getElementById('selectAllSheetRows');
+    if (selectAllCb) {
+      selectAllCb.checked = false;
+      selectAllCb.indeterminate = false;
+    }
+    const bulkBar = document.getElementById('bulkDeleteSelectedBar');
+    if (bulkBar) {
+      bulkBar.classList.add('hidden');
+      bulkBar.classList.remove('flex');
+    }
+    const clearBtn = document.getElementById('clearSheetDataBtn');
+    if (clearBtn) {
+      clearBtn.style.display = isCalculatedSheet ? 'none' : '';
+    }
+
     // Render Table Head
     const thead = document.getElementById('sheetTableHead');
     if (thead) {
       thead.innerHTML = `
         <tr>
+          ${!isCalculatedSheet ? `<th class="p-3 w-10 text-center"><input type="checkbox" id="selectAllSheetRows" onchange="window.toggleSelectAllSheetRows(this.checked)" class="rounded text-blue-600 cursor-pointer" title="सभी चुनें / हटाएं"></th>` : ''}
           ${cfg.params.map(p => `<th class="p-3 whitespace-nowrap">${p}</th>`).join('')}
           <th class="p-3 text-right whitespace-nowrap">कार्रवाई</th>
         </tr>
@@ -2717,7 +2736,7 @@
     if (rawRecords.length === 0) {
       tbody.innerHTML = `
         <tr>
-          <td colspan="${cfg.params.length + 1}" class="py-14 text-center bg-slate-50/50">
+          <td colspan="${cfg.params.length + (isCalculatedSheet ? 1 : 2)}" class="py-14 text-center bg-slate-50/50">
             <div class="max-w-md mx-auto p-6 rounded-2xl bg-white border border-slate-200/80 shadow-xs">
               <div class="w-14 h-14 mx-auto mb-3 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-2xl border border-emerald-200">
                 <i class="fa-solid fa-file-excel"></i>
@@ -2872,6 +2891,9 @@
 
       return `
         <tr class="hover:bg-blue-50/40 border-b border-slate-100 transition-colors">
+          <td class="p-3 text-center">
+            <input type="checkbox" class="sheet-row-checkbox rounded text-blue-600 cursor-pointer" data-row-idx="${idx}" onchange="window.updateBulkDeleteSelection()">
+          </td>
           ${rowValues.map((val, colIdx) => {
             const isFirst = colIdx === 0;
             if (isFirst) {
@@ -3768,6 +3790,160 @@
       } catch (err) {
         console.warn('Cloud deleteRecord failed:', err);
       }
+    }
+  };
+
+  window.toggleSelectAllSheetRows = function (isChecked) {
+    const checkboxes = document.querySelectorAll('.sheet-row-checkbox');
+    checkboxes.forEach(cb => {
+      cb.checked = isChecked;
+    });
+    window.updateBulkDeleteSelection();
+  };
+
+  window.updateBulkDeleteSelection = function () {
+    const checkedBoxes = document.querySelectorAll('.sheet-row-checkbox:checked');
+    const count = checkedBoxes.length;
+    const bar = document.getElementById('bulkDeleteSelectedBar');
+    const countEl = document.getElementById('selectedRowCount');
+    const selectAllCb = document.getElementById('selectAllSheetRows');
+    const allBoxes = document.querySelectorAll('.sheet-row-checkbox');
+
+    if (countEl) countEl.textContent = count;
+    if (bar) {
+      if (count > 0) {
+        bar.classList.remove('hidden');
+        bar.classList.add('flex');
+      } else {
+        bar.classList.add('hidden');
+        bar.classList.remove('flex');
+      }
+    }
+    if (selectAllCb) {
+      selectAllCb.checked = allBoxes.length > 0 && count === allBoxes.length;
+      selectAllCb.indeterminate = count > 0 && count < allBoxes.length;
+    }
+  };
+
+  window.deleteSelectedSheetRows = async function () {
+    const checkedBoxes = Array.from(document.querySelectorAll('.sheet-row-checkbox:checked'));
+    if (checkedBoxes.length === 0) {
+      alert('कृपया पहले हटाने के लिए रिकॉर्ड चुनें (Select records first)।');
+      return;
+    }
+
+    const count = checkedBoxes.length;
+    if (!confirm(`क्या आप निश्चित हैं कि आप चयनित ${count} रिकॉर्ड्स को हटाना चाहते हैं? यह Google Sheet से भी डिलीट हो जाएगा।`)) {
+      return;
+    }
+
+    const cfg = SHEET_CONFIGS[currentActiveSheet];
+    if (!cfg || !window.DantewadaDB.data[cfg.collection]) {
+      alert('शीट डेटा अनुपलब्ध है।');
+      return;
+    }
+
+    const searchInput = document.getElementById('sheetSearchInput');
+    const blockSelect = document.getElementById('sheetBlockFilter');
+    const options = {
+      search: searchInput ? searchInput.value : '',
+      block: blockSelect ? blockSelect.value : 'All'
+    };
+    const currentList = window.DantewadaDB.getSheetData(currentActiveSheet, options);
+
+    const itemsToDelete = [];
+    const idVals = [];
+    checkedBoxes.forEach(cb => {
+      const idx = Number(cb.dataset.rowIdx);
+      if (currentList[idx]) {
+        const item = currentList[idx];
+        itemsToDelete.push(item);
+        const idVal = item.name || item.NAME || item.founderName || item.startupName || item.title || item.Candidate_Name || item.id || item['SR. NO.'] || item.sNo || item['First Name'] || '';
+        if (idVal) idVals.push(idVal);
+      }
+    });
+
+    if (itemsToDelete.length === 0) return;
+
+    // Remove from local collection
+    const collection = window.DantewadaDB.data[cfg.collection];
+    const toDeleteSet = new Set(itemsToDelete);
+    window.DantewadaDB.data[cfg.collection] = collection.filter(row => !toDeleteSet.has(row));
+    window.DantewadaDB.persist();
+    renderSheetTable();
+    updateSidebarBadgeCounts();
+
+    // Call Cloud Backend bulkDelete
+    if (typeof API !== 'undefined' && API.call) {
+      try {
+        const res = await API.call('bulkDelete', {
+          sheetName: getCloudSheetName(currentActiveSheet),
+          records: itemsToDelete,
+          ids: idVals
+        });
+        if (res && res.success) {
+          alert(`✅ सफलतापूर्वक ${itemsToDelete.length} रिकॉर्ड हटा दिए गए (Google Sheet भी अपडेट हो गई)!`);
+        } else {
+          alert(`✅ पोर्टल से ${itemsToDelete.length} रिकॉर्ड हटा दिए गए। (क्लाउड स्थिति: ${res && res.message ? res.message : 'OK'})`);
+        }
+      } catch (err) {
+        console.warn('Cloud bulkDelete error:', err);
+        alert(`✅ पोर्टल से ${itemsToDelete.length} रिकॉर्ड हटा दिए गए।`);
+      }
+    } else {
+      alert(`✅ सफलतापूर्वक ${itemsToDelete.length} रिकॉर्ड हटा दिए गए!`);
+    }
+  };
+
+  window.confirmClearActiveSheetData = async function () {
+    const cfg = SHEET_CONFIGS[currentActiveSheet];
+    if (!cfg) return;
+
+    if (currentActiveSheet === 'Bastar_Munne_Report' || currentActiveSheet === 'Startup_District_Ideas') {
+      alert('यह शीट एक स्वचालित सारांश (Calculated Summary) है। इसे खाली नहीं किया जा सकता।');
+      return;
+    }
+
+    const currentRecords = window.DantewadaDB.data[cfg.collection] || [];
+    if (currentRecords.length === 0) {
+      alert(`शीट '${cfg.titleEn}' पहले से ही पूरी तरह खाली है (0 Records)।`);
+      return;
+    }
+
+    const promptMsg = `⚠️ चेतावनी (Warning)!\n\nक्या आप सचमुच '${cfg.titleEn}' (${cfg.titleHi}) के सभी ${currentRecords.length} रिकॉर्ड्स को हटाना (बल्क डिलीट) चाहते हैं?\n\nयह कार्रवाई Google Sheet से भी डेटा हटा देगी।\n\nयदि आप सहमत हैं तो 'DELETE' टाइप करें:`;
+    const userInput = prompt(promptMsg);
+
+    if (userInput !== 'DELETE' && userInput !== 'delete') {
+      if (userInput !== null) {
+        alert('हटाने की पुष्टि नहीं हुई। ऑपरेशन रद्द कर दिया गया।');
+      }
+      return;
+    }
+
+    const deletedTotal = currentRecords.length;
+    window.DantewadaDB.data[cfg.collection] = [];
+    window.DantewadaDB.persist();
+    renderSheetTable();
+    updateSidebarBadgeCounts();
+
+    // Cloud Backend clear
+    if (typeof API !== 'undefined' && API.call) {
+      try {
+        const res = await API.call('bulkDelete', {
+          sheetName: getCloudSheetName(currentActiveSheet),
+          deleteAll: true
+        });
+        if (res && res.success) {
+          alert(`✅ सफलतापूर्वक '${cfg.titleEn}' के सभी ${deletedTotal} रिकॉर्ड्स हटा दिए गए (Google Sheet भी खाली कर दी गई)!`);
+        } else {
+          alert(`✅ पोर्टल से '${cfg.titleEn}' के सभी ${deletedTotal} रिकॉर्ड्स हटा दिए गए।`);
+        }
+      } catch (err) {
+        console.warn('Cloud clear error:', err);
+        alert(`✅ पोर्टल से '${cfg.titleEn}' के सभी ${deletedTotal} रिकॉर्ड्स हटा दिए गए।`);
+      }
+    } else {
+      alert(`✅ सफलतापूर्वक '${cfg.titleEn}' के सभी ${deletedTotal} रिकॉर्ड्स हटा दिए गए!`);
     }
   };
 

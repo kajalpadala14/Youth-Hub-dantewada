@@ -509,7 +509,7 @@
             <div>
               <h2 class="text-base sm:text-lg font-black text-slate-900 flex items-center gap-2">
                 <i class="fa-solid fa-layer-group text-blue-700"></i>
-                <span>योजना एवं डेटाबेस मॉड्यूल (12 Category Modules)</span>
+                <span>योजना एवं डेटाबेस मॉड्यूल (16 Category Modules)</span>
               </h2>
               <p class="text-xs text-slate-500 mt-0.5">
                 विशिष्ट मॉड्यूल पर क्लिक करके उसकी डेटा टेबल, पैरामीटर्स एवं विस्तृत सूची देखें।
@@ -519,19 +519,22 @@
             <!-- Category Filter Tabs -->
             <div class="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl border border-slate-200 overflow-x-auto touch-scroll-row max-w-full" id="dashCatTabs">
               <button onclick="window.filterDashCategory('all', this)" class="cat-pill active px-3 py-1 text-xs font-bold rounded-lg bg-white text-blue-900 shadow-xs border border-slate-200 transition">
-                सभी (12)
+                सभी (16)
               </button>
               <button onclick="window.filterDashCategory('employment', this)" class="cat-pill px-2.5 py-1 text-xs font-medium text-slate-600 hover:text-slate-900 rounded-lg transition">
-                💼 रोजगार (2)
+                💼 रोजगार (3)
               </button>
               <button onclick="window.filterDashCategory('skills', this)" class="cat-pill px-2.5 py-1 text-xs font-medium text-slate-600 hover:text-slate-900 rounded-lg transition">
-                🎓 कौशल व शिक्षा (6)
+                🎓 कौशल व शिक्षा (7)
               </button>
               <button onclick="window.filterDashCategory('enterprise', this)" class="cat-pill px-2.5 py-1 text-xs font-medium text-slate-600 hover:text-slate-900 rounded-lg transition">
-                💡 उद्यमिता व ऋण (3)
+                💡 उद्यमिता व ऋण (4)
               </button>
               <button onclick="window.filterDashCategory('bastar', this)" class="cat-pill px-2.5 py-1 text-xs font-medium text-slate-600 hover:text-slate-900 rounded-lg transition">
                 ⛺ बस्तर मुन्ने (1)
+              </button>
+              <button onclick="window.filterDashCategory('field', this)" class="cat-pill px-2.5 py-1 text-xs font-medium text-slate-600 hover:text-slate-900 rounded-lg transition">
+                🤝 VO / CLF (1)
               </button>
             </div>
           </div>
@@ -783,6 +786,27 @@
                 <span>बैठक विवरण देखें</span>
                 <i class="fa-solid fa-arrow-right text-[11px] transform group-hover:translate-x-1 transition-transform"></i>
               </div>
+            </div>
+
+            <!-- 14. Counselling -->
+            <div onclick="window.openSheetViewer('Counselling')" data-dash-cat="skills" class="dash-module-card group bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 hover:border-cyan-500 hover:shadow-md transition-all cursor-pointer flex flex-col justify-between">
+              <div><div class="flex items-center justify-between mb-3"><div class="w-10 h-10 rounded-xl bg-cyan-50 text-cyan-700 flex items-center justify-center text-lg border border-cyan-100"><i class="fa-solid fa-comments"></i></div><span class="text-[11px] font-semibold text-cyan-700 bg-cyan-50 px-2 py-0.5 rounded-md border border-cyan-100">Counselling</span></div>
+                <div class="text-3xl font-black text-slate-900 tracking-tight" id="kpi-card-val-counselling">0</div><div class="font-bold text-slate-900 text-sm mt-1">14. Counselling</div><div class="text-xs text-slate-500">Counselling records</div></div>
+              <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-cyan-700"><span>डेटा सूची देखें</span><i class="fa-solid fa-arrow-right text-[11px]"></i></div>
+            </div>
+
+            <!-- 15. Startup & Ideas -->
+            <div onclick="window.openSheetViewer('Startup_Ideas')" data-dash-cat="enterprise" class="dash-module-card group bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 hover:border-violet-500 hover:shadow-md transition-all cursor-pointer flex flex-col justify-between">
+              <div><div class="flex items-center justify-between mb-3"><div class="w-10 h-10 rounded-xl bg-violet-50 text-violet-700 flex items-center justify-center text-lg border border-violet-100"><i class="fa-solid fa-lightbulb"></i></div><span class="text-[11px] font-semibold text-violet-700 bg-violet-50 px-2 py-0.5 rounded-md border border-violet-100">Startup</span></div>
+                <div class="text-3xl font-black text-slate-900 tracking-tight" id="kpi-card-val-startup-ideas">0</div><div class="font-bold text-slate-900 text-sm mt-1">15. Startup &amp; Ideas</div><div class="text-xs text-slate-500">Startup and innovation ideas</div></div>
+              <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-violet-700"><span>डेटा सूची देखें</span><i class="fa-solid fa-arrow-right text-[11px]"></i></div>
+            </div>
+
+            <!-- 16. M-Form -->
+            <div onclick="window.openSheetViewer('M_Form')" data-dash-cat="employment" class="dash-module-card group bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 hover:border-blue-500 hover:shadow-md transition-all cursor-pointer flex flex-col justify-between">
+              <div><div class="flex items-center justify-between mb-3"><div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center text-lg border border-blue-100"><i class="fa-solid fa-file-lines"></i></div><span class="text-[11px] font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100">Registration</span></div>
+                <div class="text-3xl font-black text-slate-900 tracking-tight" id="kpi-card-val-m-form">0</div><div class="font-bold text-slate-900 text-sm mt-1">16. M-Form</div><div class="text-xs text-slate-500">M-Form registration records</div></div>
+              <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-blue-700"><span>डेटा सूची देखें</span><i class="fa-solid fa-arrow-right text-[11px]"></i></div>
             </div>
 
           </div>
@@ -2101,8 +2125,8 @@
   <script src="js/api.js?v=3.5"></script>
   <script src="js/auth.js?v=3.5"></script>
   <script src="js/mform-data.js?v=3.5"></script>
-  <script src="js/db.js?v=3.5"></script>
+  <script src="js/db.js?v=3.8"></script>
   <script src="js/public-app.js?v=3.5"></script>
-  <script src="js/admin-app.js?v=3.5"></script>
+  <script src="js/admin-app.js?v=3.8"></script>
 </body>
 </html>

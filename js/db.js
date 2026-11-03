@@ -121,6 +121,18 @@
               parsed.metadata.cleanedMockDataV6 = true;
               this.persist(parsed);
             }
+            // Remove the legacy empty MY Bharat placeholder. Older sync code
+            // created this display row when a backend row had no name.
+            if (Array.isArray(parsed.myBharat)) {
+              const beforeCount = parsed.myBharat.length;
+              parsed.myBharat = parsed.myBharat.filter(record => {
+                const name = String(record && record.name || '').trim();
+                const mobile = String(record && (record.mobile || record['MOBILE NO.']) || '').replace(/\D/g, '');
+                const isPlaceholder = !name || name === 'पंजीकृत युवा' || name.toLowerCase() === 'registered youth';
+                return !isPlaceholder || mobile.length >= 10;
+              });
+              if (parsed.myBharat.length !== beforeCount) this.persist(parsed);
+            }
             return parsed;
           }
         }
@@ -427,9 +439,7 @@
 
         case 'Startup_Ideas':
         case 'Startup & Innovation Idea':
-          list = (this.data.startupIdeas && this.data.startupIdeas.length > 0)
-            ? this.data.startupIdeas
-            : (this.data.entrepreneurIdeas || []);
+          list = this.data.startupIdeas || [];
           break;
 
         case 'Startup_District_Ideas': {
@@ -1232,7 +1242,7 @@
           registeredDate: new Date().toISOString().split('T')[0]
         };
 
-        if (sheetName !== 'Meetings_VO_CLF_TRIF') {
+        if (sheetName !== 'Meetings_VO_CLF_TRIF' && sheetName !== 'Startup_Ideas' && sheetName !== 'Startup & Innovation Idea') {
           this.data.youth.unshift(newRecord);
         }
         insertedCount++;
@@ -1375,6 +1385,21 @@
             category: norm.category,
             training: norm.training || row['INTERESTED TRADE (इच्छुक ट्रेड)'] || 'SKILL TRAINING',
             status: 'Applied'
+          });
+        } else if (sheetName === 'Startup_Ideas' || sheetName === 'Startup & Innovation Idea') {
+          if (!this.data.startupIdeas) this.data.startupIdeas = [];
+          this.data.startupIdeas.unshift({
+            id: String(row['SR. NO.'] || idx + 1),
+            startupName: String(row['STARTUP / IDEA NAME'] || row.startupName || ''),
+            district: String(row.DISTRICT || row.district || norm.block || ''),
+            founderName: String(row['FOUNDER NAME'] || row.founderName || norm.name || ''),
+            age: String(row.AGE || row.age || ''),
+            address: String(row.ADDRESS || row.address || norm.village || ''),
+            education: String(row.EDUCATION || row.education || norm.qualification || ''),
+            mobile: String(row['MOBILE NO.'] || row.mobile || norm.mobile || ''),
+            investmentNeeded: String(row['INVESTMENT NEEDED'] || row.investmentNeeded || norm.loanAmount || ''),
+            workType: String(row['WORK TYPE'] || row.workType || ''),
+            businessModel: String(row['BUSINESS MODEL / PROBLEM'] || row['BUSINESS MODEL'] || row.businessModel || '')
           });
         } else if (sheetName === 'Entrepreneur_Identified') {
           if (!this.data.entrepreneursIdentified) this.data.entrepreneursIdentified = [];
@@ -1707,6 +1732,7 @@
         'Employment_Registered',
         'Employment_Registration',
         'M_Form',
+        'M Form',
         'Counselling',
         'Employment_Linked',
         'Employed',
@@ -1715,6 +1741,7 @@
         'Education',
         'Education_Linked',
         'Entrepreneur_Identified',
+        'Startup & Innovation Idea',
         'Entrepreneurs',
         'PMEGP_PMFME_Loan',
         'IIM_Candidate_List',
@@ -1788,6 +1815,80 @@
         }
       }
 
+      // A failed request set must not be treated as a successful empty sync.
+      // In particular, do not stamp stale local data as freshly synced.
+      if (fetchedSheets.size === 0) {
+        return { success: false, totalSynced: 0, stats, message: 'No Google Sheets data could be fetched. Check the Apps Script deployment URL and access permissions.' };
+      }
+
+      // Older Apps Script deployments can omit the spaced alias from
+      // getAllData(). Query that physical tab directly so the bundled local
+      // M-Form dataset is never mistaken for current Google Sheet data.
+      if (!Array.isArray(sheetDataMap['M Form']) || sheetDataMap['M Form'].length === 0) {
+        try {
+          const legacyMForm = await this._fetchWithTimeoutAndRetry(
+            url,
+            { action: 'getTableRecords', payload: { sheetName: 'M Form' } },
+            1,
+            10000
+          );
+          if (legacyMForm && legacyMForm.success && Array.isArray(legacyMForm.records)) {
+            const hadLegacyRows = Array.isArray(sheetDataMap['M Form']) ? sheetDataMap['M Form'].length : 0;
+            sheetDataMap['M Form'] = legacyMForm.records;
+            fetchedSheets.add('M Form');
+            stats['M Form'] = legacyMForm.records.length;
+            totalSynced += Math.max(0, legacyMForm.records.length - hadLegacyRows);
+          }
+        } catch (legacyMFormError) {
+          console.warn('Could not fetch the legacy M Form tab:', legacyMFormError.message);
+        }
+      }
+
+      // Do not let a partial getAllData response leave stale local
+      // Counselling records visible when this sheet was omitted.
+      if (!Array.isArray(sheetDataMap.Counselling) || sheetDataMap.Counselling.length === 0) {
+        try {
+          const counsellingResponse = await this._fetchWithTimeoutAndRetry(
+            url,
+            { action: 'getTableRecords', payload: { sheetName: 'Counselling' } },
+            1,
+            10000
+          );
+          if (counsellingResponse && counsellingResponse.success && Array.isArray(counsellingResponse.records)) {
+            const previousCount = Array.isArray(sheetDataMap.Counselling) ? sheetDataMap.Counselling.length : 0;
+            sheetDataMap.Counselling = counsellingResponse.records;
+            fetchedSheets.add('Counselling');
+            stats.Counselling = counsellingResponse.records.length;
+            totalSynced += Math.max(0, counsellingResponse.records.length - previousCount);
+          }
+        } catch (counsellingError) {
+          console.warn('Could not fetch the Counselling sheet directly:', counsellingError.message);
+        }
+      }
+
+      // The Startup & Innovation Idea module is a separate register from
+      // Entrepreneur_Identified. Fetch it directly if an older full-sync
+      // response omitted its sheet key.
+      if (!Array.isArray(sheetDataMap['Startup & Innovation Idea']) || sheetDataMap['Startup & Innovation Idea'].length === 0) {
+        try {
+          const startupResponse = await this._fetchWithTimeoutAndRetry(
+            url,
+            { action: 'getTableRecords', payload: { sheetName: 'Startup & Innovation Idea' } },
+            1,
+            10000
+          );
+          if (startupResponse && startupResponse.success && Array.isArray(startupResponse.records)) {
+            const previousCount = Array.isArray(sheetDataMap['Startup & Innovation Idea']) ? sheetDataMap['Startup & Innovation Idea'].length : 0;
+            sheetDataMap['Startup & Innovation Idea'] = startupResponse.records;
+            fetchedSheets.add('Startup & Innovation Idea');
+            stats['Startup & Innovation Idea'] = startupResponse.records.length;
+            totalSynced += Math.max(0, startupResponse.records.length - previousCount);
+          }
+        } catch (startupError) {
+          console.warn('Could not fetch the Startup & Innovation Idea sheet directly:', startupError.message);
+        }
+      }
+
       // 1. Employment_Registration / M_Form
       const empRecords = sheetDataMap['Employment_Registration'] || sheetDataMap['Employment_Registered'] || [];
       const empYouth = empRecords.map((r, idx) => {
@@ -1810,7 +1911,10 @@
       });
 
       // 2. M_Form records
-      const mformRecords = sheetDataMap['M_Form'] || [];
+      const mformCandidates = [sheetDataMap['M_Form'], sheetDataMap['M Form']].filter(Array.isArray);
+      // Both tab spellings exist in some database copies. The canonical tab
+      // may be an empty template while the spaced legacy tab holds the data.
+      const mformRecords = mformCandidates.reduce((best, records) => records.length > best.length ? records : best, []);
       const mformYouth = mformRecords.map((r, idx) => ({
         id: String(r.MForm_ID || ('MF-' + (1000 + idx))),
         name: String(r.Youth_Name || ('एम-फॉर्म आवेदक #' + (idx + 1))),
@@ -1832,14 +1936,19 @@
       } else if (fetchedSheets.has('M_Form') && mformYouth.length > 0) {
         this.data.youth = mformYouth;
       }
-      if (fetchedSheets.has('M_Form')) {
+      if (fetchedSheets.has('M_Form') || fetchedSheets.has('M Form')) {
         this.data.mFormRecords = mformRecords;
       }
 
       // 3. Counselling records
       const counsellingRecords = sheetDataMap['Counselling'] || [];
       if (fetchedSheets.has('Counselling')) {
-        this.data.counselling = counsellingRecords.map((c, idx) => ({
+        const validCounsellingRecords = counsellingRecords.filter(c => {
+          const name = String(c.Youth_Name || c.Name || ((c['First Name'] || '') + ' ' + (c['Last Name'] || '')).trim()).trim();
+          const mobile = String(c['Mobile Number'] || c.Mobile || c['MOBILE NO.'] || '').replace(/\D/g, '');
+          return Boolean(name || mobile.length >= 10);
+        });
+        this.data.counselling = validCounsellingRecords.map((c, idx) => ({
           id: String(c.Counselling_ID || ('COU-' + (1000 + idx))),
           block: this.standardizeBlock(c['Block Name'] || c.Block || c.Counselling_Type),
           gramPanchayat: String(c.Grampanchayat || c.GP || c.Village || 'N/A').trim(),
@@ -1858,6 +1967,30 @@
           aspiredCareer: String(c['Aspired Career'] || c.Career_Interest || 'Skill Training').trim(),
           date: String(c.Date || new Date().toISOString().split('T')[0]),
           outcome: String(c.Counselling_Outcome || 'Referred for Training')
+        }));
+      }
+
+      const startupCandidates = [sheetDataMap['Startup & Innovation Idea'], sheetDataMap.Startup_Ideas].filter(Array.isArray);
+      const startupRecords = startupCandidates.reduce((best, records) => records.length > best.length ? records : best, []);
+      if (fetchedSheets.has('Startup & Innovation Idea') || fetchedSheets.has('Startup_Ideas')) {
+        const validStartupRecords = startupRecords.filter(r => {
+          const idea = String(r['STARTUP / IDEA NAME'] || r.STARTUP_NAME || r.Startup_Name || '').trim();
+          const founder = String(r['FOUNDER NAME'] || r.Founder || '').trim();
+          const problem = String(r['BUSINESS MODEL / PROBLEM'] || r['BUSINESS MODEL'] || r.Description || '').trim();
+          return Boolean(idea || founder || problem);
+        });
+        this.data.startupIdeas = validStartupRecords.map((r, idx) => ({
+          id: String(r['SR. NO.'] || r.SR || idx + 1),
+          startupName: String(r['STARTUP / IDEA NAME'] || r.STARTUP_NAME || r.Startup_Name || '').trim(),
+          district: String(r.DISTRICT || r.District || '').trim(),
+          founderName: String(r['FOUNDER NAME'] || r.Founder || '').trim(),
+          age: String(r.AGE || r.Age || '').trim(),
+          address: String(r.ADDRESS || r.Address || '').trim(),
+          education: String(r.EDUCATION || r.Education || '').trim(),
+          mobile: String(r['MOBILE NO.'] || r['MOBILE NO'] || r.Mobile || '').trim(),
+          investmentNeeded: String(r['INVESTMENT NEEDED'] || r.Investment_Needed || '').trim(),
+          workType: String(r['WORK TYPE'] || r.Work_Type || '').trim(),
+          businessModel: String(r['BUSINESS MODEL / PROBLEM'] || r['BUSINESS MODEL'] || r.Business_Model || '').trim()
         }));
       }
 
@@ -1897,6 +2030,28 @@
       const eduRecords = sheetDataMap['Education_Linked'] || sheetDataMap['Education'] || [];
       const navRecords = sheetDataMap['IIM_Candidate_List'] || sheetDataMap['NavGurukul'] || [];
       const combinedNav = [];
+
+      // The IIM table is rendered from its own `iimRaipur` collection. Keep
+      // it separate from the education/NavGurukul view while syncing the same
+      // backend rows to both views for legacy portal compatibility.
+      if (fetchedSheets.has('IIM_Candidate_List')) {
+        this.data.iimRaipur = navRecords.map((r, idx) => ({
+          id: String(r.SR || r['SR. NO.'] || r.S_No || idx + 1),
+          name: String(r.NAME || r['NAME '] || r.Candidate_Name || ''),
+          fatherName: String(r['FATHER NAME'] || r.Father_Name || ''),
+          gender: String(r.GENDER || r.Gender || ''),
+          age: String(r.AGE || r.Age || ''),
+          age2: String(r.AGE_2 || r.AGE2 || r['AGE (2)'] || r.AGE || r.Age || ''),
+          category: String(r.CAST || r.Category || r.Caste || ''),
+          cast: String(r.CAST || r.Category || r.Caste || ''),
+          gp: String(r.GP || r.Village || ''),
+          block: this.standardizeBlock(r.BLOCK || r.Block),
+          district: String(r.DISTRICT || r.District || ''),
+          mobile: String(r['MOBILE NO,'] || r['MOBILE NO.'] || r['MOBILE N0.'] || r.Mobile || ''),
+          education: String(r.EDUCATION || r.Education || ''),
+          percent: String(r.PERCENT || r.Percent || '')
+        }));
+      }
 
       navRecords.forEach((r, idx) => {
         combinedNav.push({
@@ -2115,7 +2270,12 @@
       // 14. MY_Bharat_Registration
       if (fetchedSheets.has('MY_Bharat_Registration')) {
         const mbRecords = sheetDataMap['MY_Bharat_Registration'] || [];
-        this.data.myBharat = mbRecords.map((m, idx) => ({
+        const validMbRecords = mbRecords.filter(m => {
+          const name = String(m.NAME || m.Name || m.Youth_Name || '').trim();
+          const mobile = String(m['MOBILE NO.'] || m['MOBILE NO'] || m.Mobile || m.Mobile_Number || '').replace(/\D/g, '');
+          return Boolean(name || mobile.length >= 10);
+        });
+        this.data.myBharat = validMbRecords.map((m, idx) => ({
           id: idx + 1,
           name: String(m.NAME || m.Name || 'पंजीकृत युवा').trim(),
           fatherName: String(m['FATHER NAME'] || m.Father_Name || '').trim(),

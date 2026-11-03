@@ -491,7 +491,7 @@
     setVal('kpi-photos', kpis.visitPhotosCount);
     setVal('kpi-stories', kpis.successStoriesCount);
 
-    // Update the 11 Database Category Module KPI Cards
+    // Update the 16 Database Category Module KPI Cards
     const sheetKpis = [
       { id: 'kpi-card-val-employment-registration', key: 'Employment_Registration' },
       { id: 'kpi-card-val-employed', key: 'Employed' },
@@ -505,7 +505,10 @@
       { id: 'kpi-card-val-my-bharat-registration', key: 'MY_Bharat_Registration' },
       { id: 'kpi-card-val-youth-hub-trainings', key: 'Youth_Hub_Trainings' },
       { id: 'kpi-card-val-bastar-munne-shivir', key: 'Bastar_Munne_Shivir' },
-      { id: 'kpi-card-val-meetings-vo-clf-trif', key: 'Meetings_VO_CLF_TRIF' }
+      { id: 'kpi-card-val-meetings-vo-clf-trif', key: 'Meetings_VO_CLF_TRIF' },
+      { id: 'kpi-card-val-counselling', key: 'Counselling' },
+      { id: 'kpi-card-val-startup-ideas', key: 'Startup_Ideas' },
+      { id: 'kpi-card-val-m-form', key: 'M_Form' }
     ];
 
     sheetKpis.forEach(item => {
@@ -2467,7 +2470,7 @@ Startup_Ideas: {
       titleEn: "15. Startup & Innovation Idea",
       titleHi: "स्टार्टअप व इनोवेशन विचार",
       desc: "दंतेवाड़ा एवं बस्तर संभाग के चयनित युवा उद्यमी, उनके स्टार्टअप विचार, बिज़नेस मॉडल, लक्षित ग्राहक, आवश्यक निवेश एवं पिच डेक की संपूर्ण सूची।",
-      collection: "entrepreneurIdeas",
+      collection: "startupIdeas",
       params: [
         "SR. NO.",
         "STARTUP / IDEA NAME",
@@ -2497,9 +2500,9 @@ Startup_Ideas: {
           : (item.problemSolved && item.problemSolved !== 'N/A' ? (item.problemSolved.length > 55 ? item.problemSolved.slice(0, 55) + '...' : item.problemSolved) : (item.business || 'Direct Selling / Service'))
       ],
       saveRecord: (formData) => {
-        if (!window.DantewadaDB.data.entrepreneurIdeas) window.DantewadaDB.data.entrepreneurIdeas = [];
-        window.DantewadaDB.data.entrepreneurIdeas.unshift({
-          id: window.DantewadaDB.data.entrepreneurIdeas.length + 1,
+        if (!window.DantewadaDB.data.startupIdeas) window.DantewadaDB.data.startupIdeas = [];
+        window.DantewadaDB.data.startupIdeas.unshift({
+          id: window.DantewadaDB.data.startupIdeas.length + 1,
           startupName: formData['STARTUP / IDEA NAME'] || 'New Startup',
           founderName: formData['FOUNDER NAME'] || 'N/A',
           district: formData['DISTRICT'] || 'Dantewada',
@@ -2666,7 +2669,14 @@ Bastar_Munne_Report: {
 
   window.openSheetViewer = function (sheetKey) {
     if (SHEET_CONFIGS[sheetKey]) {
+      const changingSheet = currentActiveSheet !== sheetKey;
       currentActiveSheet = sheetKey;
+      if (changingSheet) {
+        const searchInput = document.getElementById('sheetSearchInput');
+        const blockFilter = document.getElementById('sheetBlockFilter');
+        if (searchInput) searchInput.value = '';
+        if (blockFilter) blockFilter.value = 'All';
+      }
     }
     switchTab('sheet-viewer');
     renderSheetViewer();

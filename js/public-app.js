@@ -77,6 +77,9 @@
     setupLanguageToggle();
     setupMobileMenu();
     setupModalBackdrops();
+    // Public pages must never show browser-cached/demo rows. Clear display
+    // collections in memory and repopulate them from the live Apps Script sync.
+    clearPublicDataUntilLiveSync();
     renderPublicKPIs();
     renderPublicCharts();
     renderPublicStories();
@@ -94,10 +97,38 @@
       });
     }
 
-    // Auto-sync in background if not synced yet
-    if (window.DantewadaDB && (!window.DantewadaDB.data.metadata || !window.DantewadaDB.data.metadata.lastCloudSync)) {
-      window.DantewadaDB.syncFromGoogleSheet().catch(() => {});
+    // Always sync on page load so the public portal reflects the current sheet.
+    if (window.DantewadaDB && typeof window.DantewadaDB.syncFromGoogleSheet === 'function') {
+      window.DantewadaDB.syncFromGoogleSheet().then(result => {
+        if (!result || !result.success) {
+          const status = document.getElementById('publicDataSyncStatus');
+          renderPublicKPIs();
+          if (status) status.textContent = 'Backend data unavailable';
+        }
+      }).catch(error => {
+        console.error('Live Google Sheets sync failed; public data remains empty:', error);
+        renderPublicKPIs();
+        renderPublicCharts();
+        renderPublicStories();
+        renderPublicStartups();
+        renderPublicVisits();
+        renderPublicTrainings();
+        const status = document.getElementById('publicDataSyncStatus');
+        if (status) status.textContent = 'Backend data unavailable';
+      });
     }
+  }
+
+  function clearPublicDataUntilLiveSync() {
+    const db = window.DantewadaDB;
+    if (!db || !db.data) return;
+    [
+      'youth', 'placed', 'skills', 'counselling', 'navgurukul', 'loans', 'iimRaipur',
+      'iimSurvey', 'myBharat', 'mFormRecords', 'youthHubTrainings', 'bastarShivir', 'trainingConducted',
+      'entrepreneursIdentified', 'entrepreneurIdeas', 'startupIdeas', 'meetingsVoClfTrif',
+      'rangDe', 'fieldVisits', 'successStories'
+    ].forEach(key => { if (Array.isArray(db.data[key])) db.data[key] = []; });
+    if (db.data.metadata) delete db.data.metadata.lastCloudSync;
   }
 
   function setupMobileMenu() {
@@ -176,19 +207,72 @@
 
   function renderPublicKPIs() {
     if (!window.DantewadaDB) return;
+    const liveDataReady = Boolean(window.DantewadaDB.data.metadata && window.DantewadaDB.data.metadata.lastCloudSync);
     const kpis = window.DantewadaDB.getKPIs();
 
     const setVal = (id, val) => {
       const el = document.getElementById(id);
-      if (el) el.textContent = Number(val || 0).toLocaleString('en-IN');
+      if (el) el.textContent = liveDataReady ? Number(val || 0).toLocaleString('en-IN') : '—';
     };
 
     setVal('pub-kpi-total', kpis.totalYouth);
     setVal('pub-kpi-employed', kpis.employedYouth);
     setVal('pub-kpi-skills', kpis.skillTrainedYouth);
-    setVal('pub-kpi-loans', kpis.schemeBeneficiaries + kpis.identifiedEntrepreneurs);
+    setVal('pub-kpi-loans', kpis.identifiedEntrepreneurs);
     setVal('pub-kpi-visits', kpis.fieldVisitsCount);
     setVal('pub-kpi-stories', kpis.successStoriesCount);
+
+    const modules = [
+      ['Employment Registration', ['Employment_Registration', 'Employment_Registered']],
+      ['Employed Youth', ['Employed', 'Employment_Linked']],
+      ['Skill Linked', ['Skill_Linked', 'Skill_Training']],
+      ['Education Linked', ['Education_Linked', 'Education']],
+      ['Counselling', ['Counselling']], ['IIM Raipur List', ['IIM_Candidate_List']],
+      ['Training Conducted', ['Training_Conducted']], ['MY Bharat', ['MY_Bharat_Registration']],
+      ['Youth Hub Trainees', ['Youth_Hub_Trainee', 'Youth_Hub_Trainings']],
+      ['Entrepreneur Identified', ['Entrepreneur_Identified']],
+      ['PMEGP / PMFME Loan', ['PMEGP_PMFME_Loan', 'Entrepreneurs']],
+      ['Startup & Ideas', ['Startup & Innovation Idea', 'Startup_Ideas']],
+      ['Rang De Loan', ['Rang_De_Loan', 'RangDe_Loan', 'Rang de loan']],
+      ['Bastar Munne Shivir', ['Bastar_Munne_Shivir']],
+      ['VO CLF Meeting', ['VO CLF Meeting', 'Meetings_VO_CLF_TRIF']],
+      ['M-Form', ['M_Form', 'M Form']]
+    ];
+    const grid = document.getElementById('publicModuleKpiGrid');
+    if (grid) grid.innerHTML = modules.map(([label, key]) => {
+      const counts = Array.isArray(key) ? key : [key];
+      const stats = (window.DantewadaDB.data.metadata && window.DantewadaDB.data.metadata.syncStats) || {};
+      const count = liveDataReady ? Math.max(0, ...counts.map(name => Number(stats[name] || 0))) : '—';
+      return `<div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm"><div class="text-xs font-semibold text-slate-500">${label}</div><div class="text-2xl font-extrabold text-blue-900 mt-1">${liveDataReady ? Number(count).toLocaleString('en-IN') : count}</div></div>`;
+    }).join('');
+    const syncStatus = document.getElementById('publicDataSyncStatus');
+    if (syncStatus) syncStatus.textContent = liveDataReady ? 'Live backend data' : 'डेटा लोड हो रहा है…';
+    updateStartupCounts(liveDataReady);
+  }
+
+  function updateStartupCounts(liveDataReady) {
+    const ideas = liveDataReady && window.DantewadaDB && window.DantewadaDB.data
+      ? (window.DantewadaDB.data.startupIdeas || []) : [];
+    const count = ideas.length;
+    const displayCount = liveDataReady ? count : '—';
+    const section = document.getElementById('startups');
+    if (!section) return;
+    const badge = section.querySelector('.inline-flex');
+    if (badge) badge.innerHTML = `<i class="fa-solid fa-rocket text-amber-600"></i> Startup Hunt | ${displayCount} Ideas`;
+    const description = section.querySelector('p.text-xs');
+    if (description) description.textContent = `${liveDataReady ? count : '—'} live records from the Startup & Innovation Idea backend tab.`;
+    section.querySelectorAll('.startup-filter-tab').forEach(button => {
+      const prefix = button.textContent.split('(')[0].trim();
+      const district = button.getAttribute('onclick') || '';
+      const match = district.match(/filterPublicStartups\('([^']+)'\)/);
+      const selected = match ? match[1] : 'All';
+      const districtCount = selected === 'All' ? count : ideas.filter(item => String(item.district || '').toLowerCase().includes(selected.toLowerCase())).length;
+      button.textContent = `${prefix} (${liveDataReady ? districtCount : '—'})`;
+    });
+    document.querySelectorAll('a[href="#startups"] span').forEach(node => {
+      if (/^(\d+|—)$/.test(node.textContent.trim())) node.textContent = liveDataReady ? String(count) : '—';
+      else if (/Ideas/i.test(node.textContent)) node.textContent = node.textContent.replace(/(\d+|—)/, liveDataReady ? String(count) : '—');
+    });
   }
 
   let blockChartInstance = null;
@@ -378,35 +462,16 @@
     if (!container) return;
 
     const trainings = window.DantewadaDB.data.trainingConducted || [];
+    if (!trainings.length) {
+      container.innerHTML = '<div class="col-span-full py-10 text-center text-slate-500 bg-white rounded-xl border border-slate-200">कोई प्रशिक्षण रिकॉर्ड उपलब्ध नहीं है।</div>';
+      return;
+    }
     container.innerHTML = trainings.map(t => `
-      <div class="p-5 bg-white rounded-xl border border-slate-200 hover:border-blue-400 transition-colors flex flex-col justify-between">
-        <div>
-          <div class="flex items-center justify-between mb-2">
-            <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
-              ${t.category}
-            </span>
-            <span class="text-xs font-medium ${t.status === 'Completed' ? 'text-green-700' : 'text-amber-700'}">
-              <i class="fa-solid fa-circle text-[8px] mr-1"></i>${t.status}
-            </span>
-          </div>
-          <h4 class="font-bold text-slate-900 text-base mb-1">${t.title}</h4>
-          <p class="text-xs text-slate-500 mb-3"><i class="fa-solid fa-location-dot mr-1"></i>${t.venue} (${t.block})</p>
-        </div>
-        
-        <div class="pt-3 border-t border-slate-100 grid grid-cols-3 text-center text-xs text-slate-600">
-          <div>
-            <div class="font-bold text-slate-900 text-sm">${t.enrolledCount}</div>
-            <div class="text-[10px] text-slate-400 uppercase">Enrolled</div>
-          </div>
-          <div>
-            <div class="font-bold text-green-700 text-sm">${t.completedCount}</div>
-            <div class="text-[10px] text-slate-400 uppercase">Passed</div>
-          </div>
-          <div>
-            <div class="font-bold text-blue-700 text-sm">${t.placedCount}</div>
-            <div class="text-[10px] text-slate-400 uppercase">Placed</div>
-          </div>
-        </div>
+      <div class="p-5 bg-white rounded-xl border border-slate-200 hover:border-blue-400 transition-colors">
+        <h4 class="font-bold text-slate-900 text-base mb-1">${escapeHtml(t.training || '—')}</h4>
+        <p class="text-xs text-slate-600 mb-1">${escapeHtml(t.institute || '—')}</p>
+        <p class="text-xs text-slate-500">${escapeHtml(t.address || '—')}${t.block ? ` · ${escapeHtml(t.block)}` : ''}</p>
+        ${t.name ? `<p class="text-xs text-slate-500 mt-3 border-t pt-2">${escapeHtml(t.name)}</p>` : ''}
       </div>
     `).join('');
   }
@@ -626,8 +691,8 @@
     currentStartupDistrict = district;
     currentStartupSearch = search;
 
-    const allIdeas = (window.DantewadaDB && window.DantewadaDB.data && window.DantewadaDB.data.entrepreneurIdeas)
-      ? window.DantewadaDB.data.entrepreneurIdeas
+    const allIdeas = (window.DantewadaDB && window.DantewadaDB.data && window.DantewadaDB.data.startupIdeas)
+      ? window.DantewadaDB.data.startupIdeas
       : [];
 
     let filtered = allIdeas;
@@ -673,15 +738,15 @@
       else if (dist.toLowerCase().includes('kondagaon')) distBadgeClass = 'bg-amber-100 text-amber-800 border-amber-200';
       else if (dist.toLowerCase().includes('durg')) distBadgeClass = 'bg-rose-100 text-rose-800 border-rose-200';
 
-      const investSought = item.investmentNeeded 
-        ? (item.investmentNeeded.toString().startsWith('₹') ? item.investmentNeeded : `₹${item.investmentNeeded}`) 
-        : '₹5 Lakh';
+      const investSought = item.investmentNeeded
+        ? (item.investmentNeeded.toString().startsWith('₹') ? item.investmentNeeded : `₹${item.investmentNeeded}`)
+        : '—';
 
       const modelShort = (item.businessModel && item.businessModel !== 'N/A')
         ? (item.businessModel.length > 90 ? item.businessModel.slice(0, 90) + '...' : item.businessModel)
         : (item.problemSolved && item.problemSolved !== 'N/A')
             ? (item.problemSolved.length > 90 ? item.problemSolved.slice(0, 90) + '...' : item.problemSolved)
-            : 'स्थानीय रोजगार व स्वावलंबन मॉडल';
+        : 'विवरण उपलब्ध नहीं';
 
       return `
         <div class="gov-card p-5 sm:p-6 flex flex-col justify-between hover:shadow-lg transition-all border border-slate-200 bg-white rounded-2xl">
@@ -691,17 +756,17 @@
                 <i class="fa-solid fa-location-dot mr-1 text-[9px]"></i>${escapeHtml(dist)}
               </span>
               <span class="text-[10px] font-bold bg-amber-50 text-amber-800 px-2 py-0.5 rounded-full border border-amber-200">
-                #${escapeHtml(item.id)} • ${escapeHtml(item.workType || 'FULL TIME')}
+                #${escapeHtml(item.id)}${item.workType ? ` • ${escapeHtml(item.workType)}` : ''}
               </span>
             </div>
 
             <h3 class="font-extrabold text-slate-900 text-base mb-1 hover:text-amber-700 transition line-clamp-1">
-              ${escapeHtml(item.startupName || 'Startup Idea')}
+              ${escapeHtml(item.startupName || '—')}
             </h3>
             
             <p class="text-xs text-slate-500 font-medium mb-3">
               <i class="fa-solid fa-user-astronaut text-amber-600 mr-1"></i>
-              <strong>${escapeHtml(item.founderName || 'उद्यमी')}</strong> (${escapeHtml(item.age || '22')} वर्ष, ${escapeHtml(item.education || '12th')})
+              <strong>${escapeHtml(item.founderName || '—')}</strong>${item.age || item.education ? ` (${escapeHtml(item.age || '—')} वर्ष, ${escapeHtml(item.education || '—')})` : ''}
             </p>
 
             <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 mb-3 text-xs text-slate-600 leading-relaxed">
@@ -717,7 +782,7 @@
               </div>
               <div class="text-right">
                 <span class="text-[10px] text-slate-400 block uppercase font-bold">टीम आकार:</span>
-                <span class="font-bold text-slate-700">${escapeHtml(item.teamMembers || '1')} सदस्य</span>
+                <span class="font-bold text-slate-700">${escapeHtml(item.teamMembers || '—')}</span>
               </div>
             </div>
 
@@ -764,8 +829,8 @@
     const content = document.getElementById('startupModalContent');
     if (!modal || !content) return;
 
-    const allIdeas = (window.DantewadaDB && window.DantewadaDB.data && window.DantewadaDB.data.entrepreneurIdeas)
-      ? window.DantewadaDB.data.entrepreneurIdeas
+    const allIdeas = (window.DantewadaDB && window.DantewadaDB.data && window.DantewadaDB.data.startupIdeas)
+      ? window.DantewadaDB.data.startupIdeas
       : [];
 
     const idea = allIdeas.find(i => String(i.id) === String(id)) || allIdeas[0];
@@ -773,7 +838,7 @@
 
     const investSought = idea.investmentNeeded 
       ? (idea.investmentNeeded.toString().startsWith('₹') ? idea.investmentNeeded : `₹${idea.investmentNeeded}`) 
-      : '₹5 Lakh';
+      : '—';
 
     content.innerHTML = `
       <div class="p-6 sm:p-8 space-y-6">
@@ -788,11 +853,11 @@
                   Idea #${escapeHtml(idea.id)} • ${escapeHtml(idea.district || 'Dantewada')}
                 </span>
                 <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
-                  ${escapeHtml(idea.workType || 'FULL TIME')}
+                  ${escapeHtml(idea.workType || '—')}
                 </span>
               </div>
               <h3 class="text-xl sm:text-2xl font-black text-slate-900 leading-tight">
-                ${escapeHtml(idea.startupName || 'Startup Idea')}
+                ${escapeHtml(idea.startupName || '—')}
               </h3>
               <p class="text-xs text-slate-500 font-semibold mt-0.5">
                 संस्थापक: <span class="text-blue-900 font-bold">${escapeHtml(idea.founderName || 'उद्यमी')}</span> • 
@@ -914,5 +979,6 @@
     renderPublicStories();
     renderPublicStartups();
     renderPublicVisits();
+    renderPublicTrainings();
   });
 })();

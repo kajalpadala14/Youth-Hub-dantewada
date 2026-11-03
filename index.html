@@ -67,7 +67,7 @@
         <a href="#stories" class="hover:text-blue-700 transition" data-i18n="successStories">सफलता की कहानियाँ</a>
         <a href="#startups" class="hover:text-blue-700 transition flex items-center gap-1.5 text-amber-700 font-bold" data-i18n="startupsNav">
           <span>स्टार्टअप हंट</span>
-          <span class="bg-amber-100 text-amber-800 text-[10px] font-extrabold px-1.5 py-0.2 rounded-full border border-amber-300">119</span>
+          <span class="bg-amber-100 text-amber-800 text-[10px] font-extrabold px-1.5 py-0.2 rounded-full border border-amber-300">—</span>
         </a>
         <a href="#visits" class="hover:text-blue-700 transition" data-i18n="visits">फील्ड विजिट्स</a>
         <a href="#trainings" class="hover:text-blue-700 transition" data-i18n="trainings">प्रशिक्षण</a>
@@ -108,9 +108,9 @@
       <a href="#startups" class="mobile-nav-link flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-slate-800/90 transition text-amber-300 font-bold" data-i18n="startupsNav">
         <div class="flex items-center gap-3">
           <i class="fa-solid fa-rocket w-5 text-amber-400 text-center"></i>
-          <span>स्टार्टअप हंट (119 Ideas)</span>
+          <span>स्टार्टअप हंट (— Ideas)</span>
         </div>
-        <span class="bg-amber-400/20 text-amber-300 text-xs font-bold px-2 py-0.5 rounded-full border border-amber-400/30">119</span>
+        <span class="bg-amber-400/20 text-amber-300 text-xs font-bold px-2 py-0.5 rounded-full border border-amber-400/30">—</span>
       </a>
       <a href="#visits" class="mobile-nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-800/90 transition text-slate-200" data-i18n="visits">
         <i class="fa-solid fa-camera w-5 text-cyan-400 text-center"></i>
@@ -188,6 +188,20 @@
           <strong id="pub-kpi-stories" class="text-2xl sm:text-3xl font-extrabold text-rose-400">0</strong>
         </div>
       </div>
+    </div>
+  </section>
+
+  <!-- Live counts for all 16 backend modules -->
+  <section id="module-kpis" class="py-12 bg-slate-50 border-b border-slate-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-8">
+      <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-2 mb-6">
+        <div>
+          <h2 class="text-2xl font-extrabold text-slate-900">योजना एवं डेटाबेस मॉड्यूल</h2>
+          <p class="text-sm text-slate-500 mt-1">Google Sheets backend से live records की संख्या</p>
+        </div>
+        <span id="publicDataSyncStatus" class="text-xs font-semibold text-slate-500">डेटा लोड हो रहा है…</span>
+      </div>
+      <div id="publicModuleKpiGrid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3"></div>
     </div>
   </section>
 
@@ -327,7 +341,7 @@
     </div>
   </section>
 
-  <!-- 4.5 Youth Startups & Innovation Ideas (119 Ideas) -->
+  <!-- 4.5 Youth Startups & Innovation Ideas (— Ideas) -->
   <section id="startups" class="py-16 bg-gradient-to-b from-amber-50/40 via-white to-slate-50 border-b border-slate-200">
     <div class="max-w-7xl mx-auto px-4 sm:px-8">
       <!-- Section Header -->
@@ -335,13 +349,13 @@
         <div>
           <span class="inline-flex items-center gap-1.5 text-xs font-bold text-amber-800 uppercase tracking-wider bg-amber-100/80 px-3 py-1 rounded-full border border-amber-300">
             <i class="fa-solid fa-rocket text-amber-600"></i>
-            स्टार्टअप हंट (Startup Hunt) | 119 Ideas
+            स्टार्टअप हंट (Startup Hunt) | — Ideas
           </span>
           <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-2">
             दंतेवाड़ा एवं बस्तर संभाग — स्टार्टअप हंट (Startup Hunt)
           </h2>
           <p class="text-xs sm:text-sm text-slate-500 mt-1">
-            चयनित युवा उद्यमियों द्वारा प्रस्तुत 119 वास्तविक नवाचार प्रस्ताव — विचार, बिज़नेस मॉडल, लक्षित ग्राहक, आवश्यक निवेश व संपर्क
+            चयनित युवा उद्यमियों द्वारा प्रस्तुत — वास्तविक नवाचार प्रस्ताव — विचार, बिज़नेस मॉडल, लक्षित ग्राहक, आवश्यक निवेश व संपर्क
           </p>
         </div>
 
@@ -360,22 +374,22 @@
       <!-- District Filter Tabs -->
       <div class="flex items-center gap-2 mb-6 sm:mb-8 text-xs overflow-x-auto touch-scroll-row pb-1.5 sm:pb-0">
         <button onclick="window.filterPublicStartups('All')" class="startup-filter-tab whitespace-nowrap bg-blue-900 text-white font-bold px-3.5 py-1.5 rounded-lg border border-blue-900 shadow-sm transition">
-          सभी जिले (All - 119)
+          सभी जिले (All - —)
         </button>
         <button onclick="window.filterPublicStartups('Dantewada')" class="startup-filter-tab whitespace-nowrap bg-white text-slate-700 hover:bg-slate-50 font-semibold px-3.5 py-1.5 rounded-lg border border-slate-200 shadow-sm transition">
-          दंतेवाड़ा (Dantewada - 109)
+          दंतेवाड़ा (Dantewada - —)
         </button>
         <button onclick="window.filterPublicStartups('Sukma')" class="startup-filter-tab whitespace-nowrap bg-white text-slate-700 hover:bg-slate-50 font-semibold px-3.5 py-1.5 rounded-lg border border-slate-200 shadow-sm transition">
-          सुकमा (Sukma - 4)
+          सुकमा (Sukma - —)
         </button>
         <button onclick="window.filterPublicStartups('Bastar')" class="startup-filter-tab whitespace-nowrap bg-white text-slate-700 hover:bg-slate-50 font-semibold px-3.5 py-1.5 rounded-lg border border-slate-200 shadow-sm transition">
-          बस्तर (Bastar - 4)
+          बस्तर (Bastar - —)
         </button>
         <button onclick="window.filterPublicStartups('Kondagaon')" class="startup-filter-tab whitespace-nowrap bg-white text-slate-700 hover:bg-slate-50 font-semibold px-3.5 py-1.5 rounded-lg border border-slate-200 shadow-sm transition">
-          कोण्डागांव (Kondagaon - 1)
+          कोण्डागांव (Kondagaon - —)
         </button>
         <button onclick="window.filterPublicStartups('Durg')" class="startup-filter-tab whitespace-nowrap bg-white text-slate-700 hover:bg-slate-50 font-semibold px-3.5 py-1.5 rounded-lg border border-slate-200 shadow-sm transition">
-          दुर्ग (Durg - 1)
+          दुर्ग (Durg - —)
         </button>
       </div>
 
@@ -666,7 +680,7 @@
   <script src="js/env.js?v=3.5"></script>
   <script src="js/api.js?v=3.5"></script>
   <script src="js/auth.js?v=3.5"></script>
-  <script src="js/db.js?v=3.5"></script>
-  <script src="js/public-app.js?v=3.5"></script>
+  <script src="js/db.js?v=3.6"></script>
+  <script src="js/public-app.js?v=3.6"></script>
 </body>
 </html>

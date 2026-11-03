@@ -487,7 +487,18 @@ function findSheet(ss, requestedName) {
   const cleanReq = String(requestedName).trim();
 
   let sheet = ss.getSheetByName(cleanReq);
-  if (sheet) return sheet;
+  if (sheet) {
+    // The source workbook contains both "M_Form" (headers only) and
+    // "M Form" (the populated register). For this logical module, prefer the
+    // populated counterpart so reads and writes do not silently target the
+    // empty duplicate tab.
+    const normalizedExact = cleanReq.toLowerCase().replace(/[\s._-]+/g, "");
+    if (normalizedExact === "mform") {
+      const alternate = ss.getSheetByName(cleanReq === "M_Form" ? "M Form" : "M_Form");
+      if (alternate && getSheetRecordCount(alternate) > getSheetRecordCount(sheet)) return alternate;
+    }
+    return sheet;
+  }
 
   const sheets = ss.getSheets();
   const lowerReq = cleanReq.toLowerCase().replace(/[\s._-]+/g, "");
@@ -536,6 +547,21 @@ function findSheet(ss, requestedName) {
   return null;
 }
 
+function getSheetRecordCount(sheet) {
+  if (!sheet || sheet.getLastRow() === 0) return 0;
+  const lastRow = sheet.getLastRow();
+  const lastCol = sheet.getLastColumn();
+  if (!lastCol) return 0;
+  const scan = sheet.getRange(1, 1, Math.min(lastRow, 2), lastCol).getValues();
+  let headerRow = 0;
+  const firstCount = scan[0].filter(v => v !== null && String(v).trim() !== "").length;
+  if (firstCount <= 2 && scan.length > 1) {
+    const secondCount = scan[1].filter(v => v !== null && String(v).trim() !== "").length;
+    if (secondCount > firstCount) headerRow = 1;
+  }
+  return Math.max(0, lastRow - headerRow - 1);
+}
+
 function getOrCreateSheet(ss, sheetName) {
   let sheet = findSheet(ss, sheetName);
   if (sheet) return sheet;
@@ -581,6 +607,41 @@ function getOrCreateSheet(ss, sheetName) {
   return sheet;
 }
 
+/** Restore a template header only when its expected row is completely blank.
+ * Existing headers and data are left untouched. */
+function ensureSheetHeaders(sheet, sheetName) {
+  if (!sheet) return false;
+  const template = EXACT_EXCEL_TEMPLATES[sheetName] || EXACT_EXCEL_TEMPLATES[sheet.getName()];
+  if (!template || !template.headers || !template.headers.length) return false;
+
+  const expected = template.headers;
+  const titleOffset = template.hasTitle ? 1 : 0;
+  const lastRow = sheet.getLastRow();
+  const lastCol = Math.max(sheet.getLastColumn(), expected.length);
+
+  // If an expected header row already exists, do not modify the sheet.
+  if (lastRow >= titleOffset + 1 && sheet.getLastColumn() > 0) {
+    const existing = sheet.getRange(titleOffset + 1, 1, 1, Math.min(sheet.getLastColumn(), expected.length)).getValues()[0];
+    const populated = existing.filter(v => v !== null && String(v).trim() !== "").length;
+    if (populated > 0) return false;
+  }
+
+  if (template.hasTitle && lastRow === 0) {
+    sheet.getRange(1, 1).setValue(template.titleText || sheetName);
+    sheet.getRange(1, 1, 1, expected.length).merge();
+    sheet.setFrozenRows(2);
+  }
+
+  sheet.getRange(titleOffset + 1, 1, 1, expected.length).setValues([expected]);
+  const headerRange = sheet.getRange(titleOffset + 1, 1, 1, expected.length);
+  headerRange.setBackground("#0F294A");
+  headerRange.setFontColor("#FFFFFF");
+  headerRange.setFontWeight("bold");
+  headerRange.setFontSize(10);
+  sheet.setFrozenRows(template.hasTitle ? 2 : 1);
+  return true;
+}
+
 /**
  * =========================================================================
  * DATABASE INITIALIZATION / SETUP FUNCTION
@@ -621,7 +682,8 @@ function setupDatabase(optionalSs) {
       sheet = getOrCreateSheet(ss, sheetKey);
       results.push(`Created: '${sheetKey}'`);
     } else {
-      results.push(`Exists: '${sheet.getName()}'`);
+      const repairedHeaders = ensureSheetHeaders(sheet, sheetKey);
+      results.push(repairedHeaders ? `Restored blank headers: '${sheet.getName()}'` : `Exists: '${sheet.getName()}'`);
     }
   }
 
@@ -668,6 +730,43 @@ function setupDatabase(optionalSs) {
     sheetsProcessed: results.length,
     log: results
   };
+}
+
+/** Reports whether all 16 portal modules resolve to a real sheet and the
+ * header row and record count currently found for each one. Read-only. */
+function auditDatabase(ss) {
+  ss = ss || getSpreadsheet();
+  if (!ss) return { success: false, message: "No active spreadsheet found." };
+  const modules = [
+    ["Employment Registration", "Employment_Registration"],
+    ["Employed Youth", "Employed"],
+    ["Skill Linked", "Skill_Linked"],
+    ["Education Linked", "Education_Linked"],
+    ["Counselling", "Counselling"],
+    ["IIM Raipur List", "IIM_Candidate_List"],
+    ["Training Conducted", "Training_Conducted"],
+    ["MY Bharat", "MY_Bharat_Registration"],
+    ["Youth Hub Trainees", "Youth_Hub_Trainee"],
+    ["Entrepreneur Identified", "Entrepreneur_Identified"],
+    ["PMEGP / PMFME Loan", "PMEGP_PMFME_Loan"],
+    ["Startup & Ideas", "Startup & Innovation Idea"],
+    ["Rang De Loan", "Rang_De_Loan"],
+    ["Bastar Munne Shivir", "Bastar_Munne_Shivir"],
+    ["VO CLF Meeting", "VO CLF Meeting"],
+    ["M-Form", "M_Form"]
+  ];
+  const results = modules.map(([module, requestedName]) => {
+    const sheet = findSheet(ss, requestedName);
+    if (!sheet) return { module, requestedName, connected: false, sheet: null, records: 0, headers: [] };
+    const recordData = getTableRecords(ss, requestedName);
+    const rows = sheet.getLastRow() ? sheet.getRange(1, 1, Math.min(sheet.getLastRow(), 2), Math.max(1, sheet.getLastColumn())).getValues() : [];
+    let headerIdx = 0;
+    if (rows.length > 1 && rows[0].filter(v => v !== null && String(v).trim() !== "").length <= 2 &&
+        rows[1].filter(v => v !== null && String(v).trim() !== "").length > rows[0].filter(v => v !== null && String(v).trim() !== "").length) headerIdx = 1;
+    const headers = rows.length ? rows[headerIdx].map(v => String(v || "").trim()).filter(Boolean) : [];
+    return { module, requestedName, connected: Boolean(recordData && recordData.success), sheet: sheet.getName(), records: recordData.total || 0, headers };
+  });
+  return { success: true, spreadsheetName: ss.getName(), modules: results, connectedCount: results.filter(x => x.connected).length, missing: results.filter(x => !x.connected).map(x => x.module) };
 }
 
 function doGet(e) {
@@ -725,6 +824,9 @@ function handleAction(action, payload) {
 
     case "setupDatabase":
       return setupDatabase();
+
+    case "auditDatabase":
+      return auditDatabase(ss);
 
     case "getTableRecords":
       return getTableRecords(ss, payload.sheetName || payload.sheet);
@@ -881,12 +983,17 @@ function getTableRecords(ss, sheetName) {
     if (isBlank) continue;
 
     const record = {};
+    const headerOccurrences = {};
     for (let c = 0; c < rawHeaders.length; c++) {
       let rawH = rawHeaders[c];
       if (rawH === null || rawH === undefined || String(rawH).trim() === "") {
         continue;
       }
-      const headerKey = String(rawH).trim();
+      const baseHeaderKey = String(rawH).trim();
+      headerOccurrences[baseHeaderKey] = (headerOccurrences[baseHeaderKey] || 0) + 1;
+      const headerKey = headerOccurrences[baseHeaderKey] === 1
+        ? baseHeaderKey
+        : `${baseHeaderKey}_${headerOccurrences[baseHeaderKey]}`;
       let val = row[c];
 
       if (val instanceof Date) {
@@ -919,6 +1026,7 @@ function getAllData(ss) {
     const sheetData = getTableRecords(ss, s.getName());
     const recs = (sheetData && sheetData.records) || [];
     result[s.getName()] = recs;
+    grandTotal += recs.length;
   }
 
   // 2. टेम्पलेट नामों के लिए भी एंट्रीज सुनिश्चित करें
@@ -963,8 +1071,12 @@ function getAllData(ss) {
     }
   }
 
-  for (const recs of Object.values(result)) {
-    if (Array.isArray(recs)) grandTotal += recs.length;
+  // Explicitly refresh the canonical key because an empty physical M_Form
+  // tab may coexist with the populated legacy tab named "M Form".
+  const preferredMForm = findSheet(ss, "M_Form");
+  if (preferredMForm) {
+    const preferredData = getTableRecords(ss, "M_Form");
+    result.M_Form = (preferredData && preferredData.records) || [];
   }
 
   return {
@@ -1544,16 +1656,13 @@ function clearSheetData(ss, targetSheetName) {
 
   const lastRow = sheet.getLastRow();
   const lastCol = sheet.getLastColumn();
-  if (lastRow <= 1) {
+  const template = EXACT_EXCEL_TEMPLATES[sheet.getName()] || EXACT_EXCEL_TEMPLATES[String(targetSheetName || "").trim()];
+  const firstRow = lastRow && lastCol ? sheet.getRange(1, 1, 1, lastCol).getValues()[0] : [];
+  const hasTitleRow = Boolean(template && template.hasTitle) ||
+    (firstRow.filter(v => v !== null && String(v).trim() !== "").length <= 2 && lastRow >= 2);
+  const headerRowIdx = hasTitleRow ? 1 : 0;
+  if (lastRow <= headerRowIdx + 1) {
     return { success: true, message: `Sheet '${sheet.getName()}' is already empty.`, deletedRows: 0 };
-  }
-
-  const values = sheet.getRange(1, 1, Math.min(lastRow, 3), Math.max(lastCol, 1)).getValues();
-  let headerRowIdx = 0;
-  const nonBlank0 = values[0].filter(v => v !== null && String(v).trim() !== "").length;
-  if (nonBlank0 <= 2 && values.length >= 2) {
-    const nonBlank1 = values[1].filter(v => v !== null && String(v).trim() !== "").length;
-    if (nonBlank1 > nonBlank0) headerRowIdx = 1;
   }
 
   const dataStartRow = headerRowIdx + 2;

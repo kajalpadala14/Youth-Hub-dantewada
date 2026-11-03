@@ -3,6 +3,7 @@
   "version": "2.0.0",
   "description": "Dantewada Youth Development, Employment & Success Story Portal - District Administration / Zilla Panchayat Dantewada",
   "scripts": {
+    "build": "echo Static build ready",
     "start": "node server.js",
     "dev": "node server.js",
     "serve": "node server.js",

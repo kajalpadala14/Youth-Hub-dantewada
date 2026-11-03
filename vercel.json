@@ -1,7 +1,11 @@
 {
-  "version": 2,
+  "$schema": "https://openapi.vercel.sh/vercel.json",
   "cleanUrls": true,
   "rewrites": [
+    {
+      "source": "/admin",
+      "destination": "/admin.html"
+    },
     {
       "source": "/YouthHub",
       "destination": "/index.html"

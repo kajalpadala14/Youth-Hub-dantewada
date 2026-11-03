@@ -61,10 +61,12 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  if (reqUrl === '/' || reqUrl === '') {
+  if (reqUrl === '/' || reqUrl === '' || reqUrl === '/YouthHub' || reqUrl === '/YouthHub/') {
     reqUrl = '/index.html';
-  } else if (reqUrl === '/admin') {
+  } else if (reqUrl === '/admin' || reqUrl === '/YouthHub/admin') {
     reqUrl = '/admin.html';
+  } else if (reqUrl.startsWith('/YouthHub/')) {
+    reqUrl = reqUrl.substring('/YouthHub'.length);
   }
 
   // 3. Security checks: blocked files & paths

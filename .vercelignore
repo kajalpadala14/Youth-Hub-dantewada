@@ -1,0 +1,17 @@
+# Prevent Vercel from deploying local dev server as a serverless function
+server.js
+
+# Internal scripts and tests
+AppsScript/
+test/
+scratch/
+scripts/
+
+# Dependency directories
+node_modules/
+
+# Local environment configs
+.env
+.env.*
+.git
+.github

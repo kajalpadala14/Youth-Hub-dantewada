@@ -1,12 +1,17 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "cleanUrls": true,
-  "outputDirectory": ".",
+  "functions": {
+    "server.js": {
+      "includeFiles": [
+        "index.html",
+        "admin.html",
+        "css/**",
+        "js/**"
+      ]
+    }
+  },
   "rewrites": [
-    {
-      "source": "/admin",
-      "destination": "/admin.html"
-    },
     {
       "source": "/YouthHub",
       "destination": "/index.html"
@@ -14,6 +19,14 @@
     {
       "source": "/YouthHub/(.*)",
       "destination": "/$1"
+    },
+    {
+      "source": "/admin",
+      "destination": "/admin.html"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/server.js"
     }
   ]
 }

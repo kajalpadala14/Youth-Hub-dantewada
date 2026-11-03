@@ -3,7 +3,9 @@ const fs = require('fs');
 const path = require('path');
 
 const PORT = parseInt(process.env.PORT, 10) || 3000;
-const ROOT_DIR = path.resolve(__dirname);
+const ROOT_DIR = fs.existsSync(path.join(__dirname, 'index.html'))
+  ? path.resolve(__dirname)
+  : path.resolve(process.cwd());
 
 const MIME_TYPES = {
   '.html': 'text/html; charset=utf-8',
@@ -30,7 +32,8 @@ const BLOCKED_PATTERNS = [
 
 function isSafePath(targetPath) {
   const resolved = path.resolve(targetPath);
-  return resolved.startsWith(ROOT_DIR) && (resolved === ROOT_DIR || resolved.startsWith(ROOT_DIR + path.sep));
+  const dirs = [path.resolve(__dirname), path.resolve(process.cwd())];
+  return dirs.some(d => resolved.startsWith(d) && (resolved === d || resolved.startsWith(d + path.sep)));
 }
 
 const server = http.createServer((req, res) => {
@@ -61,7 +64,9 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  if (reqUrl === '/' || reqUrl === '' || reqUrl === '/YouthHub' || reqUrl === '/YouthHub/') {
+  if (reqUrl === '/server.js') {
+    reqUrl = '/index.html';
+  } else if (reqUrl === '/' || reqUrl === '' || reqUrl === '/YouthHub' || reqUrl === '/YouthHub/') {
     reqUrl = '/index.html';
   } else if (reqUrl === '/admin' || reqUrl === '/YouthHub/admin') {
     reqUrl = '/admin.html';
@@ -89,7 +94,13 @@ const server = http.createServer((req, res) => {
   }
 
   const normalizedSubPath = path.normalize(reqUrl).replace(/^(\.\.[\/\\])+/, '');
-  const filePath = path.join(ROOT_DIR, normalizedSubPath);
+  let filePath = path.join(ROOT_DIR, normalizedSubPath);
+  if (!fs.existsSync(filePath)) {
+    const cwdPath = path.join(process.cwd(), normalizedSubPath);
+    if (fs.existsSync(cwdPath)) {
+      filePath = cwdPath;
+    }
+  }
 
   // 4. Path traversal prevention
   if (!isSafePath(filePath)) {
@@ -172,24 +183,28 @@ process.on('uncaughtException', (err) => {
   console.error('Uncaught Exception:', err);
 });
 
-server.listen(PORT, () => {
-  console.log(`=======================================================`);
-  console.log(`🏛️  Dantewada Youth Development & Success Story Portal`);
-  console.log(`🏢  District Administration / Zilla Panchayat, Dantewada`);
-  console.log(`🌐  Public Portal:    http://localhost:${PORT}/index.html`);
-  console.log(`📊  Admin Dashboard:  http://localhost:${PORT}/admin.html`);
-  console.log(`🛡️  Security:         Headers & Path Guard Active`);
-  console.log(`=======================================================`);
-});
-
-// Graceful process shutdown
-function handleShutdown(signal) {
-  console.log(`Received ${signal}. Gracefully shutting down...`);
-  server.close(() => {
-    console.log('HTTP server closed.');
-    process.exit(0);
+if (require.main === module) {
+  server.listen(PORT, () => {
+    console.log(`=======================================================`);
+    console.log(`🏛️  Dantewada Youth Development & Success Story Portal`);
+    console.log(`🏢  District Administration / Zilla Panchayat, Dantewada`);
+    console.log(`🌐  Public Portal:    http://localhost:${PORT}/index.html`);
+    console.log(`📊  Admin Dashboard:  http://localhost:${PORT}/admin.html`);
+    console.log(`🛡️  Security:         Headers & Path Guard Active`);
+    console.log(`=======================================================`);
   });
+
+  // Graceful process shutdown
+  function handleShutdown(signal) {
+    console.log(`Received ${signal}. Gracefully shutting down...`);
+    server.close(() => {
+      console.log('HTTP server closed.');
+      process.exit(0);
+    });
+  }
+
+  process.on('SIGTERM', () => handleShutdown('SIGTERM'));
+  process.on('SIGINT', () => handleShutdown('SIGINT'));
 }
 
-process.on('SIGTERM', () => handleShutdown('SIGTERM'));
-process.on('SIGINT', () => handleShutdown('SIGINT'));
+module.exports = server;

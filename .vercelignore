@@ -1,6 +1,3 @@
-# Prevent Vercel from deploying local dev server as a serverless function
-server.js
-
 # Internal scripts and tests
 AppsScript/
 test/

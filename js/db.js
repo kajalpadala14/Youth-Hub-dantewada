@@ -2070,65 +2070,56 @@
         }));
       }
 
-      // 6. Education & NavGurukul
-      const eduRecords = sheetDataMap['Education_Linked'] || sheetDataMap['Education'] || [];
-      const navRecords = sheetDataMap['IIM_Candidate_List'] || sheetDataMap['NavGurukul'] || [];
-      const combinedNav = [];
+      // 5. IIM Candidate List (Filter out empty/header rows so count matches exactly 80)
+      const iimCandidates = sheetDataMap['IIM_Candidate_List'] || [];
+      const validIimRecords = iimCandidates.filter(r => {
+        if (!r || typeof r !== 'object') return false;
+        const name = String(r.NAME || r['NAME '] || r.Candidate_Name || '').trim();
+        const mob = String(r['MOBILE NO,'] || r['MOBILE NO.'] || r['MOBILE N0.'] || r.Mobile || '').trim();
+        return Boolean(name || mob);
+      });
 
-      // The IIM table is rendered from its own `iimRaipur` collection. Keep
-      // it separate from the education/NavGurukul view while syncing the same
-      // backend rows to both views for legacy portal compatibility.
-      if (fetchedSheets.has('IIM_Candidate_List')) {
-        this.data.iimRaipur = navRecords.map((r, idx) => ({
+      if (fetchedSheets.has('IIM_Candidate_List') || validIimRecords.length > 0) {
+        this.data.iimRaipur = validIimRecords.map((r, idx) => ({
           id: String(r.SR || r['SR. NO.'] || r.S_No || idx + 1),
-          name: String(r.NAME || r['NAME '] || r.Candidate_Name || ''),
-          fatherName: String(r['FATHER NAME'] || r.Father_Name || ''),
-          gender: String(r.GENDER || r.Gender || ''),
-          age: String(r.AGE || r.Age || ''),
-          age2: String(r.AGE_2 || r.AGE2 || r['AGE (2)'] || r.AGE || r.Age || ''),
-          category: String(r.CAST || r.Category || r.Caste || ''),
-          cast: String(r.CAST || r.Category || r.Caste || ''),
-          gp: String(r.GP || r.Village || ''),
+          name: String(r.NAME || r['NAME '] || r.Candidate_Name || '').trim(),
+          fatherName: String(r['FATHER NAME'] || r.Father_Name || '').trim(),
+          gender: String(r.GENDER || r.Gender || '').trim(),
+          age: String(r.AGE || r.Age || '').trim(),
+          age2: String(r.AGE_2 || r.AGE2 || r['AGE (2)'] || r.AGE || r.Age || '').trim(),
+          category: String(r.CAST || r.Category || r.Caste || '').trim(),
+          cast: String(r.CAST || r.Category || r.Caste || '').trim(),
+          gp: String(r.GP || r.Village || '').trim(),
           block: this.standardizeBlock(r.BLOCK || r.Block),
-          district: String(r.DISTRICT || r.District || ''),
-          mobile: String(r['MOBILE NO,'] || r['MOBILE NO.'] || r['MOBILE N0.'] || r.Mobile || ''),
-          education: String(r.EDUCATION || r.Education || ''),
-          percent: String(r.PERCENT || r.Percent || '')
+          district: String(r.DISTRICT || r.District || 'Dantewada').trim(),
+          mobile: String(r['MOBILE NO,'] || r['MOBILE NO.'] || r['MOBILE N0.'] || r.Mobile || '').trim(),
+          education: String(r.EDUCATION || r.Education || '').trim(),
+          percent: String(r.PERCENT || r.Percent || '').trim()
         }));
       }
 
-      navRecords.forEach((r, idx) => {
-        combinedNav.push({
-          id: String(r.Candidate_ID || ('NG-' + (100 + idx))),
-          name: String(r.Candidate_Name || r.Youth_Name || r.NAME || 'NavGurukul Fellow'),
-          fatherName: String(r['FATHER NAME'] || r.Father_Name || ''),
-          motherName: '',
-          email: `${String(r.Candidate_Name || r.Youth_Name || r.NAME || 'candidate').toLowerCase().replace(/[^a-z0-9]/g, '')}@navgurukul.org`,
-          gender: String(r.GENDER || r.Gender || 'Female'),
-          education: String(r.EDUCATION || r.Qualification || '12th Pass / Graduate'),
-          phone: String(r['MOBILE NO.'] || r['MOBILE N0.'] || r.Mobile || ''),
-          address: String(r.GP || r.BLOCK || 'Jawanga, Dantewada'),
-          block: this.standardizeBlock(r.BLOCK || r.Block)
-        });
+      // 6. Education Linked (Keep distinct from IIM so count matches Google Sheet exactly 228)
+      const eduRecords = sheetDataMap['Education_Linked'] || sheetDataMap['Education'] || sheetDataMap['NavGurukul'] || [];
+      const validEduRecords = eduRecords.filter(r => {
+        if (!r || typeof r !== 'object') return false;
+        const name = String(r.Name || r.Youth_Name || r['NAME'] || r['Candidate_Name'] || '').trim();
+        const phone = String(r['Phone Number'] || r.Mobile || r['MOBILE NO.'] || '').trim();
+        return Boolean(name || phone);
       });
 
-      eduRecords.forEach((r, idx) => {
-        combinedNav.push({
-          id: String(r.Education_ID || ('EDU-' + (100 + idx))),
-          name: String(r.Name || r.Youth_Name || 'उच्च शिक्षा छात्र'),
-          fatherName: String(r['Faather Name'] || r['Father Name'] || ''),
-          motherName: String(r['Mother Name'] || ''),
-          email: String(r.Email || `${String(r.Name || 'student').toLowerCase().replace(/[^a-z0-9]/g, '')}@gmail.com`),
-          gender: String(r.Gender || 'Female'),
-          education: String(r.Education || r.Current_Qualification || 'Graduate Linkage'),
-          phone: String(r['Phone Number'] || r.Mobile || ''),
-          address: String(r.Address || 'Dantewada'),
-          block: this.standardizeBlock(r.Block)
-        });
-      });
-
-      if (fetchedSheets.has('Education_Linked') || fetchedSheets.has('Education') || fetchedSheets.has('IIM_Candidate_List') || fetchedSheets.has('NavGurukul')) {
-        this.data.navgurukul = combinedNav;
+      if (fetchedSheets.has('Education_Linked') || fetchedSheets.has('Education') || fetchedSheets.has('NavGurukul') || validEduRecords.length > 0) {
+        this.data.navgurukul = validEduRecords.map((r, idx) => ({
+          id: String(r.Education_ID || r.id || ('EDU-' + (100 + idx))),
+          name: String(r.Name || r.Youth_Name || 'उच्च शिक्षा छात्र').trim(),
+          fatherName: String(r['Faather Name'] || r['Father Name'] || '').trim(),
+          motherName: String(r['Mother Name'] || '').trim(),
+          email: String(r.Email || `${String(r.Name || 'student').toLowerCase().replace(/[^a-z0-9]/g, '')}@gmail.com`).trim(),
+          gender: String(r.Gender || 'Female').trim(),
+          education: String(r.Education || r.Current_Qualification || 'Graduate Linkage').trim(),
+          phone: String(r['Phone Number'] || r.Mobile || '').trim(),
+          address: String(r.Address || 'Dantewada').trim(),
+          block: this.standardizeBlock(r.Block || r.Address)
+        }));
       }
 
       // 7. Entrepreneurs (loans)

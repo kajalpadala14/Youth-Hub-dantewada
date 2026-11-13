@@ -122,6 +122,10 @@
   function clearPublicDataUntilLiveSync() {
     const db = window.DantewadaDB;
     if (!db || !db.data) return;
+    // Never wipe real cached/synced Google Sheet data
+    if (db.data.metadata && db.data.metadata.lastCloudSync) return;
+    const hasRealRows = ['youth', 'placed', 'skills', 'loans', 'mFormRecords', 'startupIdeas'].some(k => Array.isArray(db.data[k]) && db.data[k].length > 0);
+    if (hasRealRows) return;
     [
       'youth', 'placed', 'skills', 'counselling', 'navgurukul', 'loans', 'iimRaipur',
       'iimSurvey', 'myBharat', 'mFormRecords', 'youthHubTrainings', 'bastarShivir', 'trainingConducted',

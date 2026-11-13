@@ -1522,8 +1522,8 @@
 
   window.deleteStory = function (id) {
     if (!confirm('क्या आप निश्चित हैं कि यह सफलता कहानी हटाना चाहते हैं?')) return;
-    if (window.DantewadaDB.data.stories) {
-      window.DantewadaDB.data.stories = window.DantewadaDB.data.stories.filter(s => s.id !== id);
+    if (window.DantewadaDB.data.successStories) {
+      window.DantewadaDB.data.successStories = window.DantewadaDB.data.successStories.filter(s => s.id !== id);
       window.DantewadaDB.persist();
       renderSuccessStories();
     }
@@ -5105,6 +5105,7 @@ Bastar_Munne_Report: {
       if (res && res.success) {
         renderDashboard();
         renderActiveTab();
+        updateSidebarBadgeCounts();
         updateTopBarAlerts();
         
         if (syncLabel) syncLabel.textContent = `सिंक पूर्ण (${res.totalSynced})`;

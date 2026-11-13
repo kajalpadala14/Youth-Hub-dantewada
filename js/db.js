@@ -625,6 +625,36 @@
           }));
           break;
 
+        case 'Field_Visits':
+          list = (this.data.fieldVisits || []).map(v => ({
+            id: v.id,
+            date: v.date || '',
+            officerName: v.officerName || '',
+            block: v.block || 'Dantewada',
+            gramPanchayat: v.gramPanchayat || v.locationName || '',
+            location: v.locationName || '',
+            purpose: v.purpose || '',
+            scheme: v.scheme || '',
+            findings: v.observations || v.findings || '',
+            status: v.status || 'Resolved',
+            photos: v.photos || []
+          }));
+          break;
+
+        case 'Success_Stories':
+          list = (this.data.successStories || []).map(s => ({
+            id: s.id,
+            youthName: s.youthName || '',
+            village: s.village || '',
+            block: s.block || 'Dantewada',
+            category: s.category || 'Employment',
+            title: s.title || '',
+            summary: s.summary || '',
+            status: s.status || 'Published',
+            photoUrl: s.photoUrl || ''
+          }));
+          break;
+
         default:
           list = this.data.youth || [];
       }
@@ -1978,26 +2008,34 @@
 
       const startupCandidates = [sheetDataMap['Startup & Innovation Idea'], sheetDataMap.Startup_Ideas].filter(Array.isArray);
       const startupRecords = startupCandidates.reduce((best, records) => records.length > best.length ? records : best, []);
-      if (fetchedSheets.has('Startup & Innovation Idea') || fetchedSheets.has('Startup_Ideas')) {
+      if (fetchedSheets.has('Startup & Innovation Idea') || fetchedSheets.has('Startup_Ideas') || startupRecords.length > 0) {
         const validStartupRecords = startupRecords.filter(r => {
-          const idea = String(r['STARTUP / IDEA NAME'] || r.STARTUP_NAME || r.Startup_Name || '').trim();
-          const founder = String(r['FOUNDER NAME'] || r.Founder || '').trim();
-          const problem = String(r['BUSINESS MODEL / PROBLEM'] || r['BUSINESS MODEL'] || r.Description || '').trim();
-          return Boolean(idea || founder || problem);
+          if (!r || typeof r !== 'object') return false;
+          const firstVal = Object.values(r)[0];
+          if (firstVal && String(firstVal).trim().toUpperCase() === 'SR. NO.') return false;
+          return Object.values(r).some(v => v !== null && v !== undefined && String(v).trim() !== '');
         });
-        this.data.startupIdeas = validStartupRecords.map((r, idx) => ({
-          id: String(r['SR. NO.'] || r.SR || idx + 1),
-          startupName: String(r['STARTUP / IDEA NAME'] || r.STARTUP_NAME || r.Startup_Name || '').trim(),
-          district: String(r.DISTRICT || r.District || '').trim(),
-          founderName: String(r['FOUNDER NAME'] || r.Founder || '').trim(),
-          age: String(r.AGE || r.Age || '').trim(),
-          address: String(r.ADDRESS || r.Address || '').trim(),
-          education: String(r.EDUCATION || r.Education || '').trim(),
-          mobile: String(r['MOBILE NO.'] || r['MOBILE NO'] || r.Mobile || '').trim(),
-          investmentNeeded: String(r['INVESTMENT NEEDED'] || r.Investment_Needed || '').trim(),
-          workType: String(r['WORK TYPE'] || r.Work_Type || '').trim(),
-          businessModel: String(r['BUSINESS MODEL / PROBLEM'] || r['BUSINESS MODEL'] || r.Business_Model || '').trim()
-        }));
+        this.data.startupIdeas = validStartupRecords.map((r, idx) => {
+          const srNo = String(r['SR. NO.'] || r.SR || (idx + 1));
+          const addr = String(r.ADDRESS || r.Address || '').trim();
+          const rawIdea = String(r['STARTUP / IDEA NAME'] || r.STARTUP_NAME || r.Startup_Name || '').trim();
+          const rawFounder = String(r['FOUNDER NAME'] || r.Founder || '').trim();
+          const age = String(r.AGE || r.Age || '').trim();
+          const dist = String(r.DISTRICT || r.District || '').trim();
+          return {
+            id: srNo,
+            startupName: rawIdea || (addr ? `स्टार्टअप विचार (${addr.split(',')[0].slice(0, 30)})` : `स्टार्टअप विचार #${srNo}`),
+            district: dist || this.standardizeBlock(addr) || 'Dantewada',
+            founderName: rawFounder || (addr ? `उद्यमी (${addr.split(' ')[0]})` : `उद्यमी #${srNo}`),
+            age: age || '-',
+            address: addr || 'दंतेवाड़ा',
+            education: String(r.EDUCATION || r.Education || '-').trim(),
+            mobile: String(r['MOBILE NO.'] || r['MOBILE NO'] || r.Mobile || '-').trim(),
+            investmentNeeded: String(r['INVESTMENT NEEDED'] || r.Investment_Needed || '-').trim(),
+            workType: String(r['WORK TYPE'] || r.Work_Type || 'Micro-Enterprise').trim(),
+            businessModel: String(r['BUSINESS MODEL / PROBLEM'] || r['BUSINESS MODEL'] || r.Business_Model || (addr ? `कार्यस्थल: ${addr}` : '-')).trim()
+          };
+        });
       }
 
       // 4. Employment_Linked / Employed (Placed)

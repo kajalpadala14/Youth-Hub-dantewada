@@ -2024,16 +2024,16 @@
           const dist = String(r.DISTRICT || r.District || '').trim();
           return {
             id: srNo,
-            startupName: rawIdea || (addr ? `स्टार्टअप विचार (${addr.split(',')[0].slice(0, 30)})` : `स्टार्टअप विचार #${srNo}`),
+            startupName: rawIdea || '-',
             district: dist || this.standardizeBlock(addr) || 'Dantewada',
-            founderName: rawFounder || (addr ? `उद्यमी (${addr.split(' ')[0]})` : `उद्यमी #${srNo}`),
+            founderName: rawFounder || '-',
             age: age || '-',
-            address: addr || 'दंतेवाड़ा',
-            education: String(r.EDUCATION || r.Education || '-').trim(),
-            mobile: String(r['MOBILE NO.'] || r['MOBILE NO'] || r.Mobile || '-').trim(),
-            investmentNeeded: String(r['INVESTMENT NEEDED'] || r.Investment_Needed || '-').trim(),
-            workType: String(r['WORK TYPE'] || r.Work_Type || 'Micro-Enterprise').trim(),
-            businessModel: String(r['BUSINESS MODEL / PROBLEM'] || r['BUSINESS MODEL'] || r.Business_Model || (addr ? `कार्यस्थल: ${addr}` : '-')).trim()
+            address: addr || '-',
+            education: String(r.EDUCATION || r.Education || '-').trim() || '-',
+            mobile: String(r['MOBILE NO.'] || r['MOBILE NO'] || r.Mobile || '-').trim() || '-',
+            investmentNeeded: String(r['INVESTMENT NEEDED'] || r.Investment_Needed || '-').trim() || '-',
+            workType: String(r['WORK TYPE'] || r.Work_Type || '-').trim() || '-',
+            businessModel: String(r['BUSINESS MODEL / PROBLEM'] || r['BUSINESS MODEL'] || r.Business_Model || '-').trim() || '-'
           };
         });
       }

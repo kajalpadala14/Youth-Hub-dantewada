@@ -2536,18 +2536,18 @@ Startup_Ideas: {
       ],
       mapRow: (item, idx) => [
         item.id || idx + 1,
-        item.startupName || item.business || item.BUSSINESS || 'Startup Idea',
-        item.district || item.block || item.BLOCK || 'Dantewada',
-        item.founderName || item.name || item.NAME || 'N/A',
-        item.age || 'N/A',
-        item.address || item.village || item.VILLAGE || 'Dantewada',
-        item.education || '12th',
-        item.mobile || 'N/A',
-        item.investmentNeeded ? (item.investmentNeeded.toString().startsWith('₹') ? item.investmentNeeded : `₹${item.investmentNeeded}`) : (item.loanAmount ? `₹${item.loanAmount}` : '₹5 Lakh'),
-        item.workType || 'FULL TIME',
-        item.businessModel && item.businessModel !== 'N/A' 
+        (item.startupName && item.startupName !== 'Startup Idea' && item.startupName !== 'N/A') ? item.startupName : (item.business && item.business !== 'N/A' ? item.business : '-'),
+        item.district && item.district !== 'N/A' ? item.district : (item.block || '-'),
+        (item.founderName && item.founderName !== 'N/A') ? item.founderName : (item.name && item.name !== 'N/A' ? item.name : '-'),
+        item.age && item.age !== 'N/A' ? item.age : '-',
+        item.address && item.address !== 'N/A' ? item.address : (item.village || '-'),
+        item.education && item.education !== 'N/A' ? item.education : '-',
+        item.mobile && item.mobile !== 'N/A' ? item.mobile : '-',
+        item.investmentNeeded && item.investmentNeeded !== 'N/A' ? (item.investmentNeeded.toString().startsWith('₹') ? item.investmentNeeded : `₹${item.investmentNeeded}`) : '-',
+        item.workType && item.workType !== 'N/A' ? item.workType : '-',
+        (item.businessModel && item.businessModel !== 'N/A' && item.businessModel !== 'Direct Selling / Service')
           ? (item.businessModel.length > 55 ? item.businessModel.slice(0, 55) + '...' : item.businessModel)
-          : (item.problemSolved && item.problemSolved !== 'N/A' ? (item.problemSolved.length > 55 ? item.problemSolved.slice(0, 55) + '...' : item.problemSolved) : (item.business || 'Direct Selling / Service'))
+          : (item.problemSolved && item.problemSolved !== 'N/A' ? (item.problemSolved.length > 55 ? item.problemSolved.slice(0, 55) + '...' : item.problemSolved) : '-')
       ],
       saveRecord: (formData) => {
         if (!window.DantewadaDB.data.startupIdeas) window.DantewadaDB.data.startupIdeas = [];

@@ -381,6 +381,8 @@
           break;
 
         case 'Entrepreneur_Identified':
+        case 'Startup_Hunt':
+        case 'Startup hunt':
           // This sheet has its own authoritative collection. Falling back to
           // entrepreneurIdeas when it is empty resurrects rows after deletion.
           if (Array.isArray(this.data.entrepreneursIdentified)) {
@@ -1773,6 +1775,8 @@
         'Education',
         'Education_Linked',
         'Entrepreneur_Identified',
+        'Startup hunt',
+        'Startup_Hunt',
         'Startup & Innovation Idea',
         'Entrepreneurs',
         'PMEGP_PMFME_Loan',
@@ -2189,8 +2193,10 @@
       }
 
       // 9. Entrepreneur_Identified (Startup Hunt)
-      const entIdentifiedRecords = sheetDataMap['Entrepreneur_Identified'] || [];
-      if (fetchedSheets.has('Entrepreneur_Identified')) {
+      const startupHuntRecords = sheetDataMap['Startup hunt'] || sheetDataMap['Startup_Hunt'] || sheetDataMap['Startup Hunt'] || [];
+      const entOrigRecords = sheetDataMap['Entrepreneur_Identified'] || [];
+      const entIdentifiedRecords = startupHuntRecords.length > 0 ? startupHuntRecords : entOrigRecords;
+      if (fetchedSheets.has('Entrepreneur_Identified') || fetchedSheets.has('Startup hunt') || fetchedSheets.has('Startup_Hunt') || entIdentifiedRecords.length > 0) {
         const validEnt = entIdentifiedRecords.filter(r => {
           const name = String(r['FOUNDER NAME'] || r.NAME || r['NAME '] || r.Founder || '').trim();
           const biz = String(r['STARTUP / IDEA NAME'] || r.BUSSINESS || r.BUSINESS || r.Startup_Name || '').trim();

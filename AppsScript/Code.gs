@@ -1661,7 +1661,11 @@ function getAllData(ss) {
     "M_Form": "M Form",
     "M Form": "M_Form",
     "Rang_De_Loan": "Rang de loan",
-    "Rang de loan": "Rang_De_Loan"
+    "Rang de loan": "Rang_De_Loan",
+    "Startup hunt": "Entrepreneur_Identified",
+    "Startup_Hunt": "Entrepreneur_Identified",
+    "Startup Hunt": "Entrepreneur_Identified",
+    "Entrepreneur_Identified": "Startup hunt"
   };
 
   for (const [aliasKey, targetKey] of Object.entries(canonicalAliases)) {

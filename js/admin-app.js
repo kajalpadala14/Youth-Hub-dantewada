@@ -36,7 +36,12 @@
       Rang_De_Loan: 'Rang de loan',
       rang_de_loan: 'Rang de loan',
       M_Form: 'M Form',
-      m_form: 'M Form'
+      m_form: 'M Form',
+      Entrepreneur_Identified: 'Startup hunt',
+      entrepreneur_identified: 'Startup hunt',
+      Startup_Hunt: 'Startup hunt',
+      startup_hunt: 'Startup hunt',
+      'Startup hunt': 'Startup hunt'
     };
     return map[sheetKey] || sheetKey;
   }
@@ -52,7 +57,7 @@
     }
 
     // Sheet specific dual-key and alias expansion
-    if (sheetKey === 'Entrepreneur_Identified' || sheetKey === 'Startup_District_Ideas') {
+    if (sheetKey === 'Entrepreneur_Identified' || sheetKey === 'Startup_District_Ideas' || sheetKey === 'Startup_Hunt' || sheetKey === 'Startup hunt') {
       const founder = clean['FOUNDER NAME'] || clean['founderName'] || clean['NAME'] || clean['name'] || clean['First Name'] || '';
       const startup = clean['STARTUP / IDEA NAME'] || clean['startupName'] || clean['BUSSINESS'] || clean['BUSINESS'] || clean['business'] || '';
       const investment = clean['INVESTMENT NEEDED'] || clean['investmentNeeded'] || clean['LOAN AMOUNT'] || clean['loanAmount'] || '';
@@ -2696,6 +2701,8 @@ Bastar_Munne_Report: {
       }
     }
   };
+  SHEET_CONFIGS['Startup_Hunt'] = SHEET_CONFIGS['Entrepreneur_Identified'];
+  SHEET_CONFIGS['Startup hunt'] = SHEET_CONFIGS['Entrepreneur_Identified'];
 
   window.filterDashCategory = function(cat, btn) {
     const cards = document.querySelectorAll('.dash-module-card');

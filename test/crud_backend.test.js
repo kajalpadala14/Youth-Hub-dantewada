@@ -482,4 +482,50 @@ describe('Google Apps Script Backend CRUD Tests', () => {
     assert.ok(mockSs.getSheetByName('Counselling'));
     assert.ok(mockSs.getSheetByName('Users'));
   });
+
+  test('Field Visit and Success Story save actions append using existing sheet headers', () => {
+    const mockSs = createMockSpreadsheet({
+      Field_Visits: [['Visit_ID', 'Date', 'Photo_1_Link', 'All_photos_JSON', 'Submitted_At']],
+      Success_Stories: [['Story_ID', 'Youth_Name', 'Photo_Link', 'Achievement_Date_Of_Success', 'Is_PDF', 'Submitted_At']]
+    });
+    const ctx = setupVm(mockSs);
+    const visit = ctx.handleAction('saveFieldVisit', { record: {
+      Visit_ID: 'VIS-TEST', Date: '2026-11-04', Photo_1_Link: 'https://drive.google.com/file/d/abc/view',
+      All_photos_JSON: '[{"fileId":"abc"}]', Submitted_At: 'now'
+    } });
+    assert.equal(visit.success, true);
+    assert.deepEqual(mockSs.getSheetByName('Field_Visits').rows[1], [
+      'VIS-TEST', '2026-11-04', 'https://drive.google.com/file/d/abc/view', '[{"fileId":"abc"}]', 'now'
+    ]);
+
+    const story = ctx.handleAction('saveSuccessStory', { record: {
+      Story_ID: 'STR-TEST', Youth_Name: 'Ramesh', Photo_Link: 'https://drive.google.com/file/d/def/view',
+      Achievement_Date: '2026-10-01', Is_PDF: false, Submitted_At: 'now'
+    } });
+    assert.equal(story.success, true);
+    assert.deepEqual(mockSs.getSheetByName('Success_Stories').rows[1], [
+      'STR-TEST', 'Ramesh', 'https://drive.google.com/file/d/def/view', '2026-10-01', false, 'now'
+    ]);
+  });
+
+  test('Module save actions fail without creating a missing tab', () => {
+    const mockSs = createMockSpreadsheet({});
+    const ctx = setupVm(mockSs);
+    const res = ctx.handleAction('saveFieldVisit', { record: { Visit_ID: 'VIS-TEST' } });
+    assert.equal(res.success, false);
+    assert.equal(mockSs.getSheetByName('Field_Visits'), null);
+  });
+
+  test('uploadModulePhoto: validates and processes photo uploads', () => {
+    const mockSs = createMockSpreadsheet({});
+    const ctx = setupVm(mockSs);
+    const res = ctx.handleAction('uploadModulePhoto', {
+      module: 'Field_Visits',
+      fileName: 'test.jpg',
+      mimeType: 'image/jpeg',
+      base64Data: 'data:image/jpeg;base64,dGVzdA=='
+    });
+    assert.equal(res.success, true);
+    assert.ok(res.fileId);
+  });
 });

@@ -4,5 +4,5 @@
  * or manage it via your hosting provider's build environment.
  */
 window.ENV = {
-  GOOGLE_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbwCdp1wYyZIRpiFxluEaRyVBpMt1EIQJlZj4QDfSHRoSyuW_ySk0ou-0xEXsEjpuoNAeA/exec"
+  GOOGLE_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbyDAK6I79MCVW0tXerYXESaRN-Z_kBe7W2V96trt0YU1b87vzaSrpAEu824eo6GKztX0Q/exec"
 };

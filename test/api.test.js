@@ -43,6 +43,10 @@ describe('API Module Unit Tests', () => {
     assert.equal(API.getApiUrl(), 'https://script.google.com/macros/s/SAMPLE/exec');
   });
 
+  test('API is exposed on window for admin form submit handlers', () => {
+    assert.equal(env.window.API.call, API.call);
+  });
+
   test('call() fails gracefully when API URL is not set', async () => {
     API.clearSession();
     const result = await API.call('getDashboardKpis');

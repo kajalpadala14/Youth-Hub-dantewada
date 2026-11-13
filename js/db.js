@@ -381,8 +381,10 @@
           break;
 
         case 'Entrepreneur_Identified':
-          if (this.data.entrepreneursIdentified && this.data.entrepreneursIdentified.length > 0) {
-            list = this.data.entrepreneursIdentified.map((e, idx) => ({
+          // This sheet has its own authoritative collection. Falling back to
+          // entrepreneurIdeas when it is empty resurrects rows after deletion.
+          if (Array.isArray(this.data.entrepreneursIdentified)) {
+            list = (this.data.entrepreneursIdentified || []).map((e, idx) => ({
               id: e.id || idx + 1,
               'SR.no': e['SR.no'] || e.sNo || e.id || idx + 1,
               NAME: e.NAME || e.name || 'N/A',
@@ -1755,7 +1757,11 @@
         'Youth_Hub_Trainings',
         'VO CLF Meeting',
         'VO_CLF_Meeting',
-        'Meetings_VO_CLF_TRIF'
+        'Meetings_VO_CLF_TRIF',
+        'Field_Visits',
+        'Field Visits',
+        'Success_Stories',
+        'Success Stories'
       ];
 
       let totalSynced = 0;
@@ -2113,8 +2119,16 @@
       }
 
       // 8. Rang_De_Loan
-      const rangDeRecords = sheetDataMap['Rang_De_Loan'] || sheetDataMap['RangDe_Loan'] || [];
-      if (fetchedSheets.has('Rang_De_Loan') || fetchedSheets.has('RangDe_Loan')) {
+      // getAllData adds empty template keys for canonical sheet names. If the
+      // populated physical tab is named "Rang de loan", a truthy empty array
+      // at Rang_De_Loan must not hide its records.
+      const rangDeKeys = ['Rang_De_Loan', 'RangDe_Loan', 'Rang de loan'];
+      const rangDeRecords = rangDeKeys
+        .map(key => sheetDataMap[key])
+        .find(records => Array.isArray(records) && records.length > 0)
+        || rangDeKeys.map(key => sheetDataMap[key]).find(Array.isArray)
+        || [];
+      if (rangDeKeys.some(key => fetchedSheets.has(key) || Array.isArray(sheetDataMap[key]))) {
         const fmtCurrency = (val) => {
           if (val === undefined || val === null || val === '' || val === '-') return '-';
           const s = String(val).trim();
@@ -2286,12 +2300,91 @@
         }));
       }
 
+      // 15. Field_Visits
+      const visitRecords = sheetDataMap['Field_Visits'] || sheetDataMap['Field Visits'] || [];
+      if (fetchedSheets.has('Field_Visits') || fetchedSheets.has('Field Visits') || visitRecords.length > 0) {
+        this.data.fieldVisits = visitRecords.map((v, idx) => {
+          let parsedPhotos = [];
+          if (v.All_Photos_JSON || v.All_photos_JSON) {
+            try {
+              parsedPhotos = JSON.parse(v.All_Photos_JSON || v.All_photos_JSON);
+            } catch (e) {}
+          }
+          if (!Array.isArray(parsedPhotos) || parsedPhotos.length === 0) {
+            for (let p = 1; p <= 5; p++) {
+              const link = v[`Photo_${p}_Link`] || v[`Photo_${p}`] || v[`Photo${p}`] || v[`Photo_${p}_link`];
+              if (link) {
+                parsedPhotos.push({
+                  url: (typeof window !== 'undefined' && window.PhotoModule) ? window.PhotoModule.formatDriveUrl(link) : link,
+                  caption: v[`Photo_${p}_Caption`] || v[`Photo_${p}_caption`] || `निरीक्षण प्रमाण #${p}`,
+                  type: v[`Photo_${p}_Type`] || 'Inspection Proof'
+                });
+              }
+            }
+          } else {
+            parsedPhotos = parsedPhotos.map(p => ({
+              ...p,
+              url: (typeof window !== 'undefined' && window.PhotoModule) ? window.PhotoModule.formatDriveUrl(p.url) : p.url
+            }));
+          }
+          return {
+            id: String(v.Visit_ID || v.id || `VIS-2026-${String(idx + 1).padStart(4, '0')}`),
+            date: String(v.Date || ''),
+            officerName: String(v.Officer_Name || v.officerName || 'Field Officer'),
+            officerRole: String(v.Officer_Role || v.officerRole || 'Officer'),
+            block: this.standardizeBlock(v.Block || v.block),
+            gramPanchayat: String(v.Gram_Panchayat || v.gramPanchayat || ''),
+            locationName: String(v.Location_Name || v.locationName || v.Village || ''),
+            purpose: String(v.Purpose || v.purpose || 'फील्ड विजिट एवं निरीक्षण'),
+            scheme: String(v.Scheme || v.scheme || ''),
+            linkedYouthName: String(v.Linked_Youth_Name || v.linkedYouthName || ''),
+            description: String(v.Description || v.description || ''),
+            findings: String(v.Findings || v.findings || ''),
+            issuesFaced: String(v.Issues_Faced || v.issuesFaced || ''),
+            actionRequired: String(v.Action_Required || v.actionRequired || ''),
+            followUpDate: String(v.Follow_Up_Date || v.followUpDate || ''),
+            status: String(v.Status || v.status || 'Verified'),
+            photos: parsedPhotos,
+            isPublic: true,
+            submittedAt: String(v.Submitted_At || v.submittedAt || '')
+          };
+        });
+      }
+
+      // 16. Success_Stories
+      const storyRecords = sheetDataMap['Success_Stories'] || sheetDataMap['Success Stories'] || [];
+      if (fetchedSheets.has('Success_Stories') || fetchedSheets.has('Success Stories') || storyRecords.length > 0) {
+        this.data.successStories = storyRecords.map((s, idx) => {
+          const rawPhoto = String(s.Photo_Link || s.photoUrl || s.Photo || '').trim();
+          const photoUrl = (typeof window !== 'undefined' && window.PhotoModule) ? window.PhotoModule.formatDriveUrl(rawPhoto) : rawPhoto;
+          return {
+            id: String(s.Story_ID || s.id || `STR-2026-${String(idx + 1).padStart(3, '0')}`),
+            youthName: String(s.Youth_Name || s.youthName || s.Name || 'सफल युवा'),
+            village: String(s.Village || s.village || ''),
+            block: this.standardizeBlock(s.Block || s.block),
+            title: String(s.Title || s.title || `${s.Youth_Name || 'युवा'} की सफलता`),
+            category: String(s.Category || s.category || 'Employment'),
+            scheme: String(s.Scheme || s.scheme || ''),
+            photoUrl: photoUrl,
+            isPdf: s.Is_PDF === true || String(s.Is_PDF).toLowerCase() === 'true',
+            summary: String(s.Summary || s.summary || ''),
+            fullStory: String(s.Full_Story || s.fullStory || s.Description || ''),
+            quote: String(s.Quote || s.quote || ''),
+            achievementDate: String(s.Achievement_Date || s.achievementDate || ''),
+            featured: s.Featured === true || String(s.Featured).toLowerCase() === 'true',
+            status: String(s.Status || s.status || 'Published'),
+            author: String(s.Author || s.author || 'District Administration'),
+            submittedAt: String(s.Submitted_At || s.submittedAt || '')
+          };
+        });
+      }
+
       this.data.metadata.lastCloudSync = new Date().toISOString();
       this.data.metadata.totalSyncedRecords = totalSynced;
       this.data.metadata.syncStats = stats;
       this.persist();
 
-      if (typeof window !== 'undefined') {
+      if (typeof window !== 'undefined' && typeof CustomEvent !== 'undefined' && typeof window.dispatchEvent === 'function') {
         window.dispatchEvent(new CustomEvent('db:changed'));
       }
 

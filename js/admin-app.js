@@ -1260,6 +1260,12 @@
   window.handlePhotoFiles = function (files) {
     if (!files || files.length === 0) return;
 
+    const remaining = 5 - currentUploadedPhotos.length;
+    if (files.length > remaining) {
+      alert('Maximum 5 photo links are available in the sheet.');
+      files = Array.prototype.slice.call(files, 0, Math.max(0, remaining));
+    }
+
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       const reader = new FileReader();
@@ -1267,6 +1273,8 @@
         currentUploadedPhotos.push({
           id: 'p_' + Date.now() + '_' + i,
           url: e.target.result,
+          fileName: file.name,
+          mimeType: file.type,
           caption: file.name.replace(/\.[^/.]+$/, ""),
           type: 'Inspection',
           uploadedBy: window.DantewadaAuth.getCurrentUser().name,
@@ -1320,14 +1328,14 @@
     renderPhotoThumbnails();
   };
 
-  window.saveFieldVisitForm = function (e) {
+  window.saveFieldVisitForm = async function (e) {
     e.preventDefault();
 
     const visit = {
       id: document.getElementById('visitAutoId').value,
       date: document.getElementById('visitDateInput').value,
       officerName: document.getElementById('visitOfficerInput').value,
-      officerRole: window.DantewadaAuth.getCurrentUser().role,
+      officerRole: (window.DantewadaAuth && window.DantewadaAuth.getCurrentUser()) ? window.DantewadaAuth.getCurrentUser().role : 'Officer',
       block: document.getElementById('visitBlockSelect').value,
       gramPanchayat: document.getElementById('visitGPInput').value,
       locationName: document.getElementById('visitLocationInput').value,
@@ -1343,12 +1351,33 @@
       photos: [...currentUploadedPhotos]
     };
 
-    window.DantewadaDB.saveFieldVisit(visit);
-    alert('फील्ड विजिट एवं फोटो सफलतापूर्वक दर्ज की गई! विजिट ID: ' + visit.id);
-    e.target.reset();
-    currentUploadedPhotos = [];
-    renderVisitForm();
-    switchTab('gallery');
+    const submitButton = e.submitter || e.target.querySelector('[type="submit"]');
+    if (submitButton) {
+      submitButton.disabled = true;
+      submitButton.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1.5"></i> Google Drive & Sheet में सेव हो रहा है...';
+    }
+
+    try {
+      if (window.PhotoModule && typeof window.PhotoModule.saveFieldVisit === 'function') {
+        const result = await window.PhotoModule.saveFieldVisit(visit, currentUploadedPhotos);
+        alert(`✅ फील्ड विजिट एवं फोटो सफलतापूर्वक Google Drive और Sheet में दर्ज की गई!\nविजिट ID: ${result.visitId}`);
+      } else {
+        window.DantewadaDB.saveFieldVisit(visit);
+        alert('फील्ड विजिट स्थानीय रूप से दर्ज की गई!');
+      }
+      e.target.reset();
+      currentUploadedPhotos = [];
+      renderVisitForm();
+      renderVisitGallery();
+      switchTab('gallery');
+    } catch (error) {
+      alert('Field Visit was not saved: ' + error.message);
+    } finally {
+      if (submitButton) {
+        submitButton.disabled = false;
+        submitButton.innerHTML = '<i class="fa-solid fa-cloud-arrow-up mr-1.5"></i> फील्ड विजिट एवं फोटो सेव करें';
+      }
+    }
   };
 
   // -------------------------------------------------------------
@@ -1579,7 +1608,7 @@
     if (statusText) statusText.textContent = 'PNG, JPG, WEBP या PDF (अधिकतम 15MB)';
   };
 
-  window.saveStoryForm = function (e) {
+  window.saveStoryForm = async function (e) {
     e.preventDefault();
     const youthName = (document.getElementById('storyYouthName').value || '').trim() || 'सफल युवा प्रतिभागी';
     const title = (document.getElementById('storyTitle').value || '').trim() || 'सफलता की कहानी';
@@ -1594,7 +1623,7 @@
       title: title,
       category: document.getElementById('storyCategory').value || 'Employment',
       scheme: (document.getElementById('storyScheme').value || '').trim() || '-',
-      photoUrl: (document.getElementById('storyPhotoUrl').value || '').trim() || 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=800&auto=format&fit=crop&q=80',
+      photoUrl: (document.getElementById('storyPhotoUrl').value || '').trim(),
       summary: summary,
       fullStory: fullStory,
       quote: (document.getElementById('storyQuote').value || '').trim() || '',
@@ -1604,10 +1633,31 @@
       author: (window.DantewadaAuth && window.DantewadaAuth.getCurrentUser()) ? window.DantewadaAuth.getCurrentUser().name : 'Admin'
     };
 
-    window.DantewadaDB.saveSuccessStory(story);
-    window.closeCreateStoryModal();
-    renderSuccessStories();
-    alert('Success Story सफलतापूर्वक जोड़ दी गई!');
+    const submitButton = e.submitter || e.target.querySelector('[type="submit"]');
+    if (submitButton) {
+      submitButton.disabled = true;
+      submitButton.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1.5"></i> Google Drive & Sheet में सेव हो रहा है...';
+    }
+
+    try {
+      const selectedFile = document.getElementById('storyFileInput')?.files?.[0];
+      if (window.PhotoModule && typeof window.PhotoModule.saveSuccessStory === 'function') {
+        const result = await window.PhotoModule.saveSuccessStory(story, selectedFile || story.photoUrl);
+        alert(`✅ Success Story सफलतापूर्वक Google Drive और Sheet में जोड़ दी गई!\nकहानी ID: ${result.storyId}`);
+      } else {
+        window.DantewadaDB.saveSuccessStory(story);
+        alert('Success Story स्थानीय रूप से जोड़ दी गई!');
+      }
+      window.closeCreateStoryModal();
+      renderSuccessStories();
+    } catch (error) {
+      alert('Success Story was not saved: ' + error.message);
+    } finally {
+      if (submitButton) {
+        submitButton.disabled = false;
+        submitButton.innerHTML = '<i class="fa-solid fa-cloud-arrow-up mr-1.5"></i> कहानी प्रकाशित करें';
+      }
+    }
   };
 
   // -------------------------------------------------------------
@@ -2866,7 +2916,7 @@ Bastar_Munne_Report: {
       'PLUMBER': 'bg-cyan-100 text-cyan-900 border border-cyan-300 font-bold'
     };
 
-    tbody.innerHTML = rawRecords.slice(0, 100).map((item, idx) => {
+    tbody.innerHTML = rawRecords.map((item, idx) => {
       const rowValues = cfg.mapRow(item, idx);
 
       // Custom Interactive Click-to-Details Table for Bastar Munne Village Report
@@ -3856,9 +3906,6 @@ Bastar_Munne_Report: {
     let rowToDelete = null;
     if (cfg && window.DantewadaDB.data[cfg.collection]) {
       rowToDelete = window.DantewadaDB.data[cfg.collection][index];
-      window.DantewadaDB.data[cfg.collection].splice(index, 1);
-      window.DantewadaDB.persist();
-      renderSheetTable();
     }
 
     // Cloud backend delete
@@ -3873,8 +3920,17 @@ Bastar_Munne_Report: {
         });
         console.log('Cloud deleteRecord result:', res);
         if (res && res.success) {
+          const syncResult = await window.DantewadaDB.syncFromGoogleSheet();
+          if (!syncResult || !syncResult.success) {
+            alert('Cloud delete completed, but the table could not refresh. Reload the page to see the backend data.');
+            return;
+          }
+          renderSheetTable();
+          updateSidebarBadgeCounts();
           alert(`✅ सफलतापूर्वक Google Sheet से भी '${idVal || 'रिकॉर्ड'}' हटा दिया गया!`);
         } else if (res && !res.success) {
+          alert('Google Sheets rejected the delete. The record remains in the UI: ' + (res.message || 'unknown error'));
+          return;
           if ((res.message || '').toLowerCase().includes('no data rows')) {
             alert(`ℹ️ सूचना: आपकी Google Sheet में इस शीट के अंदर कोई डेटा पंक्ति नहीं मिली (शीट पहले से खाली है)। रिकॉर्ड पोर्टल से हटा दिया गया है।`);
           } else if ((res.message || '').includes('Unknown action')) {
@@ -3885,7 +3941,10 @@ Bastar_Munne_Report: {
         }
       } catch (err) {
         console.warn('Cloud deleteRecord failed:', err);
+        alert('Google Sheets delete failed. No record was removed from the UI: ' + err.message);
       }
+    } else {
+      alert('Google Sheets connection is unavailable. No record was removed.');
     }
   };
 
@@ -3961,15 +4020,12 @@ Bastar_Munne_Report: {
 
     if (itemsToDelete.length === 0) return;
 
-    // Remove from local collection
-    const collection = window.DantewadaDB.data[cfg.collection];
-    const toDeleteSet = new Set(itemsToDelete);
-    window.DantewadaDB.data[cfg.collection] = collection.filter(row => !toDeleteSet.has(row));
-    window.DantewadaDB.persist();
-    renderSheetTable();
-    updateSidebarBadgeCounts();
-
-    // Call Cloud Backend bulkDelete
+    // Keep the local view intact until the cloud confirms deletion.
+    let cloudDeletedCount = 0;
+    if (typeof API === 'undefined' || !API.call) {
+      alert('Google Sheets connection is unavailable. No records were removed.');
+      return;
+    }
     if (typeof API !== 'undefined' && API.call) {
       try {
         const res = await API.call('bulkDelete', {
@@ -3977,6 +4033,43 @@ Bastar_Munne_Report: {
           records: itemsToDelete,
           ids: idVals
         });
+        if (res && !res.success && /unknown action.*bulkdelete/i.test(res.message || '')) {
+          // Older Apps Script deployments may support deleteRecord but not bulkDelete.
+          let deleted = 0;
+          for (const record of itemsToDelete) {
+            try {
+              const result = await API.call('deleteRecord', {
+                sheetName: getCloudSheetName(currentActiveSheet),
+                idValue: record.name || record.NAME || record.id || record['SR. NO.'] || '',
+                rowData: record
+              });
+              if (result && result.success) deleted++;
+            } catch (deleteError) {
+              console.warn('Fallback deleteRecord failed:', deleteError);
+            }
+          }
+          res.deletedCount = deleted;
+          res.success = deleted === itemsToDelete.length;
+          res.message = `${deleted}/${itemsToDelete.length} records deleted using deleteRecord fallback`;
+        }
+        if (res && Number.isFinite(Number(res.deletedCount))) {
+          cloudDeletedCount = Number(res.deletedCount);
+        } else if (res && res.success) {
+          cloudDeletedCount = itemsToDelete.length;
+        }
+        if (cloudDeletedCount > 0) {
+          const syncResult = await window.DantewadaDB.syncFromGoogleSheet();
+          if (!syncResult || !syncResult.success) {
+            alert('Cloud delete completed, but the table could not refresh. Reload the page to see the backend data.');
+            return;
+          }
+          renderSheetTable();
+          updateSidebarBadgeCounts();
+        }
+        if (cloudDeletedCount !== itemsToDelete.length) {
+          alert(`Google Sheets confirmed ${cloudDeletedCount} of ${itemsToDelete.length} deletions. The remaining records were kept in the UI.`);
+          return;
+        }
         if (res && res.success) {
           alert(`✅ सफलतापूर्वक ${itemsToDelete.length} रिकॉर्ड हटा दिए गए (Google Sheet भी अपडेट हो गई)!`);
         } else {
@@ -3984,6 +4077,8 @@ Bastar_Munne_Report: {
         }
       } catch (err) {
         console.warn('Cloud bulkDelete error:', err);
+        alert('Google Sheets delete failed. No records were removed from the UI: ' + err.message);
+        return;
         alert(`✅ पोर्टल से ${itemsToDelete.length} रिकॉर्ड हटा दिए गए।`);
       }
     } else {
@@ -4017,18 +4112,40 @@ Bastar_Munne_Report: {
     }
 
     const deletedTotal = currentRecords.length;
-    window.DantewadaDB.data[cfg.collection] = [];
-    window.DantewadaDB.persist();
-    renderSheetTable();
-    updateSidebarBadgeCounts();
-
-    // Cloud Backend clear
+    // Do not clear the local table until the backend confirms the operation.
+    if (typeof API === 'undefined' || !API.call) {
+      alert('Google Sheets connection is unavailable. No records were removed.');
+      return;
+    }
     if (typeof API !== 'undefined' && API.call) {
       try {
         const res = await API.call('bulkDelete', {
           sheetName: getCloudSheetName(currentActiveSheet),
           deleteAll: true
         });
+        if (res && !res.success && /unknown action.*bulkdelete/i.test(res.message || '')) {
+          // clearSheet is supported by older deployed scripts that lack bulkDelete.
+          const clearResult = await API.call('clearSheet', {
+            sheetName: getCloudSheetName(currentActiveSheet)
+          });
+          if (clearResult && clearResult.success) {
+            res.success = true;
+            res.message = clearResult.message || 'Sheet cleared';
+          } else {
+            res.message = (clearResult && clearResult.message) || 'clearSheet failed';
+          }
+        }
+        if (!res || !res.success) {
+          alert('Google Sheets clear failed. The records are still shown: ' + ((res && res.message) || 'unknown error'));
+          return;
+        }
+        const syncResult = await window.DantewadaDB.syncFromGoogleSheet();
+        if (!syncResult || !syncResult.success) {
+          alert('Cloud clear completed, but the table could not refresh. Reload the page to see the backend data.');
+          return;
+        }
+        renderSheetTable();
+        updateSidebarBadgeCounts();
         if (res && res.success) {
           alert(`✅ सफलतापूर्वक '${cfg.titleEn}' के सभी ${deletedTotal} रिकॉर्ड्स हटा दिए गए (Google Sheet भी खाली कर दी गई)!`);
         } else {
@@ -4235,18 +4352,28 @@ Bastar_Munne_Report: {
       renderSheetTable();
 
       // Cloud backend update
+      let cloudUpdated = false;
       if (typeof API !== 'undefined' && API.call) {
-        API.call('updateRecord', {
-          sheetName: getCloudSheetName(currentActiveSheet),
-          rowIndex: idx,
-          updatedData: prepareSingleRecordForCloud(currentActiveSheet, formData)
-        }).then(res => {
-          console.log('Cloud update result:', res);
-        }).catch(err => {
-          console.warn('Cloud update failed:', err);
-        });
+        try {
+          const res = await API.call('updateRecord', {
+            sheetName: getCloudSheetName(currentActiveSheet),
+            rowIndex: idx,
+            updatedData: prepareSingleRecordForCloud(currentActiveSheet, formData)
+          });
+          if (res && res.success) {
+            cloudUpdated = true;
+            console.log('Cloud update result:', res);
+          }
+        } catch (err) {
+          console.warn('Cloud update warning:', err.message);
+        }
       }
-      alert(`सफलतापूर्वक ${cfg.titleEn} में रिकॉर्ड अपडेट कर दिया गया!`);
+      updateSidebarBadgeCounts();
+      if (cloudUpdated) {
+        alert(`✅ सफलतापूर्वक '${cfg.titleEn}' में रिकॉर्ड अपडेट होकर Google Sheet में सुरक्षित कर दिया गया!`);
+      } else {
+        alert(`सफलतापूर्वक '${cfg.titleEn}' में रिकॉर्ड अपडेट कर दिया गया!`);
+      }
       return;
     }
 
@@ -4254,22 +4381,35 @@ Bastar_Munne_Report: {
     if (typeof cfg.saveRecord === 'function') {
       cfg.saveRecord(formData);
     }
+    if (window.DantewadaDB && typeof window.DantewadaDB.persist === 'function') {
+      window.DantewadaDB.persist();
+    }
     window.closeSheetRecordModal();
     renderSheetTable();
 
     // Cloud backend create
+    let cloudCreated = false;
     if (typeof API !== 'undefined' && API.call) {
-      API.call('addRecord', {
-        sheetName: getCloudSheetName(currentActiveSheet),
-        data: prepareSingleRecordForCloud(currentActiveSheet, formData)
-      }).then(res => {
-        console.log('Cloud addRecord result:', res);
-      }).catch(err => {
-        console.warn('Cloud addRecord failed:', err);
-      });
+      try {
+        const res = await API.call('addRecord', {
+          sheetName: getCloudSheetName(currentActiveSheet),
+          data: prepareSingleRecordForCloud(currentActiveSheet, formData)
+        });
+        if (res && res.success) {
+          cloudCreated = true;
+          console.log('Cloud addRecord result:', res);
+        }
+      } catch (err) {
+        console.warn('Cloud addRecord warning:', err.message);
+      }
     }
 
-    alert(`सफलतापूर्वक ${cfg.titleEn} में नया रिकॉर्ड जोड़ दिया गया!`);
+    updateSidebarBadgeCounts();
+    if (cloudCreated) {
+      alert(`✅ सफलतापूर्वक '${cfg.titleEn}' में नया रिकॉर्ड जोड़कर Google Sheet में सुरक्षित कर दिया गया!`);
+    } else {
+      alert(`सफलतापूर्वक '${cfg.titleEn}' में नया रिकॉर्ड जोड़ दिया गया!`);
+    }
   };
 
   window.exportActiveSheetExcel = function () {

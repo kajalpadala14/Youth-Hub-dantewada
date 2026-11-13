@@ -427,6 +427,7 @@ const API = (function() {
   async function call(action, payload = {}) {
     const token = getToken();
     const requestPayload = { ...payload, userToken: token };
+    const requiresCloud = ["uploadModulePhoto", "saveFieldVisit", "saveSuccessStory"].includes(action);
 
     // 1. Apps Script embedded execution
     if (isAppsScriptEnvironment) {
@@ -452,6 +453,7 @@ const API = (function() {
     // 2. Standalone / Local / Production execution via HTTP POST to Apps Script Web App URL
     const apiUrl = getApiUrl();
     if (!apiUrl) {
+      if (requiresCloud) throw new Error("Google Apps Script URL is not configured; this record was not saved.");
       // Use compiled dataset fallback immediately if no Google Apps Script Web App URL is configured
       return getLocalDatasetFallback(action, requestPayload);
     }
@@ -477,6 +479,7 @@ const API = (function() {
       const data = await response.json();
       return data;
     } catch (err) {
+      if (requiresCloud) throw new Error("Google Sheets/Drive request failed; this record was not saved. " + err.message);
       console.warn("API Server Error, falling back to local dataset:", err.message);
       return getLocalDatasetFallback(action, requestPayload);
     }
@@ -494,3 +497,6 @@ const API = (function() {
     getLocalDatasetFallback
   };
 })();
+
+// Expose the communication layer for inline admin form handlers and other scripts.
+if (typeof window !== "undefined") window.API = API;

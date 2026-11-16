@@ -214,5 +214,13 @@ describe('Photo & Drive Module Unit Tests (photo.js)', () => {
     assert.ok(storyCall);
     assert.equal(storyCall.payload.storyId, 'STR-TEST-001');
     assert.equal(storyCall.payload.fileId, 'PHOTO_DEL_456');
+
+    const visitRes = await PhotoModule.deleteFieldVisit('VIS-TEST-001', ['https://drive.google.com/file/d/VISIT_PHOTO_789/view']);
+    assert.equal(visitRes.success, true);
+    const visitCall = apiCallLog.find(c => c.action === 'deleteFieldVisit');
+    assert.ok(visitCall);
+    assert.equal(visitCall.payload.visitId, 'VIS-TEST-001');
+    assert.equal(visitCall.payload.fileIds.length, 1);
+    assert.equal(visitCall.payload.fileIds[0], 'VISIT_PHOTO_789');
   });
 });

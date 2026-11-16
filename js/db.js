@@ -933,6 +933,23 @@
       return false;
     }
 
+    deleteFieldVisit(id) {
+      if (!this.data.fieldVisits) return false;
+      const idx = this.data.fieldVisits.findIndex(v => String(v.id) === String(id));
+      if (idx >= 0) {
+        const deleted = this.data.fieldVisits.splice(idx, 1)[0];
+        this.logAudit('DELETE_VISIT', 'Field Visits', id, `Deleted visit: ${deleted.locationName || ''} (${deleted.purpose || ''})`);
+        this.persist();
+        window.dispatchEvent(new CustomEvent('db:changed'));
+        return true;
+      }
+      return false;
+    }
+
+    deleteVisit(id) {
+      return this.deleteFieldVisit(id);
+    }
+
     // -------------------------------------------------------------
     // Success Stories Management (PRD Section 5)
     // -------------------------------------------------------------

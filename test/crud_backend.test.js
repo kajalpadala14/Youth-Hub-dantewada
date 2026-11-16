@@ -591,4 +591,31 @@ describe('Google Apps Script Backend CRUD Tests', () => {
     assert.equal(res.success, true);
     assert.ok(ctx._trashedFiles.includes('DRIVE_FILE_XYZ'));
   });
+
+  test('deleteFieldVisit deletes record from Field_Visits and trashes associated photos in DriveApp', () => {
+    const mockSs = createMockSpreadsheet({
+      'Field_Visits': [
+        ['Visit_ID', 'Date', 'Officer_Name', 'Location', 'Purpose', 'Photos_JSON'],
+        ['VIS-2026-0001', '2026-10-01', 'Officer A', 'Dantewada Center', 'Routine Inspection', 'https://drive.google.com/file/d/VISIT_PHOTO_111/view'],
+        ['VIS-2026-0002', '2026-10-02', 'Officer B', 'Geedam Center', 'Follow up', 'https://drive.google.com/file/d/VISIT_PHOTO_222/view']
+      ]
+    });
+    const ctx = setupVm(mockSs);
+
+    const res = ctx.handleAction('deleteFieldVisit', {
+      visitId: 'VIS-2026-0001',
+      fileIds: ['VISIT_PHOTO_111']
+    });
+    assert.equal(res.success, true);
+    assert.equal(res.deletedFromSheet, true);
+    assert.equal(res.driveFilesTrashed, 1);
+
+    // Verify row was deleted from Field_Visits
+    const remainingRows = mockSs.getSheetByName('Field_Visits').rows;
+    assert.equal(remainingRows.length, 2);
+    assert.equal(remainingRows[1][0], 'VIS-2026-0002');
+
+    // Verify Drive file was trashed
+    assert.ok(ctx._trashedFiles.includes('VISIT_PHOTO_111'));
+  });
 });

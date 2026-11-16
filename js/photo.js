@@ -786,6 +786,68 @@
     return result || { success: true, message: 'Story deleted locally.' };
   }
 
+  /**
+   * Deletes a field visit record and all associated photos from Google Drive & Sheets.
+   *
+   * @param {string} visitId Field visit ID (e.g. VIS-2026-0001)
+   * @param {string[]|string} [photoUrlsOrFileIds=[]] Associated media URLs or file IDs
+   * @return {Promise<Object>} Deletion result
+   */
+  async function deleteFieldVisit(visitId, photoUrlsOrFileIds = []) {
+    if (!visitId) {
+      throw new Error('विजिट ID आवश्यक है।');
+    }
+
+    const rawList = Array.isArray(photoUrlsOrFileIds) ? photoUrlsOrFileIds : [photoUrlsOrFileIds];
+    const fileIds = [];
+    const photoUrls = [];
+
+    rawList.forEach(item => {
+      if (!item) return;
+      if (typeof item === 'object' && (item.url || item.fileId)) {
+        if (item.url) photoUrls.push(item.url);
+        if (item.fileId) fileIds.push(item.fileId);
+      } else if (typeof item === 'string') {
+        photoUrls.push(item);
+        const fid = extractDriveFileId(item);
+        if (fid) fileIds.push(fid);
+      }
+    });
+
+    let result = null;
+
+    if (window.API && typeof window.API.call === 'function') {
+      try {
+        result = await window.API.call('deleteFieldVisit', {
+          visitId: visitId,
+          fileIds: fileIds,
+          photoUrls: photoUrls
+        });
+      } catch (err) {
+        console.warn('deleteFieldVisit primary call failed, attempting fallback deleteRecord:', err.message);
+
+        // Fallback: Delete sheet record via deleteRecord action
+        const recRes = await window.API.call('deleteRecord', {
+          sheetName: 'Field_Visits',
+          idValue: visitId,
+          idField: 'Visit_ID'
+        });
+
+        // Also explicitly trash each Drive file if fileId is known
+        for (const fid of fileIds) {
+          try {
+            await window.API.call('deleteDriveFile', { fileId: fid });
+          } catch (dErr) {
+            console.warn('deleteDriveFile fallback failed for ' + fid + ':', dErr.message);
+          }
+        }
+        result = recRes;
+      }
+    }
+
+    return result || { success: true, message: 'Visit deleted locally.' };
+  }
+
   // -------------------------------------------------------------
   // Public Module API
   // -------------------------------------------------------------
@@ -804,7 +866,8 @@
     saveFieldVisit,
     saveSuccessStory,
     deleteDriveFile,
-    deleteSuccessStory
+    deleteSuccessStory,
+    deleteFieldVisit
   };
 
   window.PhotoModule = PhotoModule;

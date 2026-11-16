@@ -429,7 +429,7 @@ const API = (function() {
     const requestPayload = { ...payload, userToken: token };
     const uploadActions = [
       "uploadModulePhoto", "uploadPhoto", "uploadPhotos", "uploadMultiplePhotos", "uploadFile",
-      "saveFieldVisit", "saveSuccessStory", "deleteSuccessStory", "deleteDriveFile", "deletePhoto", "deleteFile"
+      "saveFieldVisit", "saveSuccessStory", "deleteSuccessStory", "deleteFieldVisit", "deleteVisit", "deleteDriveFile", "deletePhoto", "deleteFile"
     ];
     const requiresCloud = uploadActions.includes(action);
 

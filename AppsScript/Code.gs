@@ -1005,6 +1005,11 @@ function handleAction(action, payload) {
     case "removeSuccessStory":
       return deleteSuccessStory(ss, payload);
 
+    case "deleteFieldVisit":
+    case "deleteVisit":
+    case "removeFieldVisit":
+      return deleteFieldVisit(ss, payload);
+
     case "deleteDriveFile":
     case "deletePhoto":
     case "deleteFile":
@@ -2299,6 +2304,120 @@ function deleteSuccessStory(ss, payload) {
     deletedFromSheet: deletedFromSheet,
     driveFileTrashed: driveTrashed,
     fileId: targetFileId
+  };
+}
+
+/**
+ * Deletes a field visit record from Google Sheets and trashes all associated photos in Google Drive.
+ *
+ * @param {Spreadsheet} ss Target spreadsheet
+ * @param {Object} payload Payload containing visitId, fileIds, photoUrls
+ * @return {Object} Status of deletion
+ */
+function deleteFieldVisit(ss, payload) {
+  payload = payload || {};
+  const visitId = String(payload.visitId || payload.id || payload.idValue || "").trim();
+  const fileIds = Array.isArray(payload.fileIds) ? payload.fileIds : [];
+  const photoUrls = Array.isArray(payload.photoUrls) ? payload.photoUrls : (payload.photoUrl ? [payload.photoUrl] : []);
+
+  let sheet = findSheet(ss, "Field_Visits");
+  if (!sheet) sheet = ss.getSheetByName("Field_Visits");
+  if (!sheet) sheet = findSheet(ss, "Field Visits");
+
+  // Collect target file IDs to trash
+  const targetFileIds = [];
+  fileIds.forEach(fid => {
+    if (fid) {
+      const sFid = String(fid).trim();
+      if (!targetFileIds.includes(sFid)) targetFileIds.push(sFid);
+    }
+  });
+  photoUrls.forEach(url => {
+    const fid = extractDriveFileId_(url);
+    if (fid && !targetFileIds.includes(fid)) targetFileIds.push(fid);
+  });
+
+  let deletedFromSheet = false;
+
+  if (sheet && sheet.getLastRow() > 1 && sheet.getLastColumn() > 0) {
+    const values = sheet.getRange(1, 1, sheet.getLastRow(), sheet.getLastColumn()).getValues();
+    const headers = values[0].map(h => String(h || "").toLowerCase().replace(/[^a-z0-9]/g, ""));
+    const visitIdColIdx = headers.findIndex(h => h.includes("visitid") || h === "id");
+    const photoColIdx = headers.findIndex(h => h.includes("photo") || h.includes("link") || h.includes("url") || h.includes("images"));
+
+    let targetRow = -1;
+    for (let r = 1; r < values.length; r++) {
+      const row = values[r];
+      const rowVisitId = visitIdColIdx !== -1 ? String(row[visitIdColIdx] || "").trim() : "";
+      if (visitId && rowVisitId && (rowVisitId.toLowerCase() === visitId.toLowerCase() || rowVisitId.replace(/\D/g, "") === visitId.replace(/\D/g, ""))) {
+        targetRow = r + 1;
+        if (photoColIdx !== -1) {
+          const rowPhotos = String(row[photoColIdx] || "");
+          const matches = rowPhotos.match(/[-\w]{25,}/g) || [];
+          matches.forEach(m => { if (!targetFileIds.includes(m)) targetFileIds.push(m); });
+        }
+        break;
+      }
+    }
+
+    if (targetRow === -1 && visitId) {
+      const vClean = visitId.toLowerCase();
+      for (let r = 1; r < values.length; r++) {
+        if (values[r].some(cell => String(cell || "").trim().toLowerCase() === vClean)) {
+          targetRow = r + 1;
+          if (photoColIdx !== -1) {
+            const rowPhotos = String(values[r][photoColIdx] || "");
+            const matches = rowPhotos.match(/[-\w]{25,}/g) || [];
+            matches.forEach(m => { if (!targetFileIds.includes(m)) targetFileIds.push(m); });
+          }
+          break;
+        }
+      }
+    }
+
+    if (targetRow > 1 && targetRow <= sheet.getLastRow()) {
+      sheet.deleteRow(targetRow);
+      deletedFromSheet = true;
+    }
+  }
+
+  // Trash all associated files in Google Drive
+  let trashedCount = 0;
+  if (typeof DriveApp !== "undefined") {
+    targetFileIds.forEach(fid => {
+      try {
+        const file = DriveApp.getFileById(fid);
+        if (file) {
+          file.setTrashed(true);
+          trashedCount++;
+        }
+      } catch (e) {
+        console.warn("Could not trash Drive file (" + fid + "): " + e.message);
+      }
+    });
+  }
+
+  // Also clean up Photo_Uploads sheet if matching visit record exists
+  try {
+    const photoSheet = findSheet(ss, "Photo_Uploads");
+    if (photoSheet && photoSheet.getLastRow() > 1) {
+      const pValues = photoSheet.getRange(1, 1, photoSheet.getLastRow(), photoSheet.getLastColumn()).getValues();
+      for (let pr = pValues.length - 1; pr >= 1; pr--) {
+        const pRecId = String(pValues[pr][3] || "").trim();
+        const pFileId = String(pValues[pr][6] || "").trim();
+        if ((visitId && pRecId === visitId) || (targetFileIds.includes(pFileId))) {
+          photoSheet.deleteRow(pr + 1);
+        }
+      }
+    }
+  } catch (pErr) {}
+
+  return {
+    success: true,
+    message: "Field visit and photos deleted from Google Sheet and Google Drive.",
+    visitId: visitId,
+    deletedFromSheet: deletedFromSheet,
+    driveFilesTrashed: trashedCount
   };
 }
 

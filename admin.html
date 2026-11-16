@@ -162,8 +162,9 @@
         <button data-tab="visits" class="bilingual-nav-btn">
           <div class="flex items-center gap-2.5">
             <span class="icon-box text-purple-400"><i class="fa-solid fa-camera"></i></span>
-            <span class="title-en font-medium">फील्ड विजिट (Visits)</span>
+            <span class="title-en font-medium">फील्ड विजिट एवं गैलरी (Visits)</span>
           </div>
+          <span id="sidebarVisitCountBadge" class="sheet-count-badge text-[10px] font-bold bg-purple-400/15 text-purple-300 px-2 py-0.5 rounded-full border border-purple-400/20">0</span>
         </button>
 
         <!-- 💼 1. EMPLOYMENT & PLACEMENT -->
@@ -1193,193 +1194,267 @@
       </div>
 
       <!-- ======================================================== -->
-      <!-- TAB 4: FIELD VISIT & MULTI-PHOTO UPLOAD                  -->
+      <!-- TAB 4: FIELD VISIT & GALLERY (गैलरी + प्रविष्टि फॉर्म)      -->
       <!-- ======================================================== -->
       <div id="tab-visits" class="admin-tab-content hidden space-y-6">
-        <div>
-          <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900">
-            Field Visit & Photo Upload Module (फील्ड विजिट प्रविष्टि)
-          </h2>
-          <p class="text-xs text-slate-500 mt-0.5">
-            गाँव, प्रशिक्षण केंद्र, हितग्राही अथवा उद्यम के निरीक्षण के बाद रिपोर्ट एवं फोटो दर्ज करें।
-          </p>
-        </div>
-
-        <form id="visitEntryForm" onsubmit="window.saveFieldVisitForm(event)" class="gov-card p-6 space-y-6">
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
-            <div>
-              <label class="block font-bold text-slate-700 uppercase mb-1">Visit ID (स्वतः जनरेट)</label>
-              <input type="text" id="visitAutoId" readonly class="w-full bg-slate-100 font-mono font-bold text-blue-900 border border-slate-300 rounded-xl px-3 py-2.5">
-            </div>
-            <div>
-              <label class="block font-bold text-slate-700 uppercase mb-1">विजिट की तारीख *</label>
-              <input type="date" id="visitDateInput" required class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5">
-            </div>
-            <div>
-              <label class="block font-bold text-slate-700 uppercase mb-1">निरीक्षण अधिकारी/कर्मचारी का नाम *</label>
-              <input type="text" id="visitOfficerInput" required placeholder="अधिकारी का नाम" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5">
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
-            <div>
-              <label class="block font-bold text-slate-700 uppercase mb-1">ब्लॉक *</label>
-              <select id="visitBlockSelect" required class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 font-semibold">
-                <option value="Dantewada">दंतेवाड़ा (Dantewada)</option>
-                <option value="Geedam">गीदम (Geedam)</option>
-                <option value="Katekalyan">कटेकल्याण (Katekalyan)</option>
-                <option value="Kuakonda">कुआकोंडा (Kuakonda)</option>
-              </select>
-            </div>
-            <div>
-              <label class="block font-bold text-slate-700 uppercase mb-1">ग्राम पंचायत *</label>
-              <input type="text" id="visitGPInput" required placeholder="ग्राम पंचायत का नाम" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5">
-            </div>
-            <div>
-              <label class="block font-bold text-slate-700 uppercase mb-1">स्थान / संस्था / केंद्र का नाम *</label>
-              <input type="text" id="visitLocationInput" required placeholder="जैसे: डैनेक्स इकाई, हरम" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5">
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
-            <div>
-              <label class="block font-bold text-slate-700 uppercase mb-1">विजिट का उद्देश्य *</label>
-              <input type="text" id="visitPurposeInput" required placeholder="जैसे: PMEGP यूनिट भौतिक सत्यापन" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5">
-            </div>
-            <div>
-              <label class="block font-bold text-slate-700 uppercase mb-1">संबंधित योजना / गतिविधि</label>
-              <select id="visitSchemeSelect" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5">
-                <option value="PMEGP">PMEGP (खादी व ग्रामोद्योग)</option>
-                <option value="PMFME">PMFME (खाद्य प्रसंस्करण)</option>
-                <option value="MUDRA LOAN">Mudra Loan (मुद्रा योजना)</option>
-                <option value="Danexx">Danexx Garments</option>
-                <option value="Livelihood College">Livelihood College Training</option>
-                <option value="Youth Hub Dantewada">Youth Hub Dantewada</option>
-                <option value="Bastar Munne Shivir">बस्तर मुन्ने शिविर</option>
-                <option value="General Inspection">सामान्य प्रशासनिक निरीक्षण</option>
-              </select>
-            </div>
-            <div>
-              <label class="block font-bold text-slate-700 uppercase mb-1">संबंधित युवा/हितग्राही (यदि लागू हो)</label>
-              <input type="text" id="visitYouthInput" placeholder="हितग्राही का नाम" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5">
-            </div>
-          </div>
-
-          <!-- Description and Observations -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-            <div>
-              <label class="block font-bold text-slate-700 uppercase mb-1">विजिट का विस्तृत विवरण *</label>
-              <textarea id="visitDescInput" rows="3" required placeholder="विजिट के दौरान की गई गतिविधियां..." class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5"></textarea>
-            </div>
-            <div>
-              <label class="block font-bold text-slate-700 uppercase mb-1">मुख्य निष्कर्ष (Key Findings) *</label>
-              <textarea id="visitFindingsInput" rows="3" required placeholder="निरीक्षण में क्या पाया गया..." class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5"></textarea>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-            <div>
-              <label class="block font-bold text-slate-700 uppercase mb-1">सामने आई समस्या (Issues Faced)</label>
-              <textarea id="visitIssuesInput" rows="2" placeholder="कोई तकनीकी, वित्तीय या अधोसंरचना संबंधी समस्या..." class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2"></textarea>
-            </div>
-            <div>
-              <label class="block font-bold text-slate-700 uppercase mb-1">आगे की कार्रवाई (Action Required)</label>
-              <textarea id="visitActionInput" rows="2" placeholder="प्रशासन या बैंक द्वारा अपेक्षित कदम..." class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2"></textarea>
-            </div>
-            <div>
-              <label class="block font-bold text-slate-700 uppercase mb-1">Follow-up Date & Status</label>
-              <div class="space-y-2">
-                <input type="date" id="visitFollowUpInput" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-1.5">
-                <select id="visitStatusSelect" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-1.5 font-semibold">
-                  <option value="Visit Completed">Visit Completed (विजिट पूर्ण)</option>
-                  <option value="Report Pending">Report Pending (रिपोर्ट लंबित)</option>
-                  <option value="Follow-up Required">Follow-up Required (फॉलो-अप आवश्यक)</option>
-                  <option value="Action in Progress">Action in Progress (कार्रवाई जारी)</option>
-                  <option value="Resolved">Resolved (समाधान पूर्ण)</option>
-                  <option value="Closed">Closed (बंद)</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          <!-- Multi-Photo Uploader Section -->
-          <div class="border-t border-slate-200 pt-5">
-            <div class="flex items-center justify-between mb-2">
-              <label class="text-xs font-bold text-slate-800 uppercase flex items-center gap-1.5">
-                <i class="fa-solid fa-camera text-blue-600"></i>
-                फील्ड विजिट फोटो अपलोड (JPG, JPEG, PNG, WebP)
-              </label>
-              <span class="text-[11px] text-slate-400">एक या अधिक फोटो अपलोड करें</span>
-            </div>
-
-            <div class="dropzone-box p-5 text-center cursor-pointer mb-4" onclick="document.getElementById('visitPhotoInput').click()">
-              <input type="file" id="visitPhotoInput" accept="image/jpeg,image/png,image/webp,image/jpg" multiple class="hidden" onchange="window.handlePhotoFiles(this.files)">
-              <i class="fa-solid fa-camera-retro text-2xl text-blue-600 mb-1"></i>
-              <p class="text-xs font-bold text-slate-700">फोटो जोड़ने के लिए क्लिक करें या यहाँ खींचें</p>
-              <p class="text-[11px] text-slate-400">कार्य पूर्व, कार्य पश्चात या निरीक्षण फोटो टैग करें</p>
-            </div>
-
-            <!-- Photos Thumbnail Preview Grid -->
-            <div id="visitPhotoPreviewGrid" class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3"></div>
-
-            <!-- Upload Progress & Status Indicator -->
-            <div id="visitPhotoUploadProgress" class="hidden mt-4 p-3 bg-blue-50 border border-blue-200 rounded-xl space-y-2">
-              <div class="flex items-center justify-between text-xs font-semibold text-blue-900">
-                <span id="visitPhotoProgressStatus" class="flex items-center gap-1.5">
-                  <i class="fa-solid fa-cloud-arrow-up text-blue-600"></i>
-                  <span>Google Drive में अपलोड हो रहा है...</span>
-                </span>
-                <span id="visitPhotoProgressPercent" class="font-mono text-blue-700 font-bold">0%</span>
-              </div>
-              <div class="w-full bg-blue-200/70 rounded-full h-2 overflow-hidden">
-                <div id="visitPhotoProgressBar" class="bg-blue-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
-              </div>
-            </div>
-
-            <!-- Upload Feedback Message -->
-            <div id="visitPhotoUploadFeedback" class="hidden mt-3 p-3 rounded-xl text-xs font-medium"></div>
-          </div>
-
-          <div class="pt-4 border-t border-slate-200 flex justify-end">
-            <button type="submit" class="bg-blue-800 hover:bg-blue-900 text-white font-bold text-xs px-6 py-3 rounded-xl shadow transition flex items-center gap-2">
-              <i class="fa-solid fa-floppy-disk"></i> विजिट रिपोर्ट एवं फोटो सुरक्षित करें
-            </button>
-          </div>
-        </form>
-      </div>
-
-      <!-- ======================================================== -->
-      <!-- TAB 5: VISIT GALLERY & REVIEW                            -->
-      <!-- ======================================================== -->
-      <div id="tab-gallery" class="admin-tab-content hidden space-y-6">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <!-- Top Header & Sub-Tab Switcher -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 pb-4">
           <div>
-            <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900">
-              Visit Gallery & Review (विजिट गैलरी व समीक्षा)
+            <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900 flex items-center gap-2">
+              <i class="fa-solid fa-camera text-purple-600"></i>
+              <span>Field Visits & Inspection Photo Gallery (फील्ड विजिट एवं फोटो गैलरी)</span>
             </h2>
             <p class="text-xs text-slate-500 mt-0.5">
-              फील्ड विजिट की तस्वीरें, रिपोर्ट एवं सार्वजनिक वेबसाइट पर प्रकाशन का अनुमोदन।
+              गाँव, प्रशिक्षण केंद्र, हितग्राही व उद्यम के निरीक्षण की फोटो गैलरी एवं नई रिपोर्ट प्रविष्टि।
             </p>
           </div>
 
-          <div class="flex items-center gap-3">
-            <select id="galleryBlockFilter" class="bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none focus:border-blue-600">
-              <option value="All">सभी ब्लॉक (All Blocks)</option>
-              <option value="Dantewada">दंतेवाड़ा</option>
-              <option value="Geedam">गीदम</option>
-              <option value="Katekalyan">कटेकल्याण</option>
-              <option value="Kuakonda">कुआकोंडा</option>
-            </select>
-            <select id="galleryStatusFilter" class="bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none focus:border-blue-600">
-              <option value="All">सभी स्थिति (All Status)</option>
-              <option value="Visit Completed">Visit Completed</option>
-              <option value="Follow-up Required">Follow-up Required</option>
-              <option value="Resolved">Resolved</option>
-            </select>
+          <!-- Sub-Tab Switch Pills -->
+          <div class="inline-flex bg-slate-100 p-1 rounded-2xl border border-slate-200 shadow-2xs self-start sm:self-auto">
+            <button type="button" id="visitSubTabGalleryBtn" onclick="window.switchVisitSubTab('gallery')" class="px-4 py-2 text-xs font-bold rounded-xl transition flex items-center gap-2 bg-white text-blue-900 shadow-xs border border-slate-200 cursor-pointer">
+              <i class="fa-solid fa-images text-purple-600"></i>
+              <span>विजिट गैलरी (Gallery)</span>
+              <span id="visitGalleryBadge" class="bg-purple-100 text-purple-800 text-[10px] px-2 py-0.5 rounded-full font-mono font-bold">0</span>
+            </button>
+            <button type="button" id="visitSubTabFormBtn" onclick="window.switchVisitSubTab('form')" class="px-4 py-2 text-xs font-bold rounded-xl transition flex items-center gap-2 text-slate-600 hover:text-slate-900 cursor-pointer">
+              <i class="fa-solid fa-plus-circle text-blue-600"></i>
+              <span>नई विजिट दर्ज करें (New Entry)</span>
+            </button>
           </div>
         </div>
 
-        <div id="adminVisitGalleryGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+        <!-- SUB-VIEW 1: FIELD VISIT GALLERY -->
+        <div id="visitGallerySection" class="space-y-6">
+          <!-- Summary Metrics Cards -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div class="gov-card p-3.5 flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center text-lg shrink-0">
+                <i class="fa-solid fa-clipboard-check"></i>
+              </div>
+              <div class="min-w-0">
+                <div id="statVisitsTotal" class="text-lg font-black text-slate-900 leading-tight">0</div>
+                <div class="text-[11px] text-slate-500 font-semibold truncate">कुल फील्ड विजिट्स</div>
+              </div>
+            </div>
+            <div class="gov-card p-3.5 flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center text-lg shrink-0">
+                <i class="fa-solid fa-camera"></i>
+              </div>
+              <div class="min-w-0">
+                <div id="statVisitsPhotos" class="text-lg font-black text-slate-900 leading-tight">0</div>
+                <div class="text-[11px] text-slate-500 font-semibold truncate">अपलोड निरीक्षण फोटो</div>
+              </div>
+            </div>
+            <div class="gov-card p-3.5 flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-lg shrink-0">
+                <i class="fa-solid fa-circle-check"></i>
+              </div>
+              <div class="min-w-0">
+                <div id="statVisitsVerified" class="text-lg font-black text-slate-900 leading-tight">0</div>
+                <div class="text-[11px] text-slate-500 font-semibold truncate">विजिट पूर्ण (Completed)</div>
+              </div>
+            </div>
+            <div class="gov-card p-3.5 flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center text-lg shrink-0">
+                <i class="fa-solid fa-clock-rotate-left"></i>
+              </div>
+              <div class="min-w-0">
+                <div id="statVisitsFollowup" class="text-lg font-black text-slate-900 leading-tight">0</div>
+                <div class="text-[11px] text-slate-500 font-semibold truncate">फॉलो-अप आवश्यक</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Gallery Filter & Search Toolbar -->
+          <div class="gov-card p-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+            <div class="flex-1 relative">
+              <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+              <input type="text" id="gallerySearchInput" oninput="window.renderVisitGallery()" placeholder="स्थान, ग्राम पंचायत, अधिकारी, उद्देश्य या हितग्राही खोजें..." class="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-semibold focus:outline-none focus:border-blue-600 focus:bg-white transition">
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+              <select id="galleryBlockFilter" onchange="window.renderVisitGallery()" class="bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none focus:border-blue-600">
+                <option value="All">सभी ब्लॉक (All Blocks)</option>
+                <option value="Dantewada">दंतेवाड़ा</option>
+                <option value="Geedam">गीदम</option>
+                <option value="Katekalyan">कटेकल्याण</option>
+                <option value="Kuakonda">कुआकोंडा</option>
+              </select>
+              <select id="galleryStatusFilter" onchange="window.renderVisitGallery()" class="bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none focus:border-blue-600">
+                <option value="All">सभी स्थिति (All Status)</option>
+                <option value="Visit Completed">Visit Completed</option>
+                <option value="Report Pending">Report Pending</option>
+                <option value="Follow-up Required">Follow-up Required</option>
+                <option value="Action in Progress">Action in Progress</option>
+                <option value="Resolved">Resolved</option>
+                <option value="Closed">Closed</option>
+              </select>
+              <button type="button" onclick="window.switchVisitSubTab('form')" class="bg-blue-800 hover:bg-blue-900 text-white text-xs font-bold px-4 py-2 rounded-xl shadow transition flex items-center gap-1.5 whitespace-nowrap cursor-pointer">
+                <i class="fa-solid fa-plus"></i> <span>नई विजिट दर्ज करें</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Cards Grid for Field Visits -->
+          <div id="adminVisitGalleryGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+        </div>
+
+        <!-- SUB-VIEW 2: FIELD VISIT ENTRY FORM -->
+        <div id="visitFormSection" class="hidden space-y-4">
+          <div class="flex items-center justify-between bg-blue-50 border border-blue-200 p-3.5 rounded-2xl">
+            <div class="flex items-center gap-2 text-xs font-bold text-blue-950">
+              <i class="fa-solid fa-pen-to-square text-blue-700"></i>
+              <span>नई फील्ड विजिट रिपोर्ट प्रविष्टि फॉर्म</span>
+            </div>
+            <button type="button" onclick="window.switchVisitSubTab('gallery')" class="text-xs font-bold text-blue-700 hover:text-blue-900 flex items-center gap-1.5 px-3 py-1.5 bg-white border border-blue-200 rounded-xl transition shadow-2xs cursor-pointer">
+              <i class="fa-solid fa-arrow-left"></i> <span>वापस गैलरी देखें (Back to Gallery)</span>
+            </button>
+          </div>
+
+          <form id="visitEntryForm" onsubmit="window.saveFieldVisitForm(event)" class="gov-card p-6 space-y-6">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+              <div>
+                <label class="block font-bold text-slate-700 uppercase mb-1">Visit ID (स्वतः जनरेट)</label>
+                <input type="text" id="visitAutoId" readonly class="w-full bg-slate-100 font-mono font-bold text-blue-900 border border-slate-300 rounded-xl px-3 py-2.5">
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 uppercase mb-1">विजिट की तारीख *</label>
+                <input type="date" id="visitDateInput" required class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5">
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 uppercase mb-1">निरीक्षण अधिकारी/कर्मचारी का नाम *</label>
+                <input type="text" id="visitOfficerInput" required placeholder="अधिकारी का नाम" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5">
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+              <div>
+                <label class="block font-bold text-slate-700 uppercase mb-1">ब्लॉक *</label>
+                <select id="visitBlockSelect" required class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 font-semibold">
+                  <option value="Dantewada">दंतेवाड़ा (Dantewada)</option>
+                  <option value="Geedam">गीदम (Geedam)</option>
+                  <option value="Katekalyan">कटेकल्याण (Katekalyan)</option>
+                  <option value="Kuakonda">कुआकोंडा (Kuakonda)</option>
+                </select>
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 uppercase mb-1">ग्राम पंचायत *</label>
+                <input type="text" id="visitGPInput" required placeholder="ग्राम पंचायत का नाम" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5">
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 uppercase mb-1">स्थान / संस्था / केंद्र का नाम *</label>
+                <input type="text" id="visitLocationInput" required placeholder="जैसे: डैनेक्स इकाई, हरम" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5">
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+              <div>
+                <label class="block font-bold text-slate-700 uppercase mb-1">विजिट का उद्देश्य *</label>
+                <input type="text" id="visitPurposeInput" required placeholder="जैसे: PMEGP यूनिट भौतिक सत्यापन" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5">
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 uppercase mb-1">संबंधित योजना / गतिविधि</label>
+                <select id="visitSchemeSelect" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5">
+                  <option value="PMEGP">PMEGP (खादी व ग्रामोद्योग)</option>
+                  <option value="PMFME">PMFME (खाद्य प्रसंस्करण)</option>
+                  <option value="MUDRA LOAN">Mudra Loan (मुद्रा योजना)</option>
+                  <option value="Danexx">Danexx Garments</option>
+                  <option value="Livelihood College">Livelihood College Training</option>
+                  <option value="Youth Hub Dantewada">Youth Hub Dantewada</option>
+                  <option value="Bastar Munne Shivir">बस्तर मुन्ने शिविर</option>
+                  <option value="General Inspection">सामान्य प्रशासनिक निरीक्षण</option>
+                </select>
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 uppercase mb-1">संबंधित युवा/हितग्राही (यदि लागू हो)</label>
+                <input type="text" id="visitYouthInput" placeholder="हितग्राही का नाम" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5">
+              </div>
+            </div>
+
+            <!-- Description and Observations -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+              <div>
+                <label class="block font-bold text-slate-700 uppercase mb-1">विजिट का विस्तृत विवरण *</label>
+                <textarea id="visitDescInput" rows="3" required placeholder="विजिट के दौरान की गई गतिविधियां..." class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5"></textarea>
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 uppercase mb-1">मुख्य निष्कर्ष (Key Findings) *</label>
+                <textarea id="visitFindingsInput" rows="3" required placeholder="निरीक्षण में क्या पाया गया..." class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5"></textarea>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+              <div>
+                <label class="block font-bold text-slate-700 uppercase mb-1">सामने आई समस्या (Issues Faced)</label>
+                <textarea id="visitIssuesInput" rows="2" placeholder="कोई तकनीकी, वित्तीय या अधोसंरचना संबंधी समस्या..." class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2"></textarea>
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 uppercase mb-1">आगे की कार्रवाई (Action Required)</label>
+                <textarea id="visitActionInput" rows="2" placeholder="प्रशासन या बैंक द्वारा अपेक्षित कदम..." class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2"></textarea>
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 uppercase mb-1">Follow-up Date & Status</label>
+                <div class="space-y-2">
+                  <input type="date" id="visitFollowUpInput" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-1.5">
+                  <select id="visitStatusSelect" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-1.5 font-semibold">
+                    <option value="Visit Completed">Visit Completed (विजिट पूर्ण)</option>
+                    <option value="Report Pending">Report Pending (रिपोर्ट लंबित)</option>
+                    <option value="Follow-up Required">Follow-up Required (फॉलो-अप आवश्यक)</option>
+                    <option value="Action in Progress">Action in Progress (कार्रवाई जारी)</option>
+                    <option value="Resolved">Resolved (समाधान पूर्ण)</option>
+                    <option value="Closed">Closed (बंद)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Multi-Photo Uploader Section -->
+            <div class="border-t border-slate-200 pt-5">
+              <div class="flex items-center justify-between mb-2">
+                <label class="text-xs font-bold text-slate-800 uppercase flex items-center gap-1.5">
+                  <i class="fa-solid fa-camera text-blue-600"></i>
+                  फील्ड विजिट फोटो अपलोड (JPG, JPEG, PNG, WebP)
+                </label>
+                <span class="text-[11px] text-slate-400">एक या अधिक फोटो अपलोड करें (अधिकतम 5)</span>
+              </div>
+
+              <div class="dropzone-box p-5 text-center cursor-pointer mb-4" onclick="document.getElementById('visitPhotoInput').click()">
+                <input type="file" id="visitPhotoInput" accept="image/jpeg,image/png,image/webp,image/jpg" multiple class="hidden" onchange="window.handlePhotoFiles(this.files)">
+                <i class="fa-solid fa-camera-retro text-2xl text-blue-600 mb-1"></i>
+                <p class="text-xs font-bold text-slate-700">फोटो जोड़ने के लिए क्लिक करें या यहाँ खींचें</p>
+                <p class="text-[11px] text-slate-400">कार्य पूर्व, कार्य पश्चात या निरीक्षण फोटो टैग करें</p>
+              </div>
+
+              <!-- Photos Thumbnail Preview Grid -->
+              <div id="visitPhotoPreviewGrid" class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3"></div>
+
+              <!-- Upload Progress & Status Indicator -->
+              <div id="visitPhotoUploadProgress" class="hidden mt-4 p-3 bg-blue-50 border border-blue-200 rounded-xl space-y-2">
+                <div class="flex items-center justify-between text-xs font-semibold text-blue-900">
+                  <span id="visitPhotoProgressStatus" class="flex items-center gap-1.5">
+                    <i class="fa-solid fa-cloud-arrow-up text-blue-600"></i>
+                    <span>Google Drive में अपलोड हो रहा है...</span>
+                  </span>
+                  <span id="visitPhotoProgressPercent" class="font-mono text-blue-700 font-bold">0%</span>
+                </div>
+                <div class="w-full bg-blue-200/70 rounded-full h-2 overflow-hidden">
+                  <div id="visitPhotoProgressBar" class="bg-blue-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                </div>
+              </div>
+
+              <!-- Upload Feedback Message -->
+              <div id="visitPhotoUploadFeedback" class="hidden mt-3 p-3 rounded-xl text-xs font-medium"></div>
+            </div>
+
+            <div class="pt-4 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3">
+              <button type="button" onclick="window.switchVisitSubTab('gallery')" class="px-4 py-2.5 border border-slate-300 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 transition cursor-pointer">
+                रद्द करें / गैलरी देखें
+              </button>
+              <button type="submit" class="bg-blue-800 hover:bg-blue-900 text-white font-bold text-xs px-6 py-3 rounded-xl shadow transition flex items-center gap-2 cursor-pointer">
+                <i class="fa-solid fa-floppy-disk"></i> विजिट रिपोर्ट एवं फोटो सुरक्षित करें
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
 
       <!-- ======================================================== -->

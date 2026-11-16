@@ -260,7 +260,7 @@
     gallery: { group: 'CORE / मुख्य', active: 'Visit Gallery (विजिट गैलरी)' },
     youth: { group: 'DATA ENTRY / डेटा प्रविष्टि', active: 'Youth Profiles (युवा प्रबंधन)' },
     importer: { group: 'DATA ENTRY / डेटा प्रविष्टि', active: 'Excel 11-Sheets Import (डेटा आयात)' },
-    visits: { group: 'DATA ENTRY / डेटा प्रविष्टि', active: 'Field Visit & Photos (फील्ड विजिट)' },
+    visits: { group: 'CORE / मुख्य', active: 'Field Visits & Photo Gallery (फील्ड विजिट एवं गैलरी)' },
     monitoring: { group: 'ANALYTICS / विश्लेषण', active: 'Visit Monitoring & Follow-up (फॉलो-अप)' },
     reports: { group: 'ANALYTICS / विश्लेषण', active: 'Reports & Analytics (रिपोर्ट्स)' },
     audit: { group: 'ADMINISTRATION / प्रशासन', active: 'Audit Logs & System (ऑडिट लॉग)' }
@@ -370,6 +370,12 @@
   }
 
   function switchTab(tabId) {
+    if (tabId === 'gallery') {
+      tabId = 'visits';
+      if (typeof window.switchVisitSubTab === 'function') {
+        window.switchVisitSubTab('gallery');
+      }
+    }
     activeTab = tabId;
 
     if (window.innerWidth < 1024) {
@@ -419,10 +425,9 @@
         renderYouthTable();
         break;
       case 'visits':
-        renderVisitForm();
-        break;
       case 'gallery':
         renderVisitGallery();
+        renderVisitForm();
         break;
       case 'stories':
         renderSuccessStories();
@@ -1434,7 +1439,11 @@
       currentUploadedPhotos = [];
       renderVisitForm();
       renderVisitGallery();
-      switchTab('gallery');
+      if (typeof window.switchVisitSubTab === 'function') {
+        window.switchVisitSubTab('gallery');
+      } else {
+        switchTab('visits');
+      }
     } catch (error) {
       console.error('Field Visit save error:', error);
       if (feedbackBox) {
@@ -1457,6 +1466,41 @@
   };
 
   // -------------------------------------------------------------
+  // Sub-Tab Switcher: Field Visits Gallery & New Entry Form
+  // -------------------------------------------------------------
+  window.switchVisitSubTab = function (subTab) {
+    const gallerySection = document.getElementById('visitGallerySection');
+    const formSection = document.getElementById('visitFormSection');
+    const galleryBtn = document.getElementById('visitSubTabGalleryBtn');
+    const formBtn = document.getElementById('visitSubTabFormBtn');
+
+    if (subTab === 'form') {
+      if (gallerySection) gallerySection.classList.add('hidden');
+      if (formSection) formSection.classList.remove('hidden');
+
+      if (formBtn) {
+        formBtn.className = 'px-4 py-2 text-xs font-bold rounded-xl transition flex items-center gap-2 bg-white text-blue-900 shadow-xs border border-slate-200 cursor-pointer';
+      }
+      if (galleryBtn) {
+        galleryBtn.className = 'px-4 py-2 text-xs font-bold rounded-xl transition flex items-center gap-2 text-slate-600 hover:text-slate-900 cursor-pointer';
+      }
+      renderVisitForm();
+    } else {
+      // default: gallery
+      if (formSection) formSection.classList.add('hidden');
+      if (gallerySection) gallerySection.classList.remove('hidden');
+
+      if (galleryBtn) {
+        galleryBtn.className = 'px-4 py-2 text-xs font-bold rounded-xl transition flex items-center gap-2 bg-white text-blue-900 shadow-xs border border-slate-200 cursor-pointer';
+      }
+      if (formBtn) {
+        formBtn.className = 'px-4 py-2 text-xs font-bold rounded-xl transition flex items-center gap-2 text-slate-600 hover:text-slate-900 cursor-pointer';
+      }
+      renderVisitGallery();
+    }
+  };
+
+  // -------------------------------------------------------------
   // 5. Visit Gallery & Review
   // -------------------------------------------------------------
   function renderVisitGallery() {
@@ -1464,60 +1508,147 @@
 
     const blockSelect = document.getElementById('galleryBlockFilter');
     const statusSelect = document.getElementById('galleryStatusFilter');
+    const searchInput = document.getElementById('gallerySearchInput');
 
+    const blockVal = blockSelect ? blockSelect.value : 'All';
+    const statusVal = statusSelect ? statusSelect.value : 'All';
+    const searchVal = searchInput ? searchInput.value.trim() : '';
+
+    const allVisits = window.DantewadaDB.getFieldVisits() || [];
     const visits = window.DantewadaDB.getFieldVisits({
-      block: blockSelect ? blockSelect.value : 'All',
-      status: statusSelect ? statusSelect.value : 'All'
-    });
+      block: blockVal,
+      status: statusVal,
+      search: searchVal
+    }) || [];
+
+    // Update KPI Counters and Badges
+    const totalCount = allVisits.length;
+    const totalPhotos = allVisits.reduce((acc, v) => acc + (v.photos ? v.photos.length : 0), 0);
+    const verifiedCount = allVisits.filter(v => v.status === 'Resolved' || v.status === 'Visit Completed').length;
+    const followupCount = allVisits.filter(v => v.status === 'Follow-up Required' || v.status === 'Action Required' || v.approvalStatus === 'Pending Approval').length;
+
+    const statTotalEl = document.getElementById('statVisitsTotal');
+    const statPhotosEl = document.getElementById('statVisitsPhotos');
+    const statVerifiedEl = document.getElementById('statVisitsVerified');
+    const statFollowupEl = document.getElementById('statVisitsFollowup');
+    const badgeGalleryEl = document.getElementById('visitGalleryBadge');
+    const badgeSidebarEl = document.getElementById('sidebarVisitCountBadge');
+
+    if (statTotalEl) statTotalEl.textContent = totalCount;
+    if (statPhotosEl) statPhotosEl.textContent = totalPhotos;
+    if (statVerifiedEl) statVerifiedEl.textContent = verifiedCount;
+    if (statFollowupEl) statFollowupEl.textContent = followupCount;
+    if (badgeGalleryEl) badgeGalleryEl.textContent = totalCount;
+    if (badgeSidebarEl) badgeSidebarEl.textContent = totalCount;
+
+    // Attach event listeners for real-time search & filters if not already bound
+    if (searchInput && !searchInput.dataset.bound) {
+      searchInput.dataset.bound = '1';
+      searchInput.addEventListener('input', () => renderVisitGallery());
+    }
+    if (blockSelect && !blockSelect.dataset.bound) {
+      blockSelect.dataset.bound = '1';
+      blockSelect.addEventListener('change', () => renderVisitGallery());
+    }
+    if (statusSelect && !statusSelect.dataset.bound) {
+      statusSelect.dataset.bound = '1';
+      statusSelect.addEventListener('change', () => renderVisitGallery());
+    }
 
     const grid = document.getElementById('adminVisitGalleryGrid');
     if (!grid) return;
 
     if (visits.length === 0) {
       grid.innerHTML = `
-        <div class="col-span-full py-12 text-center text-slate-400">
-          <i class="fa-regular fa-image text-4xl mb-2 text-slate-300"></i>
-          <p>कोई फील्ड विजिट रिकॉर्ड उपलब्ध नहीं है।</p>
+        <div class="col-span-full py-16 text-center text-slate-400 bg-slate-50/80 rounded-2xl border border-dashed border-slate-200">
+          <i class="fa-regular fa-image text-4xl mb-3 text-slate-300 block"></i>
+          <p class="font-bold text-slate-600 text-sm">कोई फील्ड विजिट रिकॉर्ड उपलब्ध नहीं है।</p>
+          <p class="text-xs text-slate-400 mt-1">"नई विजिट दर्ज करें" बटन से नई फील्ड विजिट रिपोर्ट और फोटो जोड़ें।</p>
+          <button onclick="window.switchVisitSubTab('form')" class="mt-4 px-4 py-2 bg-blue-800 text-white text-xs font-bold rounded-xl hover:bg-blue-900 transition inline-flex items-center gap-1.5 shadow-xs cursor-pointer">
+            <i class="fa-solid fa-plus"></i> नई विजिट दर्ज करें
+          </button>
         </div>
       `;
       return;
     }
 
     grid.innerHTML = visits.map(v => {
-      const pCount = v.photos ? v.photos.length : 0;
-      const primaryPhoto = (v.photos && v.photos[0]) ? v.photos[0].url : 'https://images.unsplash.com/photo-1590402494682-cd3fb53b1f70?w=800&auto=format&fit=crop&q=80';
+      const photos = v.photos || [];
+      const pCount = photos.length;
+      const primaryPhotoObj = photos[0];
+      const rawUrl = primaryPhotoObj ? (primaryPhotoObj.url || primaryPhotoObj.downloadUrl || '') : '';
+      const fileId = window.PhotoModule ? window.PhotoModule.extractDriveFileId(rawUrl) : '';
+      const thumbUrl = (window.PhotoModule && typeof window.PhotoModule.formatDriveThumbnail === 'function')
+        ? window.PhotoModule.formatDriveThumbnail(rawUrl, 'w800')
+        : (fileId ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w800` : (rawUrl || 'https://images.unsplash.com/photo-1590402494682-cd3fb53b1f70?w=800&auto=format&fit=crop&q=80'));
+
+      const isVerified = (v.status === 'Resolved' || v.status === 'Visit Completed');
+      const isFollowup = (v.status === 'Follow-up Required' || v.status === 'Action Required');
 
       return `
-        <div class="gov-card flex flex-col overflow-hidden">
-          <div class="relative h-44 bg-slate-900 cursor-pointer" onclick="window.openVisitModal('${v.id}')">
-            <img src="${primaryPhoto}" class="w-full h-full object-cover">
-            <div class="absolute top-2 left-2 flex gap-1">
-              <span class="badge-status badge-block">${v.block}</span>
-              <span class="badge-status ${v.isPublic ? 'badge-published' : 'badge-draft'}">
-                ${v.isPublic ? 'Public' : 'Internal'}
+        <div class="gov-card flex flex-col overflow-hidden group hover:shadow-lg transition-all duration-200 border border-slate-200/90">
+          <div class="relative h-48 bg-slate-900 cursor-pointer overflow-hidden" onclick="window.openVisitModal('${escapeHtml(v.id)}')">
+            <img src="${thumbUrl}"
+                 alt="${escapeHtml(v.locationName || 'Field Visit')}"
+                 referrerpolicy="no-referrer"
+                 class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                 onerror="if (!this.dataset.fallback && '${fileId}') { this.dataset.fallback='1'; this.src='https://lh3.googleusercontent.com/d/${fileId}'; } else { this.onerror=null; this.src='https://images.unsplash.com/photo-1590402494682-cd3fb53b1f70?w=800&auto=format&fit=crop&q=80'; }">
+            <div class="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-black/30 pointer-events-none"></div>
+
+            <div class="absolute top-2.5 left-2.5 flex flex-wrap gap-1.5 items-center">
+              <span class="badge-status badge-block font-bold shadow-xs">${escapeHtml(v.block || 'Dantewada')}</span>
+              <span class="badge-status ${v.isPublic ? 'badge-published' : 'badge-draft'} shadow-xs">
+                <i class="fa-solid ${v.isPublic ? 'fa-globe' : 'fa-lock'} text-[10px] mr-1"></i>${v.isPublic ? 'Public' : 'Internal'}
               </span>
             </div>
-            <div class="absolute bottom-2 right-2 bg-black/60 text-white text-[10px] px-2 py-0.5 rounded flex items-center gap-1">
-              <i class="fa-solid fa-camera"></i> ${pCount}
+
+            <div class="absolute bottom-2.5 right-2.5 bg-black/70 backdrop-blur-xs text-white text-[11px] font-bold px-2.5 py-1 rounded-lg flex items-center gap-1.5 shadow-md">
+              <i class="fa-solid fa-camera text-blue-400"></i> ${pCount} ${pCount === 1 ? 'फोटो' : 'तस्वीरें'}
+            </div>
+
+            <div class="absolute bottom-2.5 left-2.5">
+              <span class="text-[10px] font-semibold px-2 py-0.5 rounded ${isVerified ? 'bg-emerald-500/90 text-white' : (isFollowup ? 'bg-amber-500/90 text-white' : 'bg-blue-600/90 text-white')} shadow-xs">
+                ${escapeHtml(v.status || 'Visit Completed')}
+              </span>
             </div>
           </div>
-          <div class="p-4 flex-1 flex flex-col">
-            <div class="text-[11px] text-slate-500 mb-1 flex justify-between">
-              <span>${v.date}</span>
-              <span class="font-mono text-slate-400">${v.id}</span>
-            </div>
-            <h4 class="font-bold text-slate-900 text-sm mb-1 leading-snug">${v.locationName}</h4>
-            <p class="text-xs text-slate-600 line-clamp-2 mb-3 flex-1">${v.purpose}</p>
 
-            <div class="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-              <span class="text-slate-500 truncate max-w-[140px]">${v.officerName}</span>
-              <div class="space-x-1">
-                ${window.DantewadaAuth.can('visit_approve') ? `
-                  <button onclick="window.toggleVisitPublic('${v.id}')" 
-                          class="px-2 py-1 rounded text-[11px] font-semibold ${v.isPublic ? 'bg-amber-100 text-amber-800' : 'bg-green-100 text-green-800'}">
-                    ${v.isPublic ? 'Unpublish' : 'Approve & Publish'}
+          <div class="p-4 flex-1 flex flex-col justify-between space-y-3">
+            <div>
+              <div class="text-[11px] text-slate-500 mb-1 flex items-center justify-between font-medium">
+                <span class="flex items-center gap-1"><i class="fa-regular fa-calendar text-slate-400"></i> ${escapeHtml(v.date || '-')}</span>
+                <span class="font-mono text-blue-900 bg-blue-50 px-1.5 py-0.5 rounded text-[10px] font-bold">${escapeHtml(v.id || '')}</span>
+              </div>
+              <h4 class="font-extrabold text-slate-900 text-sm hover:text-blue-700 cursor-pointer transition leading-snug line-clamp-1" onclick="window.openVisitModal('${escapeHtml(v.id)}')">
+                ${escapeHtml(v.locationName || 'निरीक्षण स्थल')}
+              </h4>
+              <p class="text-xs text-slate-600 line-clamp-2 mt-1 leading-relaxed">${escapeHtml(v.purpose || 'विजिट विवरण उपलब्ध नहीं है।')}</p>
+              ${v.findings ? `<p class="text-[11px] text-slate-500 line-clamp-1 mt-1 bg-slate-50 p-1.5 rounded border border-slate-100"><strong class="text-slate-700">निष्कर्ष:</strong> ${escapeHtml(v.findings)}</p>` : ''}
+            </div>
+
+            <div class="pt-3 border-t border-slate-100 flex items-center justify-between gap-2 text-xs">
+              <div class="truncate max-w-[130px] text-slate-500" title="${escapeHtml(v.officerName || '')}">
+                <i class="fa-solid fa-user-tie text-slate-400 mr-1"></i>
+                <span class="font-medium">${escapeHtml(v.officerName || 'अधिकारी')}</span>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <button onclick="window.openVisitModal('${escapeHtml(v.id)}')" 
+                        class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition flex items-center gap-1 cursor-pointer"
+                        title="विस्तृत रिपोर्ट देखें">
+                  <i class="fa-regular fa-eye"></i> देखें
+                </button>
+                ${window.DantewadaAuth && window.DantewadaAuth.can('visit_approve') ? `
+                  <button onclick="window.toggleVisitPublic('${escapeHtml(v.id)}')" 
+                          class="px-2.5 py-1 rounded-lg text-[11px] font-bold transition cursor-pointer ${v.isPublic ? 'bg-amber-100 text-amber-800 hover:bg-amber-200' : 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'}"
+                          title="${v.isPublic ? 'वेबसाइट से अप्रकाशित करें' : 'सार्वजनिक वेबसाइट पर प्रकाशित करें'}">
+                    ${v.isPublic ? 'Unpublish' : 'Publish'}
                   </button>
                 ` : ''}
+                <button onclick="window.deleteVisit('${escapeHtml(v.id)}')"
+                        class="px-2 py-1 rounded-lg text-[11px] font-bold text-rose-600 hover:bg-rose-50 transition cursor-pointer"
+                        title="विजिट और फोटो हटाएं">
+                  <i class="fa-solid fa-trash-can"></i>
+                </button>
               </div>
             </div>
           </div>
@@ -1533,6 +1664,195 @@
     const newApproval = newPublic ? 'Approved' : 'Pending Approval';
     window.DantewadaDB.updateVisitApproval(id, newApproval, newPublic);
     renderVisitGallery();
+  };
+
+  window.openVisitModal = function (id) {
+    if (!window.DantewadaDB) return;
+    const visit = window.DantewadaDB.getFieldVisitById(id);
+    if (!visit) {
+      alert('विजिट रिकॉर्ड नहीं मिला: ' + id);
+      return;
+    }
+
+    const modal = document.getElementById('visitModal');
+    const content = document.getElementById('visitModalContent');
+    if (!modal || !content) return;
+
+    const photos = visit.photos || [];
+
+    content.innerHTML = `
+      <div class="p-6 sm:p-8 space-y-6">
+        <!-- Header -->
+        <div class="flex items-start justify-between border-b border-slate-200 pb-4">
+          <div>
+            <div class="flex flex-wrap items-center gap-2 mb-2">
+              <span class="badge-status badge-block font-bold">${escapeHtml(visit.block || 'Dantewada')}</span>
+              <span class="badge-status ${visit.isPublic ? 'badge-published' : 'badge-draft'}">
+                <i class="fa-solid ${visit.isPublic ? 'fa-globe' : 'fa-lock'} text-[10px] mr-1"></i>${visit.isPublic ? 'Public' : 'Internal'}
+              </span>
+              <span class="badge-status ${visit.status === 'Resolved' || visit.status === 'Visit Completed' ? 'badge-resolved' : 'badge-followup'}">
+                ${escapeHtml(visit.status || 'Visit Completed')}
+              </span>
+              <span class="text-xs text-slate-400 font-mono font-bold bg-slate-100 px-2 py-0.5 rounded">${escapeHtml(visit.id)}</span>
+            </div>
+            <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900">${escapeHtml(visit.locationName || 'फील्ड विजिट')}</h2>
+            <p class="text-xs text-slate-500 mt-1 flex flex-wrap items-center gap-3">
+              <span><i class="fa-regular fa-calendar mr-1 text-slate-400"></i>${escapeHtml(visit.date || '-')}</span>
+              <span><i class="fa-solid fa-map-pin mr-1 text-slate-400"></i>ग्राम पंचायत: ${escapeHtml(visit.gramPanchayat || '-')}</span>
+              <span><i class="fa-solid fa-user-tie mr-1 text-slate-400"></i>${escapeHtml(visit.officerName || 'अधिकारी')} (${escapeHtml(visit.officerRole || 'Officer')})</span>
+            </p>
+          </div>
+          <button onclick="window.closeVisitModal()" class="text-slate-400 hover:text-slate-700 rounded-xl p-2 hover:bg-slate-100 transition cursor-pointer">
+            <i class="fa-solid fa-xmark text-xl"></i>
+          </button>
+        </div>
+
+        <!-- Purpose & Scheme -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+          <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+            <span class="font-bold text-slate-700 block mb-1 uppercase tracking-wider text-[11px]"><i class="fa-solid fa-bullseye text-blue-600 mr-1.5"></i>विजिट का उद्देश्य (Purpose)</span>
+            <p class="text-slate-800 text-sm leading-relaxed">${escapeHtml(visit.purpose || '-')}</p>
+          </div>
+          <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+            <span class="font-bold text-slate-700 block mb-1 uppercase tracking-wider text-[11px]"><i class="fa-solid fa-hand-holding-hand text-purple-600 mr-1.5"></i>योजना एवं हितग्राही (Scheme & Beneficiary)</span>
+            <p class="text-slate-800 text-sm"><strong class="text-slate-900">योजना:</strong> ${escapeHtml(visit.scheme || 'सामान्य निरीक्षण')}</p>
+            ${visit.linkedYouthName ? `<p class="text-slate-800 text-sm mt-1"><strong class="text-slate-900">संबद्ध युवा:</strong> ${escapeHtml(visit.linkedYouthName)}</p>` : ''}
+          </div>
+        </div>
+
+        <!-- Photos Section -->
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <h4 class="text-xs font-bold text-slate-600 uppercase tracking-wider flex items-center gap-1.5">
+              <i class="fa-solid fa-camera text-purple-600"></i>
+              <span>फील्ड फोटो गैलरी (Photos - ${photos.length})</span>
+            </h4>
+            <span class="text-[11px] text-slate-400">Google Drive Folder: <code class="font-mono bg-slate-100 px-1.5 py-0.5 rounded text-blue-900">1FsudcSoQWifOd4gyKrRoTHfe2elzLRzO</code></span>
+          </div>
+
+          ${photos.length === 0 ? `
+            <div class="p-8 text-center bg-slate-50 rounded-xl border border-dashed border-slate-200 text-slate-400 text-xs">
+              इस विजिट के लिए कोई फोटो संलग्न नहीं है।
+            </div>
+          ` : `
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              ${photos.map((p, idx) => {
+                const pUrl = p.url || p.downloadUrl || '';
+                const pFileId = window.PhotoModule ? window.PhotoModule.extractDriveFileId(pUrl) : '';
+                const pThumb = (window.PhotoModule && typeof window.PhotoModule.formatDriveThumbnail === 'function')
+                  ? window.PhotoModule.formatDriveThumbnail(pUrl, 'w800')
+                  : (pFileId ? `https://drive.google.com/thumbnail?id=${pFileId}&sz=w800` : pUrl);
+                const driveViewUrl = pFileId ? `https://drive.google.com/file/d/${pFileId}/view` : pUrl;
+
+                return `
+                  <div class="gov-card overflow-hidden border border-slate-200 flex flex-col group">
+                    <div class="relative h-48 bg-slate-900 overflow-hidden">
+                      <img src="${pThumb}"
+                           alt="${escapeHtml(p.caption || 'Field Photo')}"
+                           referrerpolicy="no-referrer"
+                           class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                           onerror="if (!this.dataset.fallback && '${pFileId}') { this.dataset.fallback='1'; this.src='https://lh3.googleusercontent.com/d/${pFileId}'; } else { this.onerror=null; this.src='https://images.unsplash.com/photo-1590402494682-cd3fb53b1f70?w=800&auto=format&fit=crop&q=80'; }">
+                      <div class="absolute top-2 left-2">
+                        <span class="bg-blue-900/80 backdrop-blur-xs text-white text-[10px] px-2 py-0.5 rounded-full font-bold">
+                          ${escapeHtml(p.type || 'निरीक्षण')}
+                        </span>
+                      </div>
+                    </div>
+                    <div class="p-3 bg-white flex-1 flex flex-col justify-between space-y-2">
+                      <p class="text-xs text-slate-700 font-medium line-clamp-2">${escapeHtml(p.caption || 'फील्ड विजिट सत्यापन फोटो')}</p>
+                      <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px]">
+                        <span class="text-slate-400">#${idx + 1}</span>
+                        ${driveViewUrl ? `
+                          <a href="${driveViewUrl}" target="_blank" rel="noopener noreferrer" class="text-blue-700 font-bold hover:underline flex items-center gap-1">
+                            <i class="fa-brands fa-google-drive"></i> Drive में देखें <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i>
+                          </a>
+                        ` : ''}
+                      </div>
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          `}
+        </div>
+
+        <!-- Findings & Action Required -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+          <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+            <span class="font-bold text-slate-700 block mb-1"><i class="fa-solid fa-clipboard-check text-blue-600 mr-1.5"></i>मुख्य निष्कर्ष (Key Findings)</span>
+            <p class="text-slate-600 leading-relaxed">${escapeHtml(visit.findings || 'सभी मानक एवं उपकरण सत्यापित पाए गए।')}</p>
+          </div>
+          <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+            <span class="font-bold text-slate-700 block mb-1"><i class="fa-solid fa-arrows-spin text-amber-600 mr-1.5"></i>आगे की कार्रवाई (Action Required)</span>
+            <p class="text-slate-600 leading-relaxed">${escapeHtml(visit.actionRequired || 'नियमित फॉलो-अप अनुशंसित।')}</p>
+            ${visit.followUpDate ? `<p class="mt-2 text-slate-500 font-semibold"><i class="fa-regular fa-calendar-check mr-1 text-slate-400"></i>फॉलो-अप तारीख: ${escapeHtml(visit.followUpDate)}</p>` : ''}
+          </div>
+        </div>
+
+        <!-- Footer Actions -->
+        <div class="pt-4 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-2">
+            ${window.DantewadaAuth && window.DantewadaAuth.can('visit_approve') ? `
+              <button onclick="window.toggleVisitPublic('${escapeHtml(visit.id)}'); window.openVisitModal('${escapeHtml(visit.id)}');" 
+                      class="px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${visit.isPublic ? 'bg-amber-100 text-amber-800 hover:bg-amber-200' : 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'}">
+                <i class="fa-solid ${visit.isPublic ? 'fa-lock' : 'fa-globe'}"></i>
+                <span>${visit.isPublic ? 'Unpublish from Public Site' : 'Approve & Publish to Public Site'}</span>
+              </button>
+            ` : ''}
+            <button onclick="window.deleteVisit('${escapeHtml(visit.id)}')" class="px-4 py-2 rounded-xl text-xs font-bold bg-rose-50 text-rose-700 hover:bg-rose-100 transition flex items-center gap-1.5 cursor-pointer">
+              <i class="fa-solid fa-trash-can"></i>
+              <span>हटाएं (Delete Visit)</span>
+            </button>
+          </div>
+          <button onclick="window.closeVisitModal()" class="px-4 py-2 border border-slate-300 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 transition cursor-pointer">
+            बंद करें (Close)
+          </button>
+        </div>
+      </div>
+    `;
+
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+  };
+
+  window.closeVisitModal = function () {
+    const modal = document.getElementById('visitModal');
+    if (modal) {
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+  };
+
+  window.deleteVisit = async function (id) {
+    if (!id) return;
+    const visit = window.DantewadaDB ? window.DantewadaDB.getFieldVisitById(id) : null;
+    const confirmMsg = `क्या आप वाकई फील्ड विजिट (ID: ${id}) को हटाना चाहते हैं?\nयह रिकॉर्ड और इससे जुड़ी फोटो Google Drive एवं Google Sheet से भी हटा दी जाएगी।`;
+    if (!confirm(confirmMsg)) return;
+
+    try {
+      const photoUrls = (visit && visit.photos) ? visit.photos.map(p => p.url || p.downloadUrl).filter(Boolean) : [];
+
+      if (window.PhotoModule && typeof window.PhotoModule.deleteFieldVisit === 'function') {
+        await window.PhotoModule.deleteFieldVisit(id, photoUrls);
+      } else if (window.API && typeof window.API.call === 'function') {
+        try {
+          await window.API.call('deleteFieldVisit', { visitId: id, photoUrls });
+        } catch (apiErr) {
+          console.warn('Backend deleteFieldVisit call error:', apiErr);
+        }
+      }
+
+      if (window.DantewadaDB && typeof window.DantewadaDB.deleteFieldVisit === 'function') {
+        window.DantewadaDB.deleteFieldVisit(id);
+      }
+
+      window.closeVisitModal();
+      renderVisitGallery();
+      alert(`✅ फील्ड विजिट (${id}) और फोटो सफलतापूर्वक हटा दी गई!`);
+    } catch (err) {
+      console.error('Error deleting visit:', err);
+      alert('विजिट हटाने में त्रुटि: ' + (err.message || err));
+    }
   };
 
   // -------------------------------------------------------------

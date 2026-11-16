@@ -427,7 +427,8 @@ const API = (function() {
   async function call(action, payload = {}) {
     const token = getToken();
     const requestPayload = { ...payload, userToken: token };
-    const requiresCloud = ["uploadModulePhoto", "saveFieldVisit", "saveSuccessStory"].includes(action);
+    const uploadActions = ["uploadModulePhoto", "uploadPhoto", "uploadPhotos", "uploadMultiplePhotos", "uploadFile", "saveFieldVisit", "saveSuccessStory"];
+    const requiresCloud = uploadActions.includes(action);
 
     // 1. Apps Script embedded execution
     if (isAppsScriptEnvironment) {
@@ -460,7 +461,8 @@ const API = (function() {
 
     try {
       const controller = (typeof AbortController !== 'undefined') ? new AbortController() : null;
-      const timeoutId = controller ? setTimeout(() => controller.abort(), 15000) : null;
+      const timeoutMs = requiresCloud ? 60000 : 20000;
+      const timeoutId = controller ? setTimeout(() => controller.abort(), timeoutMs) : null;
 
       const fetchOptions = {
         method: "POST",

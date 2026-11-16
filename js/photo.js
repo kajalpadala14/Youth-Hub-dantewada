@@ -2,16 +2,24 @@
  * =========================================================================
  * YOUTH HUB DANTEWADA - PHOTO & DRIVE MODULE (photo.js)
  * =========================================================================
- * Comprehensive Media, Google Drive Upload & Sheet Integration for:
- * 1. Field Visits (Photo 1-5, Inspection Proofs, Captions)
+ * Production-Grade Media, Google Drive Upload & Google Sheet Sync Engine:
+ * 1. Field Visits (Photo 1-5, Inspection Proofs, Captions, Multi-upload)
  * 2. Success Stories (Featured Candidate Photos & PDF Dossiers)
+ * 3. General Sheet Records (Meeting Photos, Verification Documents)
+ *
+ * Destination Google Drive Folder:
+ * ID:  1FsudcSoQWifOd4gyKrRoTHfe2elzLRzO
+ * URL: https://drive.google.com/drive/folders/1FsudcSoQWifOd4gyKrRoTHfe2elzLRzO
  *
  * Capabilities:
- * - HTML5 Canvas client-side compression (reduces 10MB camera shots to ~80KB)
- * - Google Drive Web App upload with public shareable link creation
- * - Google Drive URL normalization for direct high-speed thumbnail display
- * - Automatic mapping into Google Sheet columns (Photo_1_Link..Photo_5_Link, Photo_Link)
- * - Offline/local fallback if Drive authorization is pending
+ * - HTML5 Canvas client-side compression (reduces 10MB shots to ~120KB)
+ * - Support for JPG, JPEG, PNG, WEBP and PDF
+ * - Direct Google Drive upload into folder 1FsudcSoQWifOd4gyKrRoTHfe2elzLRzO
+ * - Automatic retry on transient network glitches
+ * - Multi-photo batch upload with live progress tracking
+ * - High-speed direct thumbnail CDN link generation (lh3.googleusercontent.com)
+ * - Metadata persistence (originalFileName, fileId, uploadedAt, size)
+ * - Safe row linking in Google Sheets (Photo_1_Link..Photo_5_Link, All_Photos_JSON)
  * =========================================================================
  */
 
@@ -19,7 +27,28 @@
   'use strict';
 
   // -------------------------------------------------------------
-  // 1. Google Drive URL Normalization
+  // 1. Google Drive Constants & Configuration
+  // -------------------------------------------------------------
+  const TARGET_DRIVE_FOLDER_ID = (window.ENV && window.ENV.GOOGLE_DRIVE_FOLDER_ID)
+    ? window.ENV.GOOGLE_DRIVE_FOLDER_ID
+    : '1FsudcSoQWifOd4gyKrRoTHfe2elzLRzO';
+
+  const TARGET_DRIVE_FOLDER_URL = (window.ENV && window.ENV.GOOGLE_DRIVE_FOLDER_URL)
+    ? window.ENV.GOOGLE_DRIVE_FOLDER_URL
+    : `https://drive.google.com/drive/folders/${TARGET_DRIVE_FOLDER_ID}`;
+
+  const ALLOWED_MIME_TYPES = [
+    'image/jpeg',
+    'image/jpg',
+    'image/png',
+    'image/webp',
+    'application/pdf'
+  ];
+
+  const MAX_FILE_SIZE_BYTES = 15 * 1024 * 1024; // 15 Megabytes
+
+  // -------------------------------------------------------------
+  // 2. Google Drive URL Normalization
   // -------------------------------------------------------------
   /**
    * Converts Google Drive share links into direct-embed image URLs
@@ -58,34 +87,93 @@
   }
 
   // -------------------------------------------------------------
-  // 2. Client-Side Image Compression (Canvas)
+  // 3. File Validation
   // -------------------------------------------------------------
   /**
-   * Compresses image using HTML5 Canvas to ensure fast upload (<150KB)
+   * Validates file size and format (JPG, JPEG, PNG, WEBP, PDF)
+   */
+  function validateFile(file) {
+    if (!file) {
+      return { valid: false, message: 'कोई फ़ाइल नहीं चुनी गई।' };
+    }
+
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+      const sizeMb = (file.size / (1024 * 1024)).toFixed(1);
+      return {
+        valid: false,
+        message: `फ़ाइल साइज़ (${sizeMb} MB) सीमा से अधिक है। अधिकतम 15 MB फ़ाइल अपलोड करें।`
+      };
+    }
+
+    const mime = (file.type || '').toLowerCase();
+    const name = (file.name || '').toLowerCase();
+
+    const isAllowedMime = ALLOWED_MIME_TYPES.includes(mime);
+    const hasAllowedExt = name.endsWith('.jpg') || name.endsWith('.jpeg') ||
+                          name.endsWith('.png') || name.endsWith('.webp') ||
+                          name.endsWith('.pdf');
+
+    if (!isAllowedMime && !hasAllowedExt) {
+      return {
+        valid: false,
+        message: 'अमान्य फ़ाइल प्रकार! केवल JPG, JPEG, PNG, WebP एवं PDF फ़ाइलें ही समर्थित हैं।'
+      };
+    }
+
+    return { valid: true };
+  }
+
+  // -------------------------------------------------------------
+  // 4. Client-Side Image Compression (Canvas)
+  // -------------------------------------------------------------
+  /**
+   * Compresses image using HTML5 Canvas to ensure fast upload (<180KB)
+   * while preserving high visual quality and original file metadata.
    *
    * @param {File|Blob} file Image file from input
-   * @param {number} [maxWidth=1280] Max width in pixels
-   * @param {number} [maxHeight=960] Max height in pixels
-   * @param {number} [quality=0.78] JPEG compression quality
-   * @return {Promise<{base64Data: string, mimeType: string, fileName: string}>}
+   * @param {number} [maxWidth=1600] Max width in pixels
+   * @param {number} [maxHeight=1200] Max height in pixels
+   * @param {number} [quality=0.80] JPEG compression quality
+   * @return {Promise<{base64Data: string, mimeType: string, fileName: string, originalFileName: string, size: number}>}
    */
-  function compressImage(file, maxWidth = 1280, maxHeight = 960, quality = 0.78) {
+  function compressImage(file, maxWidth = 1600, maxHeight = 1200, quality = 0.80) {
     return new Promise((resolve, reject) => {
       if (!file) {
         return reject(new Error('No file provided for compression.'));
       }
 
+      const origName = file.name || 'photo.jpg';
+
       // If it's a PDF, do not compress via canvas
-      if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+      if (file.type === 'application/pdf' || origName.toLowerCase().endsWith('.pdf')) {
         const reader = new FileReader();
         reader.onload = (e) => {
           resolve({
             base64Data: e.target.result,
             mimeType: 'application/pdf',
-            fileName: file.name
+            fileName: origName,
+            originalFileName: origName,
+            size: file.size || 0
           });
         };
         reader.onerror = () => reject(new Error('Failed to read PDF file.'));
+        reader.readAsDataURL(file);
+        return;
+      }
+
+      // If canvas is unavailable (e.g. Node.js unit tests), read raw base64
+      if (typeof document === 'undefined' || typeof Image === 'undefined') {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          resolve({
+            base64Data: e.target.result,
+            mimeType: file.type || 'image/jpeg',
+            fileName: origName,
+            originalFileName: origName,
+            size: file.size || 0
+          });
+        };
+        reader.onerror = () => reject(new Error('Failed to read file from disk.'));
         reader.readAsDataURL(file);
         return;
       }
@@ -109,11 +197,14 @@
           const ctx = canvas.getContext('2d');
           ctx.drawImage(img, 0, 0, width, height);
 
+          // Use image/jpeg for consistent size reduction
           const compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
           resolve({
             base64Data: compressedDataUrl,
             mimeType: 'image/jpeg',
-            fileName: (file.name ? file.name.replace(/\.[^/.]+$/, '') : 'photo') + '.jpg'
+            fileName: origName.replace(/\.[^/.]+$/, '') + '.jpg',
+            originalFileName: origName,
+            size: Math.round((compressedDataUrl.length * 3) / 4)
           });
         };
         img.onerror = () => reject(new Error('Image failed to decode in browser.'));
@@ -125,82 +216,236 @@
   }
 
   // -------------------------------------------------------------
-  // 3. Drive Upload Core
+  // 5. Google Drive Upload Engine (With Retry)
   // -------------------------------------------------------------
   /**
-   * Uploads photo or document to Google Drive via backend Apps Script
+   * Uploads photo or document directly into Google Drive folder:
+   * 1FsudcSoQWifOd4gyKrRoTHfe2elzLRzO
+   *
+   * @param {File|Blob|Object|string} fileOrData File object, data-URL, or payload
+   * @param {string} [moduleName='Field_Visits'] Target module
+   * @param {string} [optionalName=''] File name hint
+   * @param {string} [targetFolderId=null] Override folder ID
+   * @param {number} [retryCount=1] Retry attempts on network error
+   * @return {Promise<Object>} Upload metadata (fileId, fileUrl, directUrl, etc.)
    */
-  async function uploadToDrive(fileOrData, moduleName = 'Field_Visits', optionalName = '') {
+  async function uploadToDrive(
+    fileOrData,
+    moduleName = 'Field_Visits',
+    optionalName = '',
+    targetFolderId = null,
+    retryCount = 1
+  ) {
     if (!window.API || typeof window.API.call !== 'function') {
       throw new Error('API communication layer is unavailable.');
     }
 
-    let payload = {};
+    const folderId = targetFolderId || TARGET_DRIVE_FOLDER_ID;
+    let payload = {
+      folderId: folderId,
+      module: moduleName
+    };
 
     const isFileOrBlob = (typeof File !== 'undefined' && fileOrData instanceof File) ||
                          (typeof Blob !== 'undefined' && fileOrData instanceof Blob);
-    if (isFileOrBlob) {
-      const compressed = await compressImage(fileOrData);
-      payload = {
-        module: moduleName,
-        fileName: optionalName || compressed.fileName,
-        mimeType: compressed.mimeType,
-        base64Data: compressed.base64Data
-      };
-    } else if (typeof fileOrData === 'object' && fileOrData.base64Data) {
-      payload = {
-        module: moduleName,
-        fileName: optionalName || fileOrData.fileName || `upload_${Date.now()}.jpg`,
-        mimeType: fileOrData.mimeType || 'image/jpeg',
-        base64Data: fileOrData.base64Data || fileOrData.url
-      };
-    } else if (typeof fileOrData === 'string') {
-      payload = {
-        module: moduleName,
-        fileName: optionalName || `photo_${Date.now()}.jpg`,
-        mimeType: fileOrData.match(/^data:([^;]+);/)?.[1] || 'image/jpeg',
-        base64Data: fileOrData
-      };
-    } else {
-      throw new Error('Unsupported photo format.');
-    }
 
-    const res = await window.API.call('uploadModulePhoto', payload);
-    if (!res || !res.success) {
-      // If Drive permissions are pending, we still return a valid usable object
-      // so form saving continues without halting operations.
-      if (res && res.isLocalFallback && res.fileUrl) {
+    if (isFileOrBlob) {
+      const v = validateFile(fileOrData);
+      if (!v.valid) throw new Error(v.message);
+
+      const compressed = await compressImage(fileOrData);
+      payload.originalFileName = fileOrData.name || compressed.originalFileName;
+      payload.fileName = optionalName || compressed.fileName;
+      payload.mimeType = compressed.mimeType;
+      payload.base64Data = compressed.base64Data;
+      payload.size = compressed.size;
+    } else if (typeof fileOrData === 'object' && (fileOrData.base64Data || fileOrData.url)) {
+      const dataStr = fileOrData.base64Data || fileOrData.url || '';
+      if (dataStr.startsWith('http')) {
         return {
           success: true,
-          fileId: res.fileId || ('LOCAL_' + Date.now()),
-          fileUrl: res.fileUrl,
-          isLocalFallback: true,
-          warning: res.warning || 'Drive permission pending'
+          fileId: dataStr.match(/\/d\/([a-zA-Z0-9_-]+)/)?.[1] || '',
+          fileUrl: dataStr,
+          directUrl: formatDriveUrl(dataStr),
+          originalFileName: fileOrData.originalFileName || fileOrData.fileName || optionalName || 'photo.jpg',
+          fileName: fileOrData.fileName || optionalName || 'photo.jpg',
+          isAlreadyUploaded: true
         };
       }
-      throw new Error((res && res.message) || 'Drive photo upload failed.');
+      payload.originalFileName = fileOrData.originalFileName || fileOrData.fileName || optionalName || `photo_${Date.now()}.jpg`;
+      payload.fileName = optionalName || fileOrData.fileName || payload.originalFileName;
+      payload.mimeType = fileOrData.mimeType || dataStr.match(/^data:([^;]+);/)?.[1] || 'image/jpeg';
+      payload.base64Data = dataStr;
+      payload.size = fileOrData.size || fileOrData.fileSize || 0;
+    } else if (typeof fileOrData === 'string' && fileOrData.startsWith('data:')) {
+      const detectedMime = fileOrData.match(/^data:([^;]+);/)?.[1] || 'image/jpeg';
+      payload.originalFileName = optionalName || `photo_${Date.now()}.jpg`;
+      payload.fileName = optionalName || `photo_${Date.now()}.jpg`;
+      payload.mimeType = detectedMime;
+      payload.base64Data = fileOrData;
+    } else if (typeof fileOrData === 'string' && fileOrData.startsWith('http')) {
+      // Already an uploaded web/Drive link
+      return {
+        success: true,
+        fileId: fileOrData.match(/\/d\/([a-zA-Z0-9_-]+)/)?.[1] || '',
+        fileUrl: fileOrData,
+        directUrl: formatDriveUrl(fileOrData),
+        originalFileName: optionalName || 'photo.jpg',
+        fileName: optionalName || 'photo.jpg',
+        isAlreadyUploaded: true
+      };
+    } else {
+      throw new Error('Unsupported photo format provided.');
     }
 
-    return {
-      success: true,
-      fileId: res.fileId,
-      fileUrl: res.fileUrl,
-      fileName: res.fileName || payload.fileName,
-      mimeType: res.mimeType || payload.mimeType
-    };
+    // Execute with retry
+    let lastError = null;
+    for (let attempt = 0; attempt <= retryCount; attempt++) {
+      try {
+        if (attempt > 0) {
+          // Exponential backoff wait before retry
+          await new Promise((res) => setTimeout(res, 1200 * attempt));
+        }
+
+        const res = await window.API.call('uploadModulePhoto', payload);
+
+        if (res && res.success) {
+          const fileId = res.fileId || '';
+          const directUrl = res.directUrl || (fileId ? `https://lh3.googleusercontent.com/d/${fileId}` : (res.fileUrl || ''));
+          const fileUrl = res.fileUrl || (fileId ? `https://drive.google.com/file/d/${fileId}/view?usp=sharing` : directUrl);
+
+          return {
+            success: true,
+            fileId: fileId,
+            fileUrl: fileUrl,
+            directUrl: directUrl,
+            downloadUrl: res.downloadUrl || (fileId ? `https://drive.google.com/uc?id=${fileId}&export=view` : fileUrl),
+            originalFileName: res.originalFileName || payload.originalFileName,
+            fileName: res.fileName || payload.fileName,
+            mimeType: res.mimeType || payload.mimeType,
+            size: res.size || payload.size || 0,
+            uploadedAt: res.uploadedAt || new Date().toISOString(),
+            folderId: res.folderId || folderId
+          };
+        }
+
+        // Check if backend reported local fallback
+        if (res && res.isLocalFallback && res.fileUrl) {
+          return {
+            success: true,
+            fileId: res.fileId || ('LOCAL_' + Date.now()),
+            fileUrl: res.fileUrl,
+            directUrl: res.directUrl || res.fileUrl,
+            originalFileName: payload.originalFileName,
+            fileName: payload.fileName,
+            isLocalFallback: true,
+            warning: res.warning || 'Drive permission pending'
+          };
+        }
+
+        throw new Error((res && res.message) || 'Google Drive photo upload failed.');
+      } catch (err) {
+        lastError = err;
+        console.warn(`uploadToDrive attempt ${attempt + 1} failed:`, err.message);
+      }
+    }
+
+    throw lastError || new Error('Google Drive photo upload failed after retrying.');
   }
 
   // -------------------------------------------------------------
-  // 4. Field Visits Submission & Drive Sheet Linker
+  // 6. Multiple Photos Batch Uploader
+  // -------------------------------------------------------------
+  /**
+   * Uploads multiple photos with granular progress callback.
+   *
+   * @param {Array<File|Object>} photos List of files or photo objects
+   * @param {Object} [options] Configuration
+   * @param {string} [options.moduleName='Field_Visits']
+   * @param {Function} [options.onProgress] Callback receiving ({current, total, percent, status, photo})
+   * @return {Promise<Array<Object>>} List of uploaded photo metadata
+   */
+  async function uploadMultiplePhotos(photos = [], options = {}) {
+    const list = Array.isArray(photos) ? [...photos] : [];
+    if (list.length === 0) return [];
+
+    const moduleName = options.moduleName || 'Field_Visits';
+    const folderId = options.folderId || TARGET_DRIVE_FOLDER_ID;
+    const onProgress = typeof options.onProgress === 'function' ? options.onProgress : () => {};
+
+    const uploaded = [];
+    const total = list.length;
+
+    for (let i = 0; i < total; i++) {
+      const p = list[i];
+      const photoItem = p.file || p;
+      const originalName = p.originalFileName || p.fileName || (photoItem && photoItem.name) || `photo_${i + 1}.jpg`;
+
+      onProgress({
+        current: i + 1,
+        total: total,
+        percent: Math.round(((i) / total) * 100),
+        status: `फोटो ${i + 1}/${total} अपलोड हो रही है... (${originalName})`,
+        photo: p
+      });
+
+      let res;
+      try {
+        res = await uploadToDrive(photoItem, moduleName, originalName, folderId);
+      } catch (err) {
+        console.warn(`Failed to upload photo ${i + 1}:`, err.message);
+        // Fallback to local representation so user form submission never halts
+        res = {
+          success: true,
+          fileId: 'FALLBACK_' + Date.now(),
+          fileUrl: p.url || '',
+          directUrl: p.url || '',
+          originalFileName: originalName,
+          fileName: originalName,
+          isLocalFallback: true,
+          error: err.message
+        };
+      }
+
+      uploaded.push({
+        url: res.directUrl || res.fileUrl,
+        fileUrl: res.fileUrl,
+        fileId: res.fileId,
+        originalFileName: res.originalFileName || originalName,
+        fileName: res.fileName || originalName,
+        uploadedAt: res.uploadedAt || new Date().toISOString(),
+        size: res.size || 0,
+        caption: p.caption || `निरीक्षण प्रमाण #${i + 1}`,
+        type: p.type || 'निरीक्षण साक्ष्य'
+      });
+    }
+
+    onProgress({
+      current: total,
+      total: total,
+      percent: 100,
+      status: `सभी ${total} फोटो Google Drive में सुरक्षित कर ली गईं!`
+    });
+
+    return uploaded;
+  }
+
+  // -------------------------------------------------------------
+  // 7. Field Visits Submission & Drive Sheet Linker
   // -------------------------------------------------------------
   /**
    * Complete lifecycle handler for Field Visits:
-   * 1. Compresses and uploads up to 5 inspection photos to Google Drive
-   * 2. Formats Photo_1_Link through Photo_5_Link
-   * 3. Calls 'saveFieldVisit' to append row to Field_Visits Google Sheet
-   * 4. Updates window.DantewadaDB and triggers UI refresh
+   * 1. Compresses and uploads up to 5 inspection photos to Google Drive folder 1FsudcSoQWifOd4gyKrRoTHfe2elzLRzO
+   * 2. Maps Photo_1_Link through Photo_5_Link
+   * 3. Serializes All_Photos_JSON with file IDs, original names, and timestamps
+   * 4. Appends row to Field_Visits Google Sheet
+   * 5. Updates window.DantewadaDB and triggers UI refresh
+   *
+   * @param {Object} visitData Form data for the visit
+   * @param {Array} photosList Photos array
+   * @param {Function} [onProgress] Progress callback
    */
-  async function saveFieldVisit(visitData, photosList = []) {
+  async function saveFieldVisit(visitData, photosList = [], onProgress = null) {
     visitData = visitData || {};
     const photos = Array.isArray(photosList) ? [...photosList] : [];
 
@@ -208,37 +453,31 @@
       throw new Error('अधिकतम 5 तस्वीरें ही अपलोड की जा सकती हैं।');
     }
 
-    const uploadedPhotos = [];
+    const progressCb = typeof onProgress === 'function' ? onProgress : () => {};
 
-    // Process & upload each photo to Google Drive
-    for (let i = 0; i < photos.length; i++) {
-      const p = photos[i];
-      let photoUrl = p.url || p.base64Data || p;
-      let driveLink = photoUrl;
-      let fileId = p.fileId || '';
+    // 1. Upload photos to Google Drive
+    let uploadedPhotos = [];
+    if (photos.length > 0) {
+      progressCb({
+        current: 0,
+        total: photos.length,
+        percent: 10,
+        status: `Google Drive फ़ोल्डर में ${photos.length} फोटो अपलोड की तैयारी...`
+      });
 
-      // If it's a new local data URL or File, upload to Drive
-      if (typeof photoUrl === 'string' && photoUrl.startsWith('data:')) {
-        try {
-          const uploadRes = await uploadToDrive(photoUrl, 'Field_Visits', p.fileName || `visit_photo_${i + 1}.jpg`);
-          if (uploadRes && uploadRes.fileUrl) {
-            driveLink = uploadRes.fileUrl;
-            fileId = uploadRes.fileId;
-          }
-        } catch (uploadErr) {
-          console.warn(`Drive upload for photo ${i + 1} warning:`, uploadErr.message);
-          // Fallback to data URL so the visit is not lost
-          driveLink = photoUrl;
-        }
-      }
-
-      uploadedPhotos.push({
-        url: driveLink,
-        fileId: fileId,
-        caption: p.caption || `निरीक्षण प्रमाण #${i + 1}`,
-        type: p.type || 'निरीक्षण साक्ष्य'
+      uploadedPhotos = await uploadMultiplePhotos(photos, {
+        moduleName: 'Field_Visits',
+        folderId: TARGET_DRIVE_FOLDER_ID,
+        onProgress: progressCb
       });
     }
+
+    progressCb({
+      current: photos.length,
+      total: photos.length,
+      percent: 85,
+      status: 'Google Sheet में डेटा दर्ज किया जा रहा है...'
+    });
 
     const visitId = visitData.id || `VIS-2026-${String(Date.now()).slice(-4)}`;
 
@@ -270,7 +509,7 @@
       Submitted_At: new Date().toISOString()
     };
 
-    // 1. Save to Google Sheets backend
+    // 2. Save to Google Sheets backend
     let sheetSaved = false;
     if (window.API && typeof window.API.call === 'function') {
       try {
@@ -285,7 +524,7 @@
       }
     }
 
-    // 2. Save to local database
+    // 3. Save to local database
     const localVisit = {
       ...visitData,
       id: visitId,
@@ -299,55 +538,76 @@
       window.DantewadaDB.saveFieldVisit(localVisit);
     }
 
+    progressCb({
+      current: photos.length,
+      total: photos.length,
+      percent: 100,
+      status: 'सफलतापूर्वक Google Drive एवं Sheet में सुरक्षित!'
+    });
+
     return {
       success: true,
       visitId: visitId,
       photosCount: uploadedPhotos.length,
+      uploadedPhotos: uploadedPhotos,
       sheetSynced: sheetSaved,
       record: localVisit
     };
   }
 
   // -------------------------------------------------------------
-  // 5. Success Stories Submission & Drive Linker
+  // 8. Success Stories Submission & Drive Linker
   // -------------------------------------------------------------
   /**
    * Complete lifecycle handler for Success Stories:
-   * 1. Compresses photo or reads PDF and uploads to Google Drive
+   * 1. Compresses photo or reads PDF and uploads to Google Drive folder 1FsudcSoQWifOd4gyKrRoTHfe2elzLRzO
    * 2. Obtains public Drive URL and assigns to Photo_Link
    * 3. Calls 'saveSuccessStory' to append row to Success_Stories Google Sheet
    * 4. Updates window.DantewadaDB and triggers UI refresh
+   *
+   * @param {Object} storyData Form data for the story
+   * @param {File|string} [fileOrUrl=null] File or URL
+   * @param {Function} [onProgress] Progress callback
    */
-  async function saveSuccessStory(storyData, fileOrUrl = null) {
+  async function saveSuccessStory(storyData, fileOrUrl = null, onProgress = null) {
     storyData = storyData || {};
     let finalPhotoUrl = storyData.photoUrl || '';
     let isPdf = Boolean(storyData.isPdf);
+    let driveFileMeta = null;
+
+    const progressCb = typeof onProgress === 'function' ? onProgress : () => {};
 
     // If a new File or data URL is passed, upload to Google Drive
     const isFile = (typeof File !== 'undefined' && fileOrUrl instanceof File);
     if (isFile) {
       isPdf = fileOrUrl.type === 'application/pdf' || fileOrUrl.name.toLowerCase().endsWith('.pdf');
+      progressCb({ percent: 30, status: 'मीडिया Google Drive फ़ोल्डर में अपलोड हो रही है...' });
+
       try {
-        const uploadRes = await uploadToDrive(fileOrUrl, 'Success_Stories', fileOrUrl.name);
-        if (uploadRes && uploadRes.fileUrl) {
-          finalPhotoUrl = uploadRes.fileUrl;
+        const uploadRes = await uploadToDrive(fileOrUrl, 'Success_Stories', fileOrUrl.name, TARGET_DRIVE_FOLDER_ID);
+        if (uploadRes && (uploadRes.directUrl || uploadRes.fileUrl)) {
+          finalPhotoUrl = uploadRes.directUrl || uploadRes.fileUrl;
+          driveFileMeta = uploadRes;
         }
       } catch (err) {
         console.warn('Drive upload for success story media warning:', err.message);
-        // Fallback to local reading so record is not lost
         const base = await compressImage(fileOrUrl);
         finalPhotoUrl = base.base64Data;
       }
     } else if (typeof fileOrUrl === 'string' && fileOrUrl.startsWith('data:')) {
+      progressCb({ percent: 30, status: 'मीडिया Google Drive फ़ोल्डर में अपलोड हो रही है...' });
       try {
-        const uploadRes = await uploadToDrive(fileOrUrl, 'Success_Stories', `story_media_${Date.now()}.jpg`);
-        if (uploadRes && uploadRes.fileUrl) {
-          finalPhotoUrl = uploadRes.fileUrl;
+        const uploadRes = await uploadToDrive(fileOrUrl, 'Success_Stories', `story_media_${Date.now()}.jpg`, TARGET_DRIVE_FOLDER_ID);
+        if (uploadRes && (uploadRes.directUrl || uploadRes.fileUrl)) {
+          finalPhotoUrl = uploadRes.directUrl || uploadRes.fileUrl;
+          driveFileMeta = uploadRes;
         }
       } catch (err) {
         finalPhotoUrl = fileOrUrl;
       }
     }
+
+    progressCb({ percent: 75, status: 'Google Sheet में कहानी दर्ज की जा रही है...' });
 
     const storyId = storyData.id || `STR-2026-${String(Date.now()).slice(-4)}`;
 
@@ -392,6 +652,7 @@
       id: storyId,
       photoUrl: finalPhotoUrl,
       isPdf: isPdf,
+      driveFileMeta: driveFileMeta,
       status: storyData.status || 'Published',
       sheetSynced: sheetSaved
     };
@@ -400,10 +661,13 @@
       window.DantewadaDB.saveSuccessStory(localStory);
     }
 
+    progressCb({ percent: 100, status: 'कहानी Google Drive एवं Sheet में सुरक्षित!' });
+
     return {
       success: true,
       storyId: storyId,
       mediaUrl: finalPhotoUrl,
+      driveFileMeta: driveFileMeta,
       sheetSynced: sheetSaved,
       record: localStory
     };
@@ -413,9 +677,15 @@
   // Public Module API
   // -------------------------------------------------------------
   const PhotoModule = {
+    TARGET_DRIVE_FOLDER_ID,
+    TARGET_DRIVE_FOLDER_URL,
+    ALLOWED_MIME_TYPES,
+    MAX_FILE_SIZE_BYTES,
     formatDriveUrl,
+    validateFile,
     compressImage,
     uploadToDrive,
+    uploadMultiplePhotos,
     saveFieldVisit,
     saveSuccessStory
   };

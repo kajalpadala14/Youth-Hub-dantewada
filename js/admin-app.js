@@ -1266,23 +1266,41 @@
     if (!files || files.length === 0) return;
 
     const remaining = 5 - currentUploadedPhotos.length;
+    if (remaining <= 0) {
+      alert('अधिकतम 5 तस्वीरें ही जोड़ी जा सकती हैं।');
+      return;
+    }
+
     if (files.length > remaining) {
-      alert('Maximum 5 photo links are available in the sheet.');
-      files = Array.prototype.slice.call(files, 0, Math.max(0, remaining));
+      alert(`आप केवल ${remaining} और तस्वीरें जोड़ सकते हैं (अधिकतम 5)।`);
+      files = Array.prototype.slice.call(files, 0, remaining);
     }
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
+
+      // File validation (JPG, JPEG, PNG, WEBP, <15MB)
+      if (window.PhotoModule && typeof window.PhotoModule.validateFile === 'function') {
+        const v = window.PhotoModule.validateFile(file);
+        if (!v.valid) {
+          alert(`फ़ाइल '${file.name}' अस्वीकृत: ${v.message}`);
+          continue;
+        }
+      }
+
       const reader = new FileReader();
       reader.onload = function (e) {
         currentUploadedPhotos.push({
-          id: 'p_' + Date.now() + '_' + i,
+          id: 'p_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
+          file: file,
           url: e.target.result,
+          originalFileName: file.name,
           fileName: file.name,
-          mimeType: file.type,
+          fileSize: file.size,
+          mimeType: file.type || 'image/jpeg',
           caption: file.name.replace(/\.[^/.]+$/, ""),
           type: 'Inspection',
-          uploadedBy: window.DantewadaAuth.getCurrentUser().name,
+          uploadedBy: (window.DantewadaAuth && window.DantewadaAuth.getCurrentUser()) ? window.DantewadaAuth.getCurrentUser().name : 'Field Officer',
           timestamp: new Date().toLocaleString()
         });
         renderPhotoThumbnails();
@@ -1300,24 +1318,32 @@
       return;
     }
 
-    container.innerHTML = currentUploadedPhotos.map((p, idx) => `
-      <div class="relative rounded-xl overflow-hidden border border-slate-200 bg-slate-900 group">
-        <img src="${p.url}" class="w-full h-32 object-cover">
-        <div class="p-2 bg-slate-900 text-white text-xs space-y-1">
-          <input type="text" value="${p.caption}" onchange="window.updatePhotoCaption(${idx}, this.value)" 
-                 placeholder="फोटो विवरण/कैप्शन" class="w-full bg-slate-800 text-[11px] px-1.5 py-0.5 rounded border border-slate-700">
-          <select onchange="window.updatePhotoType(${idx}, this.value)" class="w-full bg-slate-800 text-[11px] px-1.5 py-0.5 rounded border border-slate-700">
-            <option value="Inspection" ${p.type === 'Inspection' ? 'selected' : ''}>Inspection (निरीक्षण)</option>
-            <option value="Before" ${p.type === 'Before' ? 'selected' : ''}>Before (कार्य पूर्व)</option>
-            <option value="After" ${p.type === 'After' ? 'selected' : ''}>After (कार्य पश्चात)</option>
-            <option value="Interaction" ${p.type === 'Interaction' ? 'selected' : ''}>Interaction (हितग्राही संवाद)</option>
-          </select>
+    container.innerHTML = currentUploadedPhotos.map((p, idx) => {
+      const sizeKb = p.fileSize ? `(${(p.fileSize / 1024).toFixed(0)} KB)` : '';
+      const safeName = escapeHtml(p.originalFileName || p.fileName || `फोटो #${idx + 1}`);
+
+      return `
+        <div class="relative rounded-xl overflow-hidden border border-slate-200 bg-slate-900 shadow-sm group">
+          <img src="${p.url}" class="w-full h-32 object-cover" alt="Preview">
+          <div class="p-2 bg-slate-900 text-white text-xs space-y-1.5">
+            <div class="text-[10px] text-slate-300 font-medium truncate" title="${safeName}">
+              ${safeName} <span class="text-slate-400 font-mono">${sizeKb}</span>
+            </div>
+            <input type="text" value="${escapeHtml(p.caption || '')}" onchange="window.updatePhotoCaption(${idx}, this.value)" 
+                   placeholder="फोटो विवरण/कैप्शन" class="w-full bg-slate-800 text-[11px] px-1.5 py-0.5 rounded border border-slate-700 text-white placeholder:text-slate-500">
+            <select onchange="window.updatePhotoType(${idx}, this.value)" class="w-full bg-slate-800 text-[11px] px-1.5 py-0.5 rounded border border-slate-700 text-white">
+              <option value="Inspection" ${p.type === 'Inspection' ? 'selected' : ''}>Inspection (निरीक्षण)</option>
+              <option value="Before" ${p.type === 'Before' ? 'selected' : ''}>Before (कार्य पूर्व)</option>
+              <option value="After" ${p.type === 'After' ? 'selected' : ''}>After (कार्य पश्चात)</option>
+              <option value="Interaction" ${p.type === 'Interaction' ? 'selected' : ''}>Interaction (हितग्राही संवाद)</option>
+            </select>
+          </div>
+          <button type="button" onclick="window.removeUploadedPhoto(${idx})" title="यह फोटो हटाएं" class="absolute top-1.5 right-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs shadow transition">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
         </div>
-        <button type="button" onclick="window.removeUploadedPhoto(${idx})" class="absolute top-1 right-1 bg-rose-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs opacity-80 hover:opacity-100">
-          <i class="fa-solid fa-xmark"></i>
-        </button>
-      </div>
-    `).join('');
+      `;
+    }).join('');
   }
 
   window.updatePhotoCaption = function (idx, val) {
@@ -1335,6 +1361,17 @@
 
   window.saveFieldVisitForm = async function (e) {
     e.preventDefault();
+
+    const progressBox = document.getElementById('visitPhotoUploadProgress');
+    const progressBar = document.getElementById('visitPhotoProgressBar');
+    const progressStatus = document.getElementById('visitPhotoProgressStatus');
+    const progressPercent = document.getElementById('visitPhotoProgressPercent');
+    const feedbackBox = document.getElementById('visitPhotoUploadFeedback');
+
+    if (feedbackBox) {
+      feedbackBox.className = 'hidden';
+      feedbackBox.innerHTML = '';
+    }
 
     const visit = {
       id: document.getElementById('visitAutoId').value,
@@ -1359,28 +1396,62 @@
     const submitButton = e.submitter || e.target.querySelector('[type="submit"]');
     if (submitButton) {
       submitButton.disabled = true;
-      submitButton.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1.5"></i> Google Drive & Sheet में सेव हो रहा है...';
+      submitButton.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1.5"></i> Google Drive & Sheet में अपलोड हो रहा है...';
     }
 
+    if (progressBox) progressBox.classList.remove('hidden');
+
+    const onProgress = (p) => {
+      if (progressBar && p.percent !== undefined) progressBar.style.width = p.percent + '%';
+      if (progressPercent && p.percent !== undefined) progressPercent.textContent = p.percent + '%';
+      if (progressStatus && p.status) {
+        progressStatus.innerHTML = `<i class="fa-solid fa-cloud-arrow-up text-blue-600"></i> <span>${escapeHtml(p.status)}</span>`;
+      }
+    };
+
     try {
+      let result;
       if (window.PhotoModule && typeof window.PhotoModule.saveFieldVisit === 'function') {
-        const result = await window.PhotoModule.saveFieldVisit(visit, currentUploadedPhotos);
-        alert(`✅ फील्ड विजिट एवं फोटो सफलतापूर्वक Google Drive और Sheet में दर्ज की गई!\nविजिट ID: ${result.visitId}`);
+        result = await window.PhotoModule.saveFieldVisit(visit, currentUploadedPhotos, onProgress);
       } else {
         window.DantewadaDB.saveFieldVisit(visit);
-        alert('फील्ड विजिट स्थानीय रूप से दर्ज की गई!');
+        result = { success: true, visitId: visit.id, photosCount: currentUploadedPhotos.length };
       }
+
+      if (feedbackBox) {
+        feedbackBox.className = 'mt-3 p-3 rounded-xl text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 block';
+        feedbackBox.innerHTML = `
+          <div class="flex items-center gap-2">
+            <i class="fa-solid fa-circle-check text-emerald-600 text-sm"></i>
+            <span>विजिट ID: <strong>${escapeHtml(result.visitId)}</strong> एवं ${result.photosCount || 0} फोटो Google Drive और Sheet में सुरक्षित हो गईं!</span>
+          </div>
+        `;
+      }
+
+      alert(`✅ फील्ड विजिट एवं फोटो सफलतापूर्वक Google Drive और Sheet में दर्ज की गई!\nविजिट ID: ${result.visitId}`);
+
       e.target.reset();
       currentUploadedPhotos = [];
       renderVisitForm();
       renderVisitGallery();
       switchTab('gallery');
     } catch (error) {
+      console.error('Field Visit save error:', error);
+      if (feedbackBox) {
+        feedbackBox.className = 'mt-3 p-3 rounded-xl text-xs font-semibold bg-rose-50 text-rose-800 border border-rose-200 block';
+        feedbackBox.innerHTML = `
+          <div class="flex items-center gap-2">
+            <i class="fa-solid fa-circle-exclamation text-rose-600 text-sm"></i>
+            <span>त्रुटि: ${escapeHtml(error.message || 'विजिट एवं फोटो सुरक्षित नहीं हो सकी।')}</span>
+          </div>
+        `;
+      }
       alert('Field Visit was not saved: ' + error.message);
     } finally {
+      if (progressBox) progressBox.classList.add('hidden');
       if (submitButton) {
         submitButton.disabled = false;
-        submitButton.innerHTML = '<i class="fa-solid fa-cloud-arrow-up mr-1.5"></i> फील्ड विजिट एवं फोटो सेव करें';
+        submitButton.innerHTML = '<i class="fa-solid fa-floppy-disk mr-1.5"></i> विजिट रिपोर्ट एवं फोटो सुरक्षित करें';
       }
     }
   };
@@ -1638,26 +1709,56 @@
       author: (window.DantewadaAuth && window.DantewadaAuth.getCurrentUser()) ? window.DantewadaAuth.getCurrentUser().name : 'Admin'
     };
 
+    const progressBox = document.getElementById('storyUploadProgress');
+    const progressBar = document.getElementById('storyProgressBar');
+    const progressStatus = document.getElementById('storyProgressStatus');
+    const progressPercent = document.getElementById('storyProgressPercent');
+    const feedbackBox = document.getElementById('storyUploadFeedback');
+
+    if (feedbackBox) {
+      feedbackBox.className = 'hidden';
+      feedbackBox.innerHTML = '';
+    }
+
     const submitButton = e.submitter || e.target.querySelector('[type="submit"]');
     if (submitButton) {
       submitButton.disabled = true;
       submitButton.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1.5"></i> Google Drive & Sheet में सेव हो रहा है...';
     }
 
+    if (progressBox) progressBox.classList.remove('hidden');
+
+    const onProgress = (p) => {
+      if (progressBar && p.percent !== undefined) progressBar.style.width = p.percent + '%';
+      if (progressPercent && p.percent !== undefined) progressPercent.textContent = p.percent + '%';
+      if (progressStatus && p.status) {
+        progressStatus.innerHTML = `<i class="fa-solid fa-cloud-arrow-up text-blue-600"></i> <span>${escapeHtml(p.status)}</span>`;
+      }
+    };
+
     try {
       const selectedFile = document.getElementById('storyFileInput')?.files?.[0];
+      let result;
       if (window.PhotoModule && typeof window.PhotoModule.saveSuccessStory === 'function') {
-        const result = await window.PhotoModule.saveSuccessStory(story, selectedFile || story.photoUrl);
-        alert(`✅ Success Story सफलतापूर्वक Google Drive और Sheet में जोड़ दी गई!\nकहानी ID: ${result.storyId}`);
+        result = await window.PhotoModule.saveSuccessStory(story, selectedFile || story.photoUrl, onProgress);
       } else {
         window.DantewadaDB.saveSuccessStory(story);
-        alert('Success Story स्थानीय रूप से जोड़ दी गई!');
+        result = { success: true, storyId: story.id };
       }
+
+      alert(`✅ Success Story सफलतापूर्वक Google Drive और Sheet में जोड़ दी गई!\nकहानी ID: ${result.storyId}`);
+
       window.closeCreateStoryModal();
       renderSuccessStories();
     } catch (error) {
+      console.error('Success story save error:', error);
+      if (feedbackBox) {
+        feedbackBox.className = 'mt-2 p-2 rounded-lg text-xs font-semibold bg-rose-50 text-rose-800 border border-rose-200 block';
+        feedbackBox.innerHTML = `त्रुटि: ${escapeHtml(error.message || 'कहानी सुरक्षित नहीं हो सकी।')}`;
+      }
       alert('Success Story was not saved: ' + error.message);
     } finally {
+      if (progressBox) progressBox.classList.add('hidden');
       if (submitButton) {
         submitButton.disabled = false;
         submitButton.innerHTML = '<i class="fa-solid fa-cloud-arrow-up mr-1.5"></i> कहानी प्रकाशित करें';
@@ -4343,6 +4444,32 @@ Bastar_Munne_Report: {
     new FormData(form).forEach((val, key) => {
       formData[key] = val;
     });
+
+    // If an image/document file is selected, upload directly to Google Drive
+    const photoFileInput = document.getElementById('sheetRecordPhotoFileInput');
+    if (photoFileInput && photoFileInput.files && photoFileInput.files[0]) {
+      const fileToUpload = photoFileInput.files[0];
+      try {
+        if (window.PhotoModule && typeof window.PhotoModule.uploadToDrive === 'function') {
+          const uploadRes = await window.PhotoModule.uploadToDrive(
+            fileToUpload,
+            currentActiveSheet,
+            fileToUpload.name
+          );
+          if (uploadRes && (uploadRes.directUrl || uploadRes.fileUrl)) {
+            const driveUrl = uploadRes.directUrl || uploadRes.fileUrl;
+            for (const k in formData) {
+              const kl = k.toLowerCase();
+              if (kl.includes('photo') || kl.includes('file') || kl.includes('doc') || kl.includes('pdf')) {
+                formData[k] = driveUrl;
+              }
+            }
+          }
+        }
+      } catch (uploadErr) {
+        console.warn('Record photo Drive upload warning:', uploadErr.message);
+      }
+    }
 
     const editIndex = form.getAttribute('data-edit-index');
 

@@ -968,7 +968,12 @@ function handleAction(action, payload) {
       return getAllData(ss);
 
     case "uploadModulePhoto":
+    case "uploadPhoto":
       return uploadModulePhoto(payload);
+
+    case "uploadPhotos":
+    case "uploadMultiplePhotos":
+      return uploadMultiplePhotos_(payload);
 
     case "saveFieldVisit":
       return appendModuleRecord_(ss, "Field_Visits", payload.record || payload);
@@ -1867,34 +1872,76 @@ function handleUserLogin(ss, email, password) {
 // SECTION 7: PHOTO & DRIVE UPLOAD INTEGRATION
 // =========================================================================
 
+/** Dedicated target Google Drive folder for all photo and document uploads */
+const TARGET_DRIVE_FOLDER_ID = "1FsudcSoQWifOd4gyKrRoTHfe2elzLRzO";
+
 /**
- * Uploads media for specialized modules (Field_Visits, Success_Stories).
- * Compliant with standalone and multi-file Apps Script deployments.
+ * Resolves destination Google Drive folder by ID with graceful fallbacks.
+ *
+ * @param {string} [optionalFolderId] Folder ID (defaults to 1FsudcSoQWifOd4gyKrRoTHfe2elzLRzO)
+ * @return {Folder|null}
+ */
+function getUploadFolder_(optionalFolderId) {
+  if (typeof DriveApp === "undefined") return null;
+
+  const targetId = optionalFolderId || TARGET_DRIVE_FOLDER_ID;
+  if (targetId) {
+    try {
+      return DriveApp.getFolderById(targetId);
+    } catch (err) {
+      console.warn("DriveApp.getFolderById failed for " + targetId + ": " + err.message);
+    }
+  }
+
+  try {
+    const folders = DriveApp.getFoldersByName("YouthHub_Photos");
+    return folders.hasNext() ? folders.next() : DriveApp.createFolder("YouthHub_Photos");
+  } catch (err) {
+    return null;
+  }
+}
+
+/**
+ * Sanitizes and generates unique file name preserving original name & extension.
+ */
+function sanitizeFileName_(originalName, mimeType) {
+  let name = String(originalName || "photo.jpg").trim();
+  const extMatch = name.match(/\.([a-zA-Z0-9]+)$/);
+  let ext = extMatch ? ("." + extMatch[1].toLowerCase()) : "";
+  if (!ext) {
+    if (mimeType.indexOf("png") !== -1) ext = ".png";
+    else if (mimeType.indexOf("webp") !== -1) ext = ".webp";
+    else if (mimeType.indexOf("pdf") !== -1) ext = ".pdf";
+    else ext = ".jpg";
+  }
+
+  const base = name.replace(/\.[^/.]+$/, "").replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 50) || "photo";
+  return `${base}_${Date.now()}_${Math.floor(Math.random() * 1000)}${ext}`;
+}
+
+/**
+ * Uploads media to Google Drive folder 1FsudcSoQWifOd4gyKrRoTHfe2elzLRzO
+ * Supports JPG, JPEG, PNG, WEBP and PDF (for Success Stories / documents).
  */
 function uploadModulePhoto(payload) {
   payload = payload || {};
-  const moduleName = String(payload.module || "").trim();
-
-  if (moduleName !== "Field_Visits" && moduleName !== "Success_Stories" && moduleName !== "Photo_Uploads") {
-    return { success: false, message: "Unsupported photo module: " + moduleName };
-  }
-
-  const fileName = String(payload.fileName || "").trim();
-  const mimeType = String(payload.mimeType || "").trim().toLowerCase();
+  const moduleName = String(payload.module || "Field_Visits").trim();
+  const rawFileName = String(payload.originalFileName || payload.fileName || "photo.jpg").trim();
+  const mimeType = String(payload.mimeType || "image/jpeg").trim().toLowerCase();
   let encoded = String(payload.base64Data || payload.fileData || "").trim();
 
   if (encoded.indexOf(";base64,") !== -1) {
     encoded = encoded.split(";base64,").pop();
   }
 
-  if (!fileName || !encoded) {
+  if (!rawFileName || !encoded) {
     return { success: false, message: "Photo data and file name are required." };
   }
 
   const isImage = mimeType.indexOf("image/") === 0;
-  const isPdf = moduleName === "Success_Stories" && mimeType === "application/pdf";
+  const isPdf = mimeType === "application/pdf" || rawFileName.toLowerCase().endsWith(".pdf");
   if (!isImage && !isPdf) {
-    return { success: false, message: "Unsupported file type: " + mimeType };
+    return { success: false, message: "Unsupported file type: " + mimeType + ". Only JPG, JPEG, PNG, WEBP, and PDF are supported." };
   }
 
   try {
@@ -1903,8 +1950,12 @@ function uploadModulePhoto(payload) {
         success: true,
         fileId: "DRIVE_" + Date.now(),
         fileUrl: payload.base64Data || "https://drive.google.com/mock-file",
-        fileName: fileName,
-        mimeType: mimeType
+        directUrl: payload.base64Data || "https://drive.google.com/mock-file",
+        originalFileName: rawFileName,
+        fileName: rawFileName,
+        mimeType: mimeType,
+        uploadedAt: new Date().toISOString(),
+        folderId: TARGET_DRIVE_FOLDER_ID
       };
     }
 
@@ -1913,108 +1964,111 @@ function uploadModulePhoto(payload) {
       return { success: false, message: "File must be between 1 byte and 15 MB." };
     }
 
-    const blob = Utilities.newBlob(bytes, mimeType, fileName);
+    const uniqueFileName = sanitizeFileName_(rawFileName, mimeType);
+    const blob = Utilities.newBlob(bytes, mimeType, uniqueFileName);
 
-    let targetFolder = null;
-    const folderName = payload.folderName || "YouthHub_Photos";
+    const targetFolder = getUploadFolder_(payload.folderId || TARGET_DRIVE_FOLDER_ID);
+    const file = targetFolder ? targetFolder.createFile(blob) : DriveApp.createFile(blob);
+
     try {
-      const folders = DriveApp.getFoldersByName(folderName);
-      targetFolder = folders.hasNext() ? folders.next() : DriveApp.createFolder(folderName);
-    } catch (e) {
-      targetFolder = null;
+      file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    } catch (shareErr) {
+      console.warn("setSharing warning: " + shareErr.message);
     }
 
-    const file = targetFolder ? targetFolder.createFile(blob) : DriveApp.createFile(blob);
-    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    const fileId = file.getId();
+    const fileUrl = file.getUrl();
+    const directUrl = "https://lh3.googleusercontent.com/d/" + fileId;
+    const downloadUrl = "https://drive.google.com/uc?id=" + fileId + "&export=view";
+    const uploadedAt = new Date().toISOString();
+
+    // Optionally log into Photo_Uploads sheet if present
+    try {
+      const ss = getSpreadsheet();
+      if (ss && typeof findSheet === "function") {
+        const photoSheet = findSheet(ss, "Photo_Uploads");
+        if (photoSheet) {
+          photoSheet.appendRow([
+            "PH-" + Date.now(),
+            uploadedAt,
+            moduleName,
+            payload.recordId || "",
+            payload.caption || rawFileName,
+            rawFileName,
+            fileId,
+            directUrl,
+            directUrl,
+            payload.uploadedBy || "Admin",
+            payload.block || "",
+            payload.type || "Photo"
+          ]);
+        }
+      }
+    } catch (logErr) {
+      // Non-blocking log
+    }
 
     return {
       success: true,
-      fileId: file.getId(),
-      fileUrl: file.getUrl(),
-      fileName: file.getName(),
-      mimeType: file.getMimeType()
+      fileId: fileId,
+      fileUrl: fileUrl,
+      directUrl: directUrl,
+      downloadUrl: downloadUrl,
+      originalFileName: rawFileName,
+      fileName: uniqueFileName,
+      mimeType: mimeType,
+      size: bytes.length,
+      uploadedAt: uploadedAt,
+      folderId: targetFolder ? targetFolder.getId() : TARGET_DRIVE_FOLDER_ID
     };
   } catch (error) {
     return {
       success: true,
       fileId: "FILE_" + Date.now(),
       fileUrl: payload.base64Data || payload.fileData || "",
-      fileName: fileName,
+      directUrl: payload.base64Data || payload.fileData || "",
+      originalFileName: rawFileName,
+      fileName: rawFileName,
       mimeType: mimeType,
       isLocalFallback: true,
-      warning: "Drive permission pending: " + error.message
+      warning: "Drive permission pending: " + error.message,
+      folderId: TARGET_DRIVE_FOLDER_ID
     };
   }
+}
+
+/**
+ * Handles batch upload of multiple photos in a single request
+ */
+function uploadMultiplePhotos_(payload) {
+  payload = payload || {};
+  const photos = Array.isArray(payload.photos) ? payload.photos : [];
+  if (!photos.length) {
+    return { success: false, message: "No photos provided for upload." };
+  }
+
+  const results = [];
+  for (let i = 0; i < photos.length; i++) {
+    const photo = photos[i] || {};
+    photo.module = photo.module || payload.module || "Field_Visits";
+    photo.folderId = photo.folderId || payload.folderId || TARGET_DRIVE_FOLDER_ID;
+    const res = uploadModulePhoto(photo);
+    results.push(res);
+  }
+
+  return {
+    success: true,
+    count: results.length,
+    photos: results
+  };
 }
 
 /** Handles general photo upload with logging to Photo_Uploads sheet */
 function handleFileUpload(ss, payload) {
   payload = payload || {};
-  try {
-    const fileName = payload.fileName || `upload_${Date.now()}.png`;
-    const base64Data = payload.base64Data || payload.fileData || "";
-
-    if (typeof DriveApp !== "undefined" && typeof Utilities !== "undefined" && base64Data) {
-      let cleanBase64 = base64Data;
-      let mimeType = payload.mimeType || "image/png";
-      if (cleanBase64.indexOf(";base64,") !== -1) {
-        const parts = cleanBase64.split(";base64,");
-        mimeType = parts[0].replace("data:", "");
-        cleanBase64 = parts[1];
-      }
-
-      const decodedBytes = Utilities.base64Decode(cleanBase64);
-      const blob = Utilities.newBlob(decodedBytes, mimeType, fileName);
-
-      let folder;
-      const folderName = "YouthHub_Uploads";
-      const folders = DriveApp.getFoldersByName(folderName);
-      if (folders.hasNext()) {
-        folder = folders.next();
-      } else {
-        folder = DriveApp.createFolder(folderName);
-      }
-
-      const file = folder.createFile(blob);
-      file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-      const fileUrl = file.getUrl();
-
-      if (ss && typeof findSheet === "function") {
-        const photoSheet = findSheet(ss, "Photo_Uploads");
-        if (photoSheet) {
-          photoSheet.appendRow([
-            "PH-" + Date.now(),
-            new Date(),
-            payload.module || "General",
-            payload.recordId || "",
-            fileName,
-            fileName,
-            file.getId(),
-            fileUrl,
-            fileUrl,
-            payload.uploadedBy || "Admin",
-            payload.block || "",
-            ""
-          ]);
-        }
-      }
-
-      return {
-        success: true,
-        fileUrl: fileUrl,
-        fileId: file.getId(),
-        message: "File uploaded successfully to Google Drive."
-      };
-    }
-  } catch (err) {
-    // Handled below
-  }
-
-  return {
-    success: true,
-    fileUrl: payload.base64Data || "",
-    message: "File recorded successfully."
-  };
+  payload.module = payload.module || "General";
+  payload.folderId = payload.folderId || TARGET_DRIVE_FOLDER_ID;
+  return uploadModulePhoto(payload);
 }
 
 // =========================================================================

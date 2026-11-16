@@ -366,13 +366,28 @@
       return;
     }
 
-    container.innerHTML = stories.map(s => `
+    container.innerHTML = stories.map(s => {
+      const isPdf = Boolean(s.isPdf) || (s.photoUrl && (s.photoUrl.startsWith('data:application/pdf') || s.photoUrl.toLowerCase().endsWith('.pdf')));
+      const fileId = window.PhotoModule ? window.PhotoModule.extractDriveFileId(s.photoUrl) : '';
+      const thumbUrl = (window.PhotoModule && typeof window.PhotoModule.formatDriveThumbnail === 'function')
+        ? window.PhotoModule.formatDriveThumbnail(s.photoUrl, 'w800')
+        : (fileId ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w800` : (s.photoUrl || 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=800&auto=format&fit=crop&q=80'));
+
+      return `
       <div class="gov-card flex flex-col overflow-hidden h-full">
         <div class="relative h-48 w-full bg-slate-100 overflow-hidden">
-          <img src="${s.photoUrl || 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=800&auto=format&fit=crop&q=80'}" 
-               alt="${s.youthName}" 
-               class="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
-               onerror="this.src='https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=800&auto=format&fit=crop&q=80'">
+          ${isPdf ? `
+            <div class="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-red-950 text-white p-4">
+              <i class="fa-solid fa-file-pdf text-4xl text-red-500 mb-2"></i>
+              <span class="text-xs font-bold uppercase tracking-wider">PDF सफलता दस्तावेज</span>
+            </div>
+          ` : `
+            <img src="${thumbUrl}"
+                 alt="${s.youthName}"
+                 referrerpolicy="no-referrer"
+                 class="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+                 onerror="if (!this.dataset.fallback && '${fileId}') { this.dataset.fallback='1'; this.src='https://lh3.googleusercontent.com/d/${fileId}'; } else { this.onerror=null; this.src='https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=800&auto=format&fit=crop&q=80'; }">
+          `}
           <div class="absolute top-3 right-3">
             <span class="badge-status badge-published shadow-sm">${s.category || 'Success'}</span>
           </div>
@@ -399,7 +414,8 @@
           </div>
         </div>
       </div>
-    `).join('');
+    `;
+    }).join('');
   }
 
   function renderPublicVisits(filterBlock = 'All') {
@@ -507,21 +523,34 @@
     const content = document.getElementById('storyModalContent');
     if (!modal || !content) return;
 
-    const isPdf = story.photoUrl && (story.photoUrl.startsWith('data:application/pdf') || story.photoUrl.toLowerCase().endsWith('.pdf'));
+    const isPdf = Boolean(story.isPdf) || (story.photoUrl && (story.photoUrl.startsWith('data:application/pdf') || story.photoUrl.toLowerCase().endsWith('.pdf')));
+    const fileId = window.PhotoModule ? window.PhotoModule.extractDriveFileId(story.photoUrl) : '';
+    const fullPreviewUrl = (window.PhotoModule && typeof window.PhotoModule.formatDriveThumbnail === 'function')
+      ? window.PhotoModule.formatDriveThumbnail(story.photoUrl, 'w1200')
+      : (fileId ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w1200` : (story.photoUrl || ''));
+    const driveOpenUrl = fileId
+      ? `https://drive.google.com/file/d/${fileId}/view?usp=sharing`
+      : (story.photoUrl && story.photoUrl.startsWith('http') ? story.photoUrl : '');
 
     content.innerHTML = `
-      <div class="relative">
+      <div class="relative bg-white">
         <div class="h-64 sm:h-80 w-full overflow-hidden rounded-t-2xl bg-slate-900 relative">
           ${isPdf ? `
             <div class="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-red-950 text-white p-6">
               <i class="fa-solid fa-file-pdf text-6xl text-red-500 mb-3 animate-pulse"></i>
               <div class="text-lg font-bold">संलग्न पीडीएफ दस्तावेज (PDF Document)</div>
-              <a href="${story.photoUrl}" target="_blank" download="${(story.youthName || 'story').replace(/\s+/g, '_')}_document.pdf" class="mt-3 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-lg transition">
-                <i class="fa-solid fa-arrow-up-right-from-square"></i> PDF दस्तावेज नया टैब में खोलें / डाउनलोड करें
-              </a>
+              ${driveOpenUrl ? `
+                <a href="${driveOpenUrl}" target="_blank" rel="noopener noreferrer" class="mt-3 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-lg transition">
+                  <i class="fa-solid fa-arrow-up-right-from-square"></i> PDF दस्तावेज नया टैब में खोलें / डाउनलोड करें
+                </a>
+              ` : ''}
             </div>
           ` : `
-            <img src="${story.photoUrl}" alt="${story.youthName}" class="w-full h-full object-cover" onerror="this.src='https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=800&auto=format&fit=crop&q=80'">
+            <img src="${fullPreviewUrl}"
+                 alt="${story.youthName}"
+                 referrerpolicy="no-referrer"
+                 class="w-full h-full object-cover"
+                 onerror="if (!this.dataset.fallback && '${fileId}') { this.dataset.fallback='1'; this.src='https://lh3.googleusercontent.com/d/${fileId}'; } else { this.onerror=null; this.src='https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=800&auto=format&fit=crop&q=80'; }">
           `}
           <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none"></div>
           <div class="absolute bottom-6 left-6 right-6 text-white pointer-events-none">

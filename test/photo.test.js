@@ -184,4 +184,35 @@ describe('Photo & Drive Module Unit Tests (photo.js)', () => {
     assert.ok(saveCall);
     assert.equal(saveCall.payload.record.Photo_Link, result.mediaUrl);
   });
+
+  test('extractDriveFileId extracts file IDs from various link formats', () => {
+    assert.equal(PhotoModule.extractDriveFileId('https://drive.google.com/file/d/1FsudcSoQWifOd4gyKrRoTHfe2elzLRzO/view?usp=sharing'), '1FsudcSoQWifOd4gyKrRoTHfe2elzLRzO');
+    assert.equal(PhotoModule.extractDriveFileId('https://drive.google.com/open?id=ABC_XYZ_123'), 'ABC_XYZ_123');
+    assert.equal(PhotoModule.extractDriveFileId('https://lh3.googleusercontent.com/d/FILE_TEST_999'), 'FILE_TEST_999');
+    assert.equal(PhotoModule.extractDriveFileId('data:image/jpeg;base64,data'), '');
+    assert.equal(PhotoModule.extractDriveFileId(''), '');
+  });
+
+  test('formatDriveThumbnail generates valid Google Drive thumbnail links', () => {
+    const thumb = PhotoModule.formatDriveThumbnail('https://drive.google.com/file/d/TEST_FILE_ID/view?usp=sharing', 'w800');
+    assert.equal(thumb, 'https://drive.google.com/thumbnail?id=TEST_FILE_ID&sz=w800');
+
+    const regularImg = 'https://example.com/photo.jpg';
+    assert.equal(PhotoModule.formatDriveThumbnail(regularImg), regularImg);
+  });
+
+  test('deleteDriveFile and deleteSuccessStory trigger backend deletion calls', async () => {
+    const driveRes = await PhotoModule.deleteDriveFile('https://drive.google.com/file/d/DRIVE_DEL_123/view');
+    assert.equal(driveRes.success, true);
+    const delCall = apiCallLog.find(c => c.action === 'deleteDriveFile');
+    assert.ok(delCall);
+    assert.equal(delCall.payload.fileId, 'DRIVE_DEL_123');
+
+    const storyRes = await PhotoModule.deleteSuccessStory('STR-TEST-001', 'https://drive.google.com/file/d/PHOTO_DEL_456/view');
+    assert.equal(storyRes.success, true);
+    const storyCall = apiCallLog.find(c => c.action === 'deleteSuccessStory');
+    assert.ok(storyCall);
+    assert.equal(storyCall.payload.storyId, 'STR-TEST-001');
+    assert.equal(storyCall.payload.fileId, 'PHOTO_DEL_456');
+  });
 });

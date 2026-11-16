@@ -122,6 +122,7 @@ describe('Google Apps Script Backend CRUD Tests', () => {
   }
 
   function setupVm(mockSs) {
+    const trashedFiles = [];
     const sandbox = {
       Logger: { log: () => {} },
       ContentService: {
@@ -129,15 +130,43 @@ describe('Google Apps Script Backend CRUD Tests', () => {
         MimeType: { JSON: 'json' }
       },
       Session: { getScriptTimeZone: () => 'Asia/Kolkata' },
-      Utilities: { formatDate: (d) => d.toISOString().split('T')[0] },
+      Utilities: {
+        formatDate: (d) => d.toISOString().split('T')[0],
+        base64Decode: (str) => Buffer.from(str, 'base64'),
+        newBlob: (bytes, mime, name) => ({
+          getBytes: () => bytes,
+          getContentType: () => mime,
+          getName: () => name
+        })
+      },
       SpreadsheetApp: {
         getActiveSpreadsheet: () => mockSs,
         openById: () => mockSs
+      },
+      DriveApp: {
+        Access: { ANYONE_WITH_LINK: 'ANYONE_WITH_LINK' },
+        Permission: { VIEW: 'VIEW' },
+        trashedFiles: trashedFiles,
+        getFileById(id) {
+          return {
+            getId() { return id; },
+            getUrl() { return 'https://drive.google.com/file/d/' + id + '/view'; },
+            setTrashed(val) { if (val) trashedFiles.push(id); }
+          };
+        },
+        createFile() {
+          return {
+            getId() { return 'FILE_' + Date.now(); },
+            getUrl() { return 'https://drive.google.com/file/d/test/view'; },
+            setSharing() {}
+          };
+        }
       }
     };
 
     const ctx = vm.createContext(sandbox);
     vm.runInContext(code, ctx);
+    ctx._trashedFiles = trashedFiles;
     return ctx;
   }
 
@@ -527,5 +556,39 @@ describe('Google Apps Script Backend CRUD Tests', () => {
     });
     assert.equal(res.success, true);
     assert.ok(res.fileId);
+  });
+
+  test('deleteSuccessStory deletes record from Success_Stories and trashes photo in DriveApp', () => {
+    const mockSs = createMockSpreadsheet({
+      'Success_Stories': [
+        ['Story_ID', 'Youth_Name', 'Photo_Link', 'Achievement_Date', 'Is_PDF', 'Submitted_At'],
+        ['STR-001', 'Ramesh Kashyap', 'https://drive.google.com/file/d/DRIVE_PHOTO_888/view', '2026-10-01', false, 'now'],
+        ['STR-002', 'Sunita Mandavi', 'https://drive.google.com/file/d/DRIVE_PHOTO_999/view', '2026-10-02', false, 'now']
+      ]
+    });
+    const ctx = setupVm(mockSs);
+
+    const res = ctx.handleAction('deleteSuccessStory', { storyId: 'STR-001' });
+    assert.equal(res.success, true);
+    assert.equal(res.deletedFromSheet, true);
+    assert.equal(res.driveFileTrashed, true);
+    assert.equal(res.fileId, 'DRIVE_PHOTO_888');
+
+    // Verify row was deleted from sheet
+    const remainingRows = mockSs.getSheetByName('Success_Stories').rows;
+    assert.equal(remainingRows.length, 2);
+    assert.equal(remainingRows[1][0], 'STR-002');
+
+    // Verify Drive file was trashed
+    assert.ok(ctx._trashedFiles.includes('DRIVE_PHOTO_888'));
+  });
+
+  test('deleteDriveFile trashes target file in DriveApp', () => {
+    const mockSs = createMockSpreadsheet({});
+    const ctx = setupVm(mockSs);
+
+    const res = ctx.handleAction('deleteDriveFile', { fileId: 'DRIVE_FILE_XYZ' });
+    assert.equal(res.success, true);
+    assert.ok(ctx._trashedFiles.includes('DRIVE_FILE_XYZ'));
   });
 });

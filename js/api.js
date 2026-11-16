@@ -427,7 +427,10 @@ const API = (function() {
   async function call(action, payload = {}) {
     const token = getToken();
     const requestPayload = { ...payload, userToken: token };
-    const uploadActions = ["uploadModulePhoto", "uploadPhoto", "uploadPhotos", "uploadMultiplePhotos", "uploadFile", "saveFieldVisit", "saveSuccessStory"];
+    const uploadActions = [
+      "uploadModulePhoto", "uploadPhoto", "uploadPhotos", "uploadMultiplePhotos", "uploadFile",
+      "saveFieldVisit", "saveSuccessStory", "deleteSuccessStory", "deleteDriveFile", "deletePhoto", "deleteFile"
+    ];
     const requiresCloud = uploadActions.includes(action);
 
     // 1. Apps Script embedded execution

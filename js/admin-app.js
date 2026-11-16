@@ -1538,6 +1538,8 @@
   // -------------------------------------------------------------
   // 6. Success Stories Management
   // -------------------------------------------------------------
+  // 5. Success Stories & Media Management
+  // -------------------------------------------------------------
   function renderSuccessStories() {
     if (!window.DantewadaDB) return;
 
@@ -1545,43 +1547,75 @@
     const tbody = document.getElementById('storiesTableBody');
     if (!tbody) return;
 
-    tbody.innerHTML = stories.map((s, idx) => `
-      <tr class="hover:bg-slate-50 border-b border-slate-100">
+    if (!stories || stories.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="6" class="p-8 text-center text-slate-400">
+            <i class="fa-regular fa-folder-open text-3xl mb-2 text-slate-300 block"></i>
+            कोई सफलता कहानी उपलब्ध नहीं है। "नई Success Story बनाएं" बटन से कहानी जोड़ें।
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    tbody.innerHTML = stories.map((s, idx) => {
+      const isPdf = Boolean(s.isPdf) || (s.photoUrl && (s.photoUrl.startsWith('data:application/pdf') || s.photoUrl.toLowerCase().endsWith('.pdf')));
+      const fileId = window.PhotoModule ? window.PhotoModule.extractDriveFileId(s.photoUrl) : '';
+      const thumbUrl = (window.PhotoModule && typeof window.PhotoModule.formatDriveThumbnail === 'function')
+        ? window.PhotoModule.formatDriveThumbnail(s.photoUrl, 'w200')
+        : (fileId ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w200` : (s.photoUrl || ''));
+
+      return `
+      <tr class="hover:bg-slate-50 border-b border-slate-100 transition">
         <td class="p-3 text-xs font-mono text-slate-400">${idx + 1}</td>
         <td class="p-3">
           <div class="flex items-center gap-3">
-            ${s.photoUrl && (s.photoUrl.startsWith('data:application/pdf') || s.photoUrl.toLowerCase().endsWith('.pdf'))
-              ? `<div class="w-10 h-10 rounded-lg bg-red-100 text-red-600 flex flex-col items-center justify-center shrink-0"><i class="fa-solid fa-file-pdf text-base"></i><span class="text-[7px] font-bold">PDF</span></div>`
-              : `<img src="${s.photoUrl}" class="w-10 h-10 rounded-lg object-cover shrink-0" onerror="this.src='https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=800&auto=format&fit=crop&q=80'">`
+            ${isPdf
+              ? `<div onclick="window.openStoryModal('${s.id}')" class="w-10 h-10 rounded-lg bg-red-100 text-red-600 flex flex-col items-center justify-center shrink-0 cursor-pointer hover:bg-red-200 transition shadow-xs" title="PDF पूर्वावलोकन (Preview) देखें">
+                   <i class="fa-solid fa-file-pdf text-base"></i>
+                   <span class="text-[7px] font-bold uppercase">PDF</span>
+                 </div>`
+              : `<div class="relative w-10 h-10 rounded-lg overflow-hidden bg-slate-100 shrink-0 cursor-pointer shadow-xs border border-slate-200 group" onclick="window.openStoryModal('${s.id}')" title="फोटो पूर्वावलोकन (Preview) देखें">
+                   <img src="${thumbUrl}"
+                        alt="${escapeHtml(s.youthName || 'Photo')}"
+                        referrerpolicy="no-referrer"
+                        class="w-full h-full object-cover group-hover:scale-110 transition duration-200"
+                        onerror="if (!this.dataset.fallback && '${fileId}') { this.dataset.fallback='1'; this.src='https://lh3.googleusercontent.com/d/${fileId}'; } else { this.onerror=null; this.src='https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=800&auto=format&fit=crop&q=80'; }">
+                   <div class="absolute inset-0 bg-black/25 opacity-0 group-hover:opacity-100 flex items-center justify-center transition">
+                     <i class="fa-regular fa-eye text-white text-[11px]"></i>
+                   </div>
+                 </div>`
             }
             <div>
-              <div class="font-bold text-slate-900 text-sm">${s.youthName}</div>
-              <div class="text-xs text-slate-500">${s.village}, ${s.block || 'Dantewada'}</div>
+              <div class="font-bold text-slate-900 text-sm hover:text-blue-700 cursor-pointer transition" onclick="window.openStoryModal('${s.id}')">${escapeHtml(s.youthName)}</div>
+              <div class="text-xs text-slate-500">${escapeHtml(s.village || '-')}, ${escapeHtml(s.block || 'Dantewada')}</div>
             </div>
           </div>
         </td>
-        <td class="p-3 text-xs font-medium text-slate-800">${s.title}</td>
-        <td class="p-3 text-xs"><span class="badge-status badge-block">${s.category}</span></td>
+        <td class="p-3 text-xs font-medium text-slate-800">${escapeHtml(s.title)}</td>
+        <td class="p-3 text-xs"><span class="badge-status badge-block">${escapeHtml(s.category)}</span></td>
         <td class="p-3 text-xs">
           <span class="badge-status ${s.status === 'Published' ? 'badge-published' : (s.status === 'Approved' ? 'badge-resolved' : 'badge-draft')}">
-            ${s.status}
+            ${escapeHtml(s.status)}
           </span>
         </td>
-        <td class="p-3 text-xs text-right space-x-1">
+        <td class="p-3 text-xs text-right space-x-1 whitespace-nowrap">
           ${window.DantewadaAuth.can('story_approve') ? `
-            <button onclick="window.cycleStoryStatus('${s.id}')" title="स्थिति बदलें" class="p-1.5 text-blue-700 hover:bg-blue-100 rounded-lg">
+            <button onclick="window.cycleStoryStatus('${s.id}')" title="स्थिति बदलें (Status)" class="p-1.5 text-blue-700 hover:bg-blue-100 rounded-lg transition">
               <i class="fa-solid fa-arrows-rotate"></i>
             </button>
           ` : ''}
-          <button onclick="window.openStoryModal('${s.id}')" title="देखें" class="p-1.5 text-slate-700 hover:bg-slate-100 rounded-lg">
+          <button onclick="window.openStoryModal('${s.id}')" title="पूर्वावलोकन देखें (View Preview)" class="p-1.5 text-slate-700 hover:bg-slate-100 rounded-lg transition">
             <i class="fa-regular fa-eye"></i>
           </button>
-          <button onclick="window.deleteStory('${s.id}')" title="हटाएं (Delete)" class="p-1.5 text-rose-700 hover:bg-rose-100 rounded-lg">
+          <button onclick="window.deleteStory('${s.id}')" title="हटाएं (Delete)" class="p-1.5 text-rose-700 hover:bg-rose-100 rounded-lg transition">
             <i class="fa-regular fa-trash-can"></i>
           </button>
         </td>
       </tr>
-    `).join('');
+      `;
+    }).join('');
   }
 
   window.cycleStoryStatus = function (id) {
@@ -1596,12 +1630,185 @@
     renderSuccessStories();
   };
 
-  window.deleteStory = function (id) {
-    if (!confirm('क्या आप निश्चित हैं कि यह सफलता कहानी हटाना चाहते हैं?')) return;
-    if (window.DantewadaDB.data.successStories) {
-      window.DantewadaDB.data.successStories = window.DantewadaDB.data.successStories.filter(s => s.id !== id);
-      window.DantewadaDB.persist();
+  window.openStoryModal = function (id) {
+    if (!window.DantewadaDB) return;
+    const story = window.DantewadaDB.getSuccessStoryById(id);
+    if (!story) return;
+
+    const modal = document.getElementById('storyModal');
+    const content = document.getElementById('storyModalContent');
+    if (!modal || !content) return;
+
+    const isPdf = Boolean(story.isPdf) || (story.photoUrl && (story.photoUrl.startsWith('data:application/pdf') || story.photoUrl.toLowerCase().endsWith('.pdf')));
+    const fileId = window.PhotoModule ? window.PhotoModule.extractDriveFileId(story.photoUrl) : '';
+    const fullPreviewUrl = (window.PhotoModule && typeof window.PhotoModule.formatDriveThumbnail === 'function')
+      ? window.PhotoModule.formatDriveThumbnail(story.photoUrl, 'w1200')
+      : (fileId ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w1200` : (story.photoUrl || ''));
+    const driveOpenUrl = fileId
+      ? `https://drive.google.com/file/d/${fileId}/view?usp=sharing`
+      : (story.photoUrl && story.photoUrl.startsWith('http') ? story.photoUrl : '');
+
+    content.innerHTML = `
+      <div class="relative bg-white">
+        <!-- Header Banner & Media Preview -->
+        <div class="h-64 sm:h-80 w-full overflow-hidden rounded-t-2xl bg-slate-900 relative">
+          ${isPdf ? `
+            <div class="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-red-950 text-white p-6">
+              <i class="fa-solid fa-file-pdf text-6xl text-red-500 mb-3 animate-bounce"></i>
+              <div class="text-lg font-bold">संलग्न पीडीएफ दस्तावेज (PDF Document)</div>
+              <p class="text-xs text-slate-300 mt-1 mb-4">सफलता कहानी का संलग्न पीडीएफ डॉक्युमेंट</p>
+              ${driveOpenUrl ? `
+                <a href="${driveOpenUrl}" target="_blank" rel="noopener noreferrer" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-lg transition">
+                  <i class="fa-solid fa-arrow-up-right-from-square"></i> Google Drive में PDF खोलें / डाउनलोड करें
+                </a>
+              ` : ''}
+            </div>
+          ` : `
+            <img src="${fullPreviewUrl}"
+                 alt="${escapeHtml(story.youthName || 'Photo')}"
+                 referrerpolicy="no-referrer"
+                 class="w-full h-full object-cover"
+                 onerror="if (!this.dataset.fallback && '${fileId}') { this.dataset.fallback='1'; this.src='https://lh3.googleusercontent.com/d/${fileId}'; } else { this.onerror=null; this.src='https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=800&auto=format&fit=crop&q=80'; }">
+          `}
+          <div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent pointer-events-none"></div>
+          <div class="absolute bottom-5 left-6 right-16 text-white pointer-events-none">
+            <span class="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-600/90 text-white shadow-xs mb-2">
+              ${escapeHtml(story.category || 'Employment')}
+            </span>
+            <h2 class="text-xl sm:text-2xl font-extrabold leading-tight drop-shadow-sm">${escapeHtml(story.title || 'सफलता की कहानी')}</h2>
+            <p class="text-xs text-slate-200 mt-1 flex items-center gap-2">
+              <span><i class="fa-solid fa-user mr-1"></i>${escapeHtml(story.youthName || '')}</span>
+              <span>•</span>
+              <span><i class="fa-solid fa-location-dot mr-1"></i>${escapeHtml(story.village || '')}, ${escapeHtml(story.block || 'Dantewada')}</span>
+            </p>
+          </div>
+          <button onclick="window.closeStoryModal()" class="absolute top-4 right-4 bg-black/60 hover:bg-black/90 text-white rounded-full w-9 h-9 flex items-center justify-center transition-colors shadow-lg z-10" title="बंद करें">
+            <i class="fa-solid fa-xmark text-lg"></i>
+          </button>
+        </div>
+
+        <!-- Body Content -->
+        <div class="p-6 sm:p-8 space-y-6">
+          ${story.quote ? `
+            <blockquote class="p-4 rounded-xl bg-blue-50/70 border-l-4 border-blue-600 text-blue-950 italic text-sm">
+              "${escapeHtml(story.quote)}"
+            </blockquote>
+          ` : ''}
+
+          <div>
+            <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">सफलता की पूरी कहानी (Full Story)</h4>
+            <div class="text-slate-700 leading-relaxed text-sm bg-slate-50/60 p-4 rounded-xl border border-slate-100 whitespace-pre-wrap">
+              ${escapeHtml(story.fullStory || story.summary || 'विवरण उपलब्ध नहीं है।')}
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs">
+            <div>
+              <span class="text-slate-400 block text-[10px] uppercase font-bold">कहानी ID</span>
+              <span class="font-mono font-bold text-slate-800">${escapeHtml(story.id)}</span>
+            </div>
+            <div>
+              <span class="text-slate-400 block text-[10px] uppercase font-bold">योजना (Scheme)</span>
+              <span class="font-bold text-slate-800">${escapeHtml(story.scheme || '-')}</span>
+            </div>
+            <div>
+              <span class="text-slate-400 block text-[10px] uppercase font-bold">उपलब्धि दिनांक</span>
+              <span class="font-bold text-slate-800">${escapeHtml(story.achievementDate || '-')}</span>
+            </div>
+            <div>
+              <span class="text-slate-400 block text-[10px] uppercase font-bold">स्थिति (Status)</span>
+              <span class="font-bold text-emerald-700">${escapeHtml(story.status || 'Published')}</span>
+            </div>
+          </div>
+
+          <!-- Actions Footer -->
+          <div class="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-slate-200">
+            <div class="flex items-center gap-2">
+              ${driveOpenUrl ? `
+                <a href="${driveOpenUrl}" target="_blank" rel="noopener noreferrer" class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold flex items-center gap-1.5 transition">
+                  <i class="fa-brands fa-google-drive text-amber-600 text-sm"></i> Google Drive में मूल फ़ाइल देखें
+                </a>
+              ` : ''}
+            </div>
+            <div class="flex items-center gap-2">
+              <button onclick="window.deleteStory('${story.id}')" class="px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-bold flex items-center gap-1.5 transition">
+                <i class="fa-regular fa-trash-can"></i> यह कहानी हटाएं (Delete)
+              </button>
+              <button onclick="window.closeStoryModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-bold transition">
+                बंद करें
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+  };
+
+  window.closeStoryModal = function () {
+    const modal = document.getElementById('storyModal');
+    if (modal) {
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+  };
+
+  window.deleteStory = async function (id) {
+    if (!id) return;
+    const story = (window.DantewadaDB && window.DantewadaDB.getSuccessStoryById)
+      ? window.DantewadaDB.getSuccessStoryById(id)
+      : (window.DantewadaDB?.data?.successStories || []).find(s => s.id === id);
+
+    const titleOrName = story ? (story.youthName || story.title || 'यह कहानी') : 'यह सफलता कहानी';
+    if (!confirm(`क्या आप निश्चित हैं कि '${titleOrName}' को हटाना चाहते हैं?\n\nयह Google Drive से फोटो/दस्तावेज़ और Google Sheet से डेटा स्थायी रूप से हटा देगा।`)) {
+      return;
+    }
+
+    const btn = document.querySelector(`button[onclick*="deleteStory('${id}')"]`);
+    const originalHtml = btn ? btn.innerHTML : '';
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-rose-700"></i>';
+    }
+
+    try {
+      const photoUrl = story ? (story.photoUrl || '') : '';
+      const fileId = (story && story.driveFileMeta && story.driveFileMeta.fileId)
+        || (window.PhotoModule ? window.PhotoModule.extractDriveFileId(photoUrl) : '');
+
+      let cloudDeleted = false;
+      if (window.PhotoModule && typeof window.PhotoModule.deleteSuccessStory === 'function') {
+        const res = await window.PhotoModule.deleteSuccessStory(id, photoUrl || fileId);
+        if (res && res.success) cloudDeleted = true;
+      } else if (window.API && typeof window.API.call === 'function') {
+        const res = await window.API.call('deleteSuccessStory', {
+          storyId: id,
+          fileId: fileId,
+          photoUrl: photoUrl
+        });
+        if (res && res.success) cloudDeleted = true;
+      }
+
+      // Remove from local database and persist
+      if (window.DantewadaDB && window.DantewadaDB.data && window.DantewadaDB.data.successStories) {
+        window.DantewadaDB.data.successStories = window.DantewadaDB.data.successStories.filter(s => s.id !== id);
+        window.DantewadaDB.persist();
+      }
+
       renderSuccessStories();
+      if (typeof updateSidebarBadgeCounts === 'function') updateSidebarBadgeCounts();
+      if (typeof window.closeStoryModal === 'function') window.closeStoryModal();
+
+      alert(`✅ सफलता कहानी Google Drive (फोटो) और Google Sheet (डेटा) से सफलतापूर्वक हटा दी गई!`);
+    } catch (err) {
+      console.error('Delete success story error:', err);
+      alert('❌ कहानी हटाने में त्रुटि: ' + (err.message || 'Server error'));
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = originalHtml;
+      }
     }
   };
 
@@ -1663,6 +1870,49 @@
       }
     };
     reader.readAsDataURL(file);
+  };
+
+  window.handleStoryUrlInput = function (url) {
+    const trimmed = (url || '').trim();
+    const previewBox = document.getElementById('storyFilePreviewBox');
+    const clearBtn = document.getElementById('storyClearFileBtn');
+    const statusText = document.getElementById('storyFileStatus');
+
+    if (!trimmed) {
+      if (typeof window.clearStoryFile === 'function') window.clearStoryFile();
+      return;
+    }
+
+    if (clearBtn) clearBtn.classList.remove('hidden');
+
+    const isPdf = trimmed.startsWith('data:application/pdf') || trimmed.toLowerCase().endsWith('.pdf') || trimmed.includes('.pdf');
+    if (isPdf) {
+      if (previewBox) {
+        previewBox.innerHTML = `
+          <div class="flex flex-col items-center justify-center p-1 text-red-600">
+            <i class="fa-solid fa-file-pdf text-3xl"></i>
+            <span class="text-[9px] font-bold mt-1 uppercase">PDF लिंक</span>
+          </div>
+        `;
+      }
+      if (statusText) statusText.innerHTML = `<span class="text-blue-700 font-bold">✓ ऑनलाइन PDF लिंक दर्ज किया गया</span>`;
+    } else {
+      const fileId = window.PhotoModule ? window.PhotoModule.extractDriveFileId(trimmed) : '';
+      const previewUrl = fileId
+        ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w400`
+        : trimmed;
+
+      if (previewBox) {
+        previewBox.innerHTML = `
+          <img src="${previewUrl}"
+               referrerpolicy="no-referrer"
+               class="w-full h-full object-cover rounded-xl"
+               alt="Preview"
+               onerror="if (!this.dataset.fb && '${fileId}') { this.dataset.fb='1'; this.src='https://lh3.googleusercontent.com/d/${fileId}'; } else { this.onerror=null; this.src='https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=800&auto=format&fit=crop&q=80'; }">
+        `;
+      }
+      if (statusText) statusText.innerHTML = `<span class="text-emerald-700 font-bold">✓ फ़ोटो लिंक पूर्वावलोकन सक्रिय</span>`;
+    }
   };
 
   window.clearStoryFile = function () {

@@ -48,8 +48,56 @@
   const MAX_FILE_SIZE_BYTES = 15 * 1024 * 1024; // 15 Megabytes
 
   // -------------------------------------------------------------
-  // 2. Google Drive URL Normalization
+  // 2. Google Drive URL Normalization & ID Extraction
   // -------------------------------------------------------------
+  /**
+   * Extracts Google Drive File ID from various share link formats.
+   *
+   * @param {string} url Drive link or direct embed link
+   * @return {string} Extracted File ID or empty string
+   */
+  function extractDriveFileId(url) {
+    if (!url || typeof url !== 'string') return '';
+    const trimmed = url.trim();
+
+    // Do not parse data-URIs or blob URLs
+    if (trimmed.startsWith('data:') || trimmed.startsWith('blob:')) {
+      return '';
+    }
+
+    const match1 = trimmed.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+    if (match1 && match1[1]) return match1[1];
+
+    const match2 = trimmed.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+    if (match2 && match2[1]) return match2[1];
+
+    const match3 = trimmed.match(/\/d\/([a-zA-Z0-9_-]+)/);
+    if (match3 && match3[1]) return match3[1];
+
+    return '';
+  }
+
+  /**
+   * Generates a fast Google Drive thumbnail URL.
+   * When paired with referrerpolicy="no-referrer", this delivers
+   * optimal performance across all browsers without hotlinking 403 blocks.
+   *
+   * @param {string} url Drive URL or image URL
+   * @param {string} [size='w1000'] Thumbnail size (e.g. 'w200', 'w800', 'w1200')
+   * @return {string} Direct thumbnail URL
+   */
+  function formatDriveThumbnail(url, size = 'w1000') {
+    if (!url || typeof url !== 'string') return '';
+    const trimmed = url.trim();
+    if (trimmed.startsWith('data:') || trimmed.startsWith('blob:')) return trimmed;
+
+    const fileId = extractDriveFileId(trimmed);
+    if (fileId) {
+      return `https://drive.google.com/thumbnail?id=${fileId}&sz=${size}`;
+    }
+    return trimmed;
+  }
+
   /**
    * Converts Google Drive share links into direct-embed image URLs
    * that display inside <img> tags without Google login redirects.
@@ -63,21 +111,7 @@
       return trimmed;
     }
 
-    // Extract Google Drive File ID
-    let fileId = null;
-    const match1 = trimmed.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
-    if (match1 && match1[1]) fileId = match1[1];
-
-    if (!fileId) {
-      const match2 = trimmed.match(/[?&]id=([a-zA-Z0-9_-]+)/);
-      if (match2 && match2[1]) fileId = match2[1];
-    }
-
-    if (!fileId) {
-      const match3 = trimmed.match(/\/d\/([a-zA-Z0-9_-]+)/);
-      if (match3 && match3[1]) fileId = match3[1];
-    }
-
+    const fileId = extractDriveFileId(trimmed);
     if (fileId) {
       // Google User Content CDN delivers high-res direct image
       return `https://lh3.googleusercontent.com/d/${fileId}`;
@@ -674,6 +708,85 @@
   }
 
   // -------------------------------------------------------------
+  // 9. Drive File & Success Story Deletion Engine
+  // -------------------------------------------------------------
+  /**
+   * Deletes a file from Google Drive folder by file ID or share URL.
+   *
+   * @param {string} fileIdOrUrl Drive File ID or full URL
+   * @return {Promise<Object>} Backend response
+   */
+  async function deleteDriveFile(fileIdOrUrl) {
+    if (!fileIdOrUrl) {
+      return { success: false, message: 'No file ID or URL provided for deletion.' };
+    }
+    const fileId = extractDriveFileId(fileIdOrUrl) || fileIdOrUrl;
+    if (window.API && typeof window.API.call === 'function') {
+      try {
+        const res = await window.API.call('deleteDriveFile', { fileId, url: fileIdOrUrl });
+        return res;
+      } catch (err) {
+        console.warn('deleteDriveFile call error:', err.message);
+        throw err;
+      }
+    }
+    return { success: false, message: 'API service is unavailable.' };
+  }
+
+  /**
+   * Complete deletion workflow for a Success Story:
+   * 1. Permanently removes row from Success_Stories Google Sheet
+   * 2. Moves associated photo or PDF from Google Drive folder to Trash
+   * 3. Cleans up Photo_Uploads registry if present
+   *
+   * @param {string} storyId Success story ID (e.g. STR-2026-001)
+   * @param {string} [photoUrlOrFileId=''] Associated media URL or file ID
+   * @return {Promise<Object>} Deletion result
+   */
+  async function deleteSuccessStory(storyId, photoUrlOrFileId = '') {
+    if (!storyId) {
+      throw new Error('कहानी ID आवश्यक है।');
+    }
+
+    const fileId = extractDriveFileId(photoUrlOrFileId) || '';
+    let result = null;
+
+    if (window.API && typeof window.API.call === 'function') {
+      try {
+        result = await window.API.call('deleteSuccessStory', {
+          storyId: storyId,
+          fileId: fileId,
+          photoUrl: photoUrlOrFileId
+        });
+      } catch (err) {
+        console.warn('deleteSuccessStory primary call failed, attempting fallback deleteRecord:', err.message);
+
+        // Fallback: Delete sheet record via deleteRecord action
+        const recRes = await window.API.call('deleteRecord', {
+          sheetName: 'Success_Stories',
+          idValue: storyId,
+          idField: 'Story_ID',
+          deleteDriveFile: true,
+          fileId: fileId,
+          photoUrl: photoUrlOrFileId
+        });
+
+        // Also explicitly trash Drive file if fileId is known
+        if (fileId) {
+          try {
+            await window.API.call('deleteDriveFile', { fileId, url: photoUrlOrFileId });
+          } catch (dErr) {
+            console.warn('deleteDriveFile fallback failed:', dErr.message);
+          }
+        }
+        result = recRes;
+      }
+    }
+
+    return result || { success: true, message: 'Story deleted locally.' };
+  }
+
+  // -------------------------------------------------------------
   // Public Module API
   // -------------------------------------------------------------
   const PhotoModule = {
@@ -681,13 +794,17 @@
     TARGET_DRIVE_FOLDER_URL,
     ALLOWED_MIME_TYPES,
     MAX_FILE_SIZE_BYTES,
+    extractDriveFileId,
+    formatDriveThumbnail,
     formatDriveUrl,
     validateFile,
     compressImage,
     uploadToDrive,
     uploadMultiplePhotos,
     saveFieldVisit,
-    saveSuccessStory
+    saveSuccessStory,
+    deleteDriveFile,
+    deleteSuccessStory
   };
 
   window.PhotoModule = PhotoModule;

@@ -1001,6 +1001,15 @@ function handleAction(action, payload) {
     case "saveSuccessStory":
       return appendModuleRecord_(ss, "Success_Stories", payload.record || payload);
 
+    case "deleteSuccessStory":
+    case "removeSuccessStory":
+      return deleteSuccessStory(ss, payload);
+
+    case "deleteDriveFile":
+    case "deletePhoto":
+    case "deleteFile":
+      return deleteDriveFile(payload);
+
     // Dynamic record creation with automatic sheet destination routing
     case "addRecord":
     case "createRecord":
@@ -1395,11 +1404,47 @@ function deleteRecord(ss, targetSheetName, payload) {
   const targetRow = findTargetRowIndex(values, info.headerRowIdx, info.headersClean, payload);
 
   if (targetRow && targetRow > info.headerRowIdx + 1 && targetRow <= sheet.getLastRow()) {
+    // Check if target row has any Google Drive photo links to trash
+    let driveTrashed = false;
+    let fileIdToTrash = payload.fileId || "";
+    const sheetNameStr = String(sheet.getName() || "").toLowerCase();
+    const isPhotoModule = sheetNameStr.includes("success") || sheetNameStr.includes("visit") || sheetNameStr.includes("photo") || payload.deleteDriveFile;
+
+    if (!fileIdToTrash && isPhotoModule) {
+      const rowValues = values[targetRow - 1] || [];
+      for (let c = 0; c < rowValues.length; c++) {
+        const cellVal = String(rowValues[c] || "");
+        if (cellVal.includes("drive.google.com") || cellVal.includes("lh3.googleusercontent.com")) {
+          const extracted = extractDriveFileId_(cellVal);
+          if (extracted) {
+            fileIdToTrash = extracted;
+            break;
+          }
+        }
+      }
+    }
+    if (!fileIdToTrash && payload.photoUrl) {
+      fileIdToTrash = extractDriveFileId_(payload.photoUrl);
+    }
+    if (fileIdToTrash && typeof DriveApp !== "undefined") {
+      try {
+        const file = DriveApp.getFileById(fileIdToTrash);
+        if (file) {
+          file.setTrashed(true);
+          driveTrashed = true;
+        }
+      } catch (dErr) {
+        console.warn("DriveApp trash warning: " + dErr.message);
+      }
+    }
+
     sheet.deleteRow(targetRow);
     return {
       success: true,
       message: `Record at row ${targetRow} deleted successfully from '${sheet.getName()}'.`,
-      deletedRow: targetRow
+      deletedRow: targetRow,
+      driveFileTrashed: driveTrashed,
+      fileId: fileIdToTrash
     };
   }
 
@@ -2082,6 +2127,179 @@ function handleFileUpload(ss, payload) {
   payload.module = payload.module || "General";
   payload.folderId = payload.folderId || TARGET_DRIVE_FOLDER_ID;
   return uploadModulePhoto(payload);
+}
+
+/**
+ * Extracts Google Drive File ID from various link structures.
+ *
+ * @param {string} url Drive share link, direct URL, uc link, etc.
+ * @return {string} Extracted File ID or empty string
+ */
+function extractDriveFileId_(url) {
+  if (!url || typeof url !== "string") return "";
+  const trimmed = url.trim();
+  let match = trimmed.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+  if (match && match[1]) return match[1];
+  match = trimmed.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+  if (match && match[1]) return match[1];
+  match = trimmed.match(/\/d\/([a-zA-Z0-9_-]+)/);
+  if (match && match[1]) return match[1];
+  return "";
+}
+
+/**
+ * Permanently removes or moves a file to Google Drive trash.
+ *
+ * @param {Object} payload Payload containing fileId or url
+ * @return {Object}
+ */
+function deleteDriveFile(payload) {
+  payload = payload || {};
+  const fileId = payload.fileId || extractDriveFileId_(payload.url || payload.fileUrl || payload.photoUrl || "");
+  if (!fileId) {
+    return { success: false, message: "No valid Google Drive file ID provided to delete." };
+  }
+  if (typeof DriveApp === "undefined") {
+    return { success: false, message: "DriveApp service is not available in this environment." };
+  }
+  try {
+    const file = DriveApp.getFileById(fileId);
+    if (file) {
+      file.setTrashed(true);
+      return { success: true, message: "File successfully moved to Google Drive trash.", fileId: fileId };
+    }
+    return { success: false, message: "File not found in Google Drive.", fileId: fileId };
+  } catch (err) {
+    return { success: false, message: "Failed to delete file from Google Drive: " + err.message, fileId: fileId };
+  }
+}
+
+/**
+ * Deletes a Success Story from Google Sheets and trashes its photo in Google Drive.
+ *
+ * @param {Spreadsheet} ss Spreadsheet instance
+ * @param {Object} payload { storyId, fileId, photoUrl, youthName }
+ * @return {Object}
+ */
+function deleteSuccessStory(ss, payload) {
+  payload = payload || {};
+  const storyId = String(payload.storyId || payload.id || payload.idValue || "").trim();
+  const fileId = String(payload.fileId || "").trim();
+  const photoUrl = String(payload.photoUrl || payload.url || "").trim();
+  const youthName = String(payload.youthName || payload.name || "").trim().toLowerCase();
+
+  let sheet = findSheet(ss, "Success_Stories");
+  if (!sheet) sheet = ss.getSheetByName("Success_Stories");
+  if (!sheet) sheet = findSheet(ss, "Success Stories");
+
+  if (!sheet) {
+    // If sheet not found, still attempt to trash Drive file if provided
+    let driveTrashed = false;
+    let targetFileId = fileId || extractDriveFileId_(photoUrl);
+    if (targetFileId && typeof DriveApp !== "undefined") {
+      try {
+        const file = DriveApp.getFileById(targetFileId);
+        if (file) { file.setTrashed(true); driveTrashed = true; }
+      } catch (e) {}
+    }
+    return { success: false, message: "Sheet 'Success_Stories' not found.", driveFileTrashed: driveTrashed };
+  }
+
+  const lastRow = sheet.getLastRow();
+  const lastCol = sheet.getLastColumn();
+  if (lastRow <= 1 || lastCol === 0) {
+    let driveTrashed = false;
+    let targetFileId = fileId || extractDriveFileId_(photoUrl);
+    if (targetFileId && typeof DriveApp !== "undefined") {
+      try {
+        const file = DriveApp.getFileById(targetFileId);
+        if (file) { file.setTrashed(true); driveTrashed = true; }
+      } catch (e) {}
+    }
+    return { success: true, message: "Success_Stories sheet is already empty.", deletedFromSheet: false, driveFileTrashed: driveTrashed };
+  }
+
+  const values = sheet.getRange(1, 1, lastRow, lastCol).getValues();
+  const headers = values[0].map(h => String(h || "").toLowerCase().replace(/[^a-z0-9]/g, ""));
+  const storyIdColIdx = headers.indexOf("storyid");
+  const photoColIdx = headers.findIndex(h => h.includes("photo") || h.includes("link") || h.includes("url"));
+  const youthNameColIdx = headers.indexOf("youthname");
+
+  let targetRow = -1;
+  let rowPhotoUrl = "";
+
+  for (let r = 1; r < values.length; r++) {
+    const row = values[r];
+    const rowStoryId = storyIdColIdx !== -1 ? String(row[storyIdColIdx] || "").trim() : "";
+    const rowYouth = youthNameColIdx !== -1 ? String(row[youthNameColIdx] || "").trim().toLowerCase() : "";
+
+    if (storyId && rowStoryId && (rowStoryId.toLowerCase() === storyId.toLowerCase() || rowStoryId.replace(/\D/g, "") === storyId.replace(/\D/g, ""))) {
+      targetRow = r + 1;
+      if (photoColIdx !== -1) rowPhotoUrl = String(row[photoColIdx] || "").trim();
+      break;
+    } else if (!storyId && youthName && rowYouth === youthName) {
+      targetRow = r + 1;
+      if (photoColIdx !== -1) rowPhotoUrl = String(row[photoColIdx] || "").trim();
+      break;
+    }
+  }
+
+  // Scan row cells if not matched yet
+  if (targetRow === -1 && storyId) {
+    const sClean = storyId.toLowerCase();
+    for (let r = 1; r < values.length; r++) {
+      if (values[r].some(cell => String(cell || "").trim().toLowerCase() === sClean)) {
+        targetRow = r + 1;
+        if (photoColIdx !== -1) rowPhotoUrl = String(values[r][photoColIdx] || "").trim();
+        break;
+      }
+    }
+  }
+
+  let driveTrashed = false;
+  let targetFileId = fileId || extractDriveFileId_(photoUrl) || extractDriveFileId_(rowPhotoUrl);
+
+  if (targetFileId && typeof DriveApp !== "undefined") {
+    try {
+      const file = DriveApp.getFileById(targetFileId);
+      if (file) {
+        file.setTrashed(true);
+        driveTrashed = true;
+      }
+    } catch (driveErr) {
+      console.warn("Could not trash Drive file (" + targetFileId + "): " + driveErr.message);
+    }
+  }
+
+  let deletedFromSheet = false;
+  if (targetRow > 1 && targetRow <= sheet.getLastRow()) {
+    sheet.deleteRow(targetRow);
+    deletedFromSheet = true;
+  }
+
+  // Also clean up Photo_Uploads sheet if matching record exists
+  try {
+    const photoSheet = findSheet(ss, "Photo_Uploads");
+    if (photoSheet && photoSheet.getLastRow() > 1) {
+      const pValues = photoSheet.getRange(1, 1, photoSheet.getLastRow(), photoSheet.getLastColumn()).getValues();
+      for (let pr = pValues.length - 1; pr >= 1; pr--) {
+        const pRecId = String(pValues[pr][3] || "").trim();
+        const pFileId = String(pValues[pr][6] || "").trim();
+        if ((storyId && pRecId === storyId) || (targetFileId && pFileId === targetFileId)) {
+          photoSheet.deleteRow(pr + 1);
+        }
+      }
+    }
+  } catch (pErr) {}
+
+  return {
+    success: true,
+    message: "Success story deleted from Google Sheet and Google Drive.",
+    storyId: storyId,
+    deletedFromSheet: deletedFromSheet,
+    driveFileTrashed: driveTrashed,
+    fileId: targetFileId
+  };
 }
 
 // =========================================================================

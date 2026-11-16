@@ -81,6 +81,18 @@
         <span class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-[#08152c]" title="Online"></span>
       </div>
 
+      <!-- Change Password Button -->
+      <button type="button" onclick="window.openChangePasswordModal()" class="bg-gradient-to-r from-blue-900/60 to-slate-800 hover:from-blue-800 hover:to-slate-700 active:scale-95 text-slate-100 text-xs font-semibold p-2 sm:px-3 sm:py-1.5 rounded-xl border border-blue-500/40 shadow-sm flex items-center gap-1.5 transition cursor-pointer" title="पासवर्ड बदलें (Change Admin Password)">
+        <i class="fa-solid fa-key text-amber-400 text-xs"></i>
+        <span class="hidden md:inline">पासवर्ड</span>
+      </button>
+
+      <!-- Logout Button -->
+      <button type="button" onclick="window.handleAdminLogout()" class="bg-rose-500/15 hover:bg-rose-500/25 active:scale-95 text-rose-300 hover:text-rose-200 border border-rose-500/30 text-xs font-semibold p-2 sm:px-3 sm:py-1.5 rounded-xl transition flex items-center gap-1.5 cursor-pointer" title="प्रशासनिक सत्र समाप्त करें (Logout)">
+        <i class="fa-solid fa-arrow-right-from-bracket text-xs text-rose-400"></i>
+        <span class="hidden sm:inline">लॉगआउट</span>
+      </button>
+
       <!-- Public Site Link Button -->
       <a href="index.html" class="bg-gradient-to-r from-blue-900/60 to-slate-800 hover:from-blue-800 hover:to-slate-700 active:scale-95 text-slate-100 text-xs font-semibold p-2 sm:px-3 sm:py-1.5 rounded-xl border border-blue-500/40 shadow-sm flex items-center gap-1.5 transition" title="सार्वजनिक पोर्टल देखें (Public Site)">
         <i class="fa-solid fa-arrow-up-right-from-square text-amber-400 text-xs"></i>
@@ -356,15 +368,30 @@
           </div>
         </button>
 
+        <button type="button" onclick="window.openChangePasswordModal()" class="bilingual-nav-btn">
+          <div class="flex items-center gap-2">
+            <span class="icon-box text-amber-400"><i class="fa-solid fa-key"></i></span>
+            <span class="title-en font-medium">एडमिन पासवर्ड बदलें (Password)</span>
+          </div>
+        </button>
+
       </nav>
 
       <!-- Sidebar Footer -->
       <div class="p-3 border-t border-slate-800/80 text-[11px] text-slate-400 bg-[#070d1a]">
-        <div class="flex items-center justify-between">
+        <div class="flex items-center justify-between mb-2">
           <span>Dantewada Portal v2.0</span>
           <span class="flex items-center gap-1.5 text-green-400 font-mono text-[10px]">
             <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> Online
           </span>
+        </div>
+        <div class="pt-2 border-t border-slate-800/60 flex items-center justify-between text-[10px]">
+          <button type="button" onclick="window.openChangePasswordModal()" class="text-amber-400 hover:text-amber-300 transition flex items-center gap-1 cursor-pointer">
+            <i class="fa-solid fa-key text-[9px]"></i> पासवर्ड बदलें
+          </button>
+          <button type="button" onclick="window.handleAdminLogout()" class="text-rose-400 hover:text-rose-300 font-bold transition flex items-center gap-1 cursor-pointer">
+            <i class="fa-solid fa-arrow-right-from-bracket text-[9px]"></i> लॉगआउट
+          </button>
         </div>
       </div>
     </aside>
@@ -2204,6 +2231,135 @@
   <!-- Modal: Field Visit Details -->
   <div id="visitModal" class="modal-backdrop fixed inset-0 z-50 hidden items-center justify-center p-4">
     <div class="modal-content bg-white w-full max-w-3xl rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto" id="visitModalContent"></div>
+  </div>
+
+  <!-- Modal: Change Admin Password -->
+  <div id="changePasswordModal" class="modal-backdrop fixed inset-0 z-50 hidden items-center justify-center p-4">
+    <div class="modal-content bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden border border-slate-200">
+      <div class="bg-gradient-to-r from-blue-900 via-slate-900 to-blue-950 p-4 text-white flex items-center justify-between">
+        <h3 class="font-bold text-sm flex items-center gap-2">
+          <i class="fa-solid fa-key text-amber-400"></i>
+          <span>एडमिन पासवर्ड बदलें (Change Password)</span>
+        </h3>
+        <button type="button" onclick="window.closeChangePasswordModal()" class="text-slate-400 hover:text-white cursor-pointer">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+      <form onsubmit="window.saveNewAdminPassword(event)" class="p-6 space-y-4 text-xs">
+        <div>
+          <label class="block font-bold text-slate-700 uppercase mb-1">वर्तमान पासवर्ड (Current Password) *</label>
+          <input type="password" id="currentPassInput" required placeholder="वर्तमान पासवर्ड दर्ज करें..." class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-blue-600">
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 uppercase mb-1">नया पासवर्ड (New Password) *</label>
+          <input type="password" id="newPassInput" minlength="4" required placeholder="नया सुरक्षित पासवर्ड..." class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-blue-600">
+          <p class="text-[10px] text-slate-400 mt-1">कम से कम 4 अक्षरों का पासवर्ड रखें।</p>
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 uppercase mb-1">नए पासवर्ड की पुष्टि करें (Confirm New Password) *</label>
+          <input type="password" id="confirmPassInput" minlength="4" required placeholder="नए पासवर्ड को पुनः दर्ज करें..." class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-blue-600">
+        </div>
+        <div id="changePassFeedback" class="hidden p-3 rounded-xl text-xs font-semibold"></div>
+        <div class="pt-3 border-t border-slate-200 flex items-center justify-end gap-2.5">
+          <button type="button" onclick="window.closeChangePasswordModal()" class="px-4 py-2 border border-slate-300 rounded-xl text-slate-700 hover:bg-slate-50 transition cursor-pointer">
+            रद्द करें
+          </button>
+          <button type="submit" class="px-5 py-2 bg-blue-800 hover:bg-blue-900 text-white font-bold rounded-xl shadow transition cursor-pointer">
+            सुरक्षित करें
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- ADMIN SECURITY GATE: PASSWORD AUTHENTICATION SCREEN      -->
+  <!-- ======================================================== -->
+  <div id="adminLoginGate" class="fixed inset-0 z-[100] flex items-center justify-center bg-[#070e1c]/95 backdrop-blur-xl p-4 overflow-y-auto">
+    <div class="relative w-full max-w-md bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden my-auto">
+      <!-- Top Decorative Banner -->
+      <div class="bg-gradient-to-r from-[#0b1c3d] via-[#102a5c] to-[#0b1c3d] p-6 text-center text-white relative">
+        <div class="inline-flex w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 text-slate-950 font-black text-2xl items-center justify-center shadow-lg mb-3 border-2 border-white/30">
+          दं
+        </div>
+        <h2 class="text-xl font-extrabold tracking-tight">जिला प्रशासन दंतेवाड़ा</h2>
+        <p class="text-xs text-amber-300 font-semibold mt-0.5">युवा विकास पोर्टल • प्रशासनिक कंसोल (Admin Portal)</p>
+        <div class="mt-2.5 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 text-[11px] text-slate-200 border border-white/15">
+          <i class="fa-solid fa-lock text-amber-400"></i>
+          <span>सुरक्षित पासवर्ड प्रमाणीकरण (Secure Access)</span>
+        </div>
+      </div>
+
+      <!-- Login Form Body -->
+      <form id="adminLoginForm" onsubmit="window.handleAdminLogin(event)" class="p-6 sm:p-8 space-y-5">
+        <!-- Error Banner -->
+        <div id="adminLoginError" class="hidden p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold flex items-center gap-2">
+          <i class="fa-solid fa-circle-exclamation text-rose-600 shrink-0"></i>
+          <span id="adminLoginErrorMsg">अमान्य पासवर्ड! कृपया पुनः प्रयास करें।</span>
+        </div>
+
+        <!-- Role / User Selection -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+            लॉगिन पद / यूज़र चुनें (Select User Role)
+          </label>
+          <div class="relative">
+            <select id="adminLoginUserSelect" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-3 text-xs font-semibold text-slate-800 focus:outline-none focus:border-blue-600 transition pr-9">
+              <option value="usr_super">Amit Varma — [Super Admin / मुख्य एडमिन]</option>
+              <option value="usr_dist">Dr. S. Beck — [District Admin / जिला एडमिन]</option>
+              <option value="usr_block_geedam">Shri R.K. Kashyap — [BDO Geedam / ब्लॉक अधिकारी]</option>
+              <option value="usr_block_dantewada">Shri V.K. Sahu — [BDO Dantewada / ब्लॉक अधिकारी]</option>
+              <option value="usr_deo">Rohan Baghel — [Lead DEO / डेटा ऑपरेटर]</option>
+              <option value="usr_reviewer">Ms. Sunita Soren — [PRO / गैलरी समीक्षक]</option>
+            </select>
+            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-400">
+              <i class="fa-solid fa-chevron-down text-xs"></i>
+            </div>
+          </div>
+        </div>
+
+        <!-- Password Input -->
+        <div>
+          <div class="flex items-center justify-between mb-1.5">
+            <label class="text-xs font-bold text-slate-700 uppercase tracking-wider">
+              एडमिन पासवर्ड (Password) *
+            </label>
+            <span class="text-[11px] text-blue-700 font-medium">Default: <code class="font-mono bg-blue-50 px-1 py-0.5 rounded text-blue-900 font-bold">admin123</code></span>
+          </div>
+          <div class="relative">
+            <input type="password" id="adminPasswordInput" required placeholder="एडमिन पासवर्ड दर्ज करें..." 
+                   class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-3 text-xs font-medium text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white transition pr-10">
+            <button type="button" onclick="window.toggleAdminPasswordVisibility()" 
+                    class="absolute inset-y-0 right-0 flex items-center px-3.5 text-slate-400 hover:text-slate-700 transition cursor-pointer" title="पासवर्ड देखें / छुपाएं">
+              <i id="adminPasswordEyeIcon" class="fa-regular fa-eye"></i>
+            </button>
+          </div>
+          <p class="text-[10px] text-slate-400 mt-1">स्वीकृत डिफ़ॉल्ट: <code class="text-slate-600 font-mono">admin123</code> अथवा <code class="text-slate-600 font-mono">dantewada@2026</code></p>
+        </div>
+
+        <!-- Remember Me Checkbox -->
+        <div class="flex items-center justify-between text-xs">
+          <label class="flex items-center gap-2 cursor-pointer text-slate-600 select-none">
+            <input type="checkbox" id="adminRememberMe" checked class="rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+            <span class="font-medium">इस ब्राउज़र में सत्र याद रखें (Remember Session)</span>
+          </label>
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit" id="adminLoginSubmitBtn" class="w-full bg-gradient-to-r from-blue-800 to-indigo-900 hover:from-blue-900 hover:to-indigo-950 active:scale-[0.99] text-white font-bold text-xs py-3.5 rounded-xl shadow-lg shadow-blue-950/20 transition flex items-center justify-center gap-2 cursor-pointer">
+          <i class="fa-solid fa-lock-open text-amber-400"></i>
+          <span>एडमिन कंसोल में प्रवेश करें (Login)</span>
+        </button>
+
+        <!-- Back to Public Portal -->
+        <div class="pt-3 border-t border-slate-100 text-center">
+          <a href="index.html" class="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-blue-800 transition">
+            <i class="fa-solid fa-arrow-left"></i>
+            <span>सार्वजनिक पोर्टल पर वापस जाएं (Back to Public Portal)</span>
+          </a>
+        </div>
+      </form>
+    </div>
   </div>
 
   <!-- Mobile Bottom Quick Navigation Dock (Native App Style) -->

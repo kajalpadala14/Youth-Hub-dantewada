@@ -117,10 +117,124 @@
   ];
 
   const STORAGE_KEY = 'DANTEWADA_AUTH_USER';
+  const SESSION_KEY = 'DANTEWADA_ADMIN_SESSION';
+  const CUSTOM_PASS_KEY = 'DANTEWADA_ADMIN_CUSTOM_PASSWORD';
+  const DEFAULT_PASSWORDS = ['admin123', 'dantewada@2026', 'admin@2026', 'dantewada', 'admin'];
 
   class AuthService {
     constructor() {
       this.currentUser = this.loadUser();
+    }
+
+    /**
+     * Checks if current browser session holds an active admin session token.
+     * @return {boolean}
+     */
+    isAuthenticated() {
+      try {
+        let token = null;
+        if (typeof sessionStorage !== 'undefined') {
+          token = sessionStorage.getItem(SESSION_KEY);
+        }
+        if (!token && typeof localStorage !== 'undefined') {
+          token = localStorage.getItem(SESSION_KEY);
+        }
+        return Boolean(token);
+      } catch (e) {
+        return false;
+      }
+    }
+
+    /**
+     * Validates input password against custom password or built-in administrative defaults.
+     * @param {string} password
+     * @return {boolean}
+     */
+    verifyPassword(password) {
+      if (!password || typeof password !== 'string') return false;
+      const cleanPass = password.trim();
+      if (!cleanPass) return false;
+
+      // 1. Check custom password stored in localStorage
+      try {
+        const customPass = localStorage.getItem(CUSTOM_PASS_KEY);
+        if (customPass && customPass.trim() === cleanPass) {
+          return true;
+        }
+      } catch (e) {}
+
+      // 2. Check default passwords (case-normalized and exact)
+      const cleanLower = cleanPass.toLowerCase();
+      return DEFAULT_PASSWORDS.some(dp => dp === cleanPass || dp.toLowerCase() === cleanLower);
+    }
+
+    /**
+     * Authenticates administrative user with password.
+     * @param {string} userIdOrEmail Selected user ID or email
+     * @param {string} password Secret password
+     * @param {boolean} [remember=true] Persist session across browser restarts
+     * @return {Object} Status and user details
+     */
+    authenticateWithPassword(userIdOrEmail, password, remember = true) {
+      if (!this.verifyPassword(password)) {
+        return {
+          success: false,
+          message: 'अमान्य पासवर्ड (Incorrect Password)! कृपया सही पासवर्ड दर्ज करें।'
+        };
+      }
+
+      let matchedUser = null;
+      if (userIdOrEmail) {
+        matchedUser = DEFAULT_USERS.find(u => 
+          u.id === userIdOrEmail || 
+          u.email.toLowerCase() === String(userIdOrEmail).toLowerCase().trim()
+        );
+      }
+      if (!matchedUser) {
+        matchedUser = this.currentUser || DEFAULT_USERS[0];
+      }
+
+      this.saveUser(matchedUser);
+
+      // Store authenticated session token
+      const sessionToken = 'ADMIN_SESSION_' + Date.now() + '_' + Math.random().toString(36).substring(2, 8);
+      try {
+        if (typeof sessionStorage !== 'undefined') {
+          sessionStorage.setItem(SESSION_KEY, sessionToken);
+        }
+        if (typeof localStorage !== 'undefined') {
+          if (remember) {
+            localStorage.setItem(SESSION_KEY, sessionToken);
+          } else {
+            localStorage.removeItem(SESSION_KEY);
+          }
+        }
+      } catch (e) {}
+
+      return { success: true, user: matchedUser, token: sessionToken };
+    }
+
+    /**
+     * Allows authenticated administrator to set a new custom password.
+     * @param {string} currentPassword
+     * @param {string} newPassword
+     * @return {Object}
+     */
+    setAdminPassword(currentPassword, newPassword) {
+      if (!this.verifyPassword(currentPassword)) {
+        return { success: false, message: 'वर्तमान पासवर्ड गलत है (Current password incorrect)!' };
+      }
+      if (!newPassword || newPassword.trim().length < 4) {
+        return { success: false, message: 'नया पासवर्ड कम से कम 4 अक्षरों का होना चाहिए।' };
+      }
+
+      try {
+        localStorage.setItem(CUSTOM_PASS_KEY, newPassword.trim());
+      } catch (e) {
+        return { success: false, message: 'पासवर्ड सुरक्षित करने में असमर्थ।' };
+      }
+
+      return { success: true, message: 'एडमिन पासवर्ड सफलतापूर्वक अपडेट हो गया!' };
     }
 
     loadUser() {
@@ -148,7 +262,9 @@
       } catch (e) {
         console.error('Error saving user to localStorage:', e);
       }
-      window.dispatchEvent(new CustomEvent('auth:user_changed', { detail: user }));
+      if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function' && typeof CustomEvent !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('auth:user_changed', { detail: user }));
+      }
     }
 
     getCurrentUser() {
@@ -192,6 +308,15 @@
     }
 
     logout() {
+      try {
+        if (typeof sessionStorage !== 'undefined') {
+          sessionStorage.removeItem(SESSION_KEY);
+        }
+        if (typeof localStorage !== 'undefined') {
+          localStorage.removeItem(SESSION_KEY);
+        }
+      } catch (e) {}
+
       const publicUser = {
         id: 'usr_public',
         email: '',
@@ -201,6 +326,7 @@
         department: 'Citizen Portal'
       };
       this.saveUser(publicUser);
+      return true;
     }
 
     can(permission) {

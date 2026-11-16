@@ -118,6 +118,7 @@
   if (typeof window !== 'undefined') window.prepareRecordsForCloud = prepareRecordsForCloud;
 
   function init() {
+    checkAdminAuthentication();
     setupRoleSwitcher();
     setupNavigation();
     setupAdminModalBackdrops();
@@ -130,7 +131,7 @@
     const modalIds = [
       'youthModal', 'youthDossierModal', 'villageCandidatesModal', 
       'sheetRecordModal', 'bulkUploadModal', 'createStoryModal', 
-      'storyModal', 'visitModal'
+      'storyModal', 'visitModal', 'changePasswordModal'
     ];
     modalIds.forEach(id => {
       const modal = document.getElementById(id);
@@ -156,6 +157,184 @@
       }
     });
   }
+
+  // -------------------------------------------------------------
+  // Admin Password Gate & Authentication Handlers
+  // -------------------------------------------------------------
+  function checkAdminAuthentication() {
+    const gate = document.getElementById('adminLoginGate');
+    if (!gate) return;
+
+    if (!window.DantewadaAuth || !window.DantewadaAuth.isAuthenticated()) {
+      gate.classList.remove('hidden');
+      gate.classList.add('flex');
+
+      // Populate user dropdown with preset users if available
+      const select = document.getElementById('adminLoginUserSelect');
+      if (select && window.DantewadaAuth) {
+        const users = window.DantewadaAuth.getAllPresetUsers();
+        const currentUser = window.DantewadaAuth.getCurrentUser();
+        const currentId = currentUser ? currentUser.id : 'usr_super';
+        select.innerHTML = users.map(u => {
+          const roleDetails = window.DantewadaAuth.getRoleDetails(u.role);
+          const isSelected = u.id === currentId ? 'selected' : '';
+          return `<option value="${escapeHtml(u.id)}" ${isSelected}>${escapeHtml(u.name)} — [${escapeHtml(roleDetails.name)} / ${escapeHtml(roleDetails.nameHi)}]</option>`;
+        }).join('');
+      }
+
+      setTimeout(() => {
+        const passInput = document.getElementById('adminPasswordInput');
+        if (passInput) passInput.focus();
+      }, 150);
+    } else {
+      gate.classList.add('hidden');
+      gate.classList.remove('flex');
+    }
+  }
+  window.checkAdminAuthentication = checkAdminAuthentication;
+
+  window.handleAdminLogin = function (e) {
+    if (e && e.preventDefault) e.preventDefault();
+
+    const userSelect = document.getElementById('adminLoginUserSelect');
+    const passInput = document.getElementById('adminPasswordInput');
+    const rememberMe = document.getElementById('adminRememberMe');
+    const errorBox = document.getElementById('adminLoginError');
+    const errorMsg = document.getElementById('adminLoginErrorMsg');
+    const submitBtn = document.getElementById('adminLoginSubmitBtn');
+
+    if (errorBox) errorBox.classList.add('hidden');
+
+    const userId = userSelect ? userSelect.value : 'usr_super';
+    const password = passInput ? passInput.value : '';
+
+    if (!password) {
+      if (errorBox && errorMsg) {
+        errorMsg.textContent = 'कृपया एडमिन पासवर्ड दर्ज करें।';
+        errorBox.classList.remove('hidden');
+      }
+      if (passInput) passInput.focus();
+      return;
+    }
+
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1.5"></i> प्रमाणीकरण हो रहा है...';
+    }
+
+    setTimeout(() => {
+      const res = window.DantewadaAuth.authenticateWithPassword(userId, password, rememberMe ? rememberMe.checked : true);
+
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fa-solid fa-lock-open text-amber-400 mr-1.5"></i> एडमिन कंसोल में प्रवेश करें (Login)';
+      }
+
+      if (res && res.success) {
+        const gate = document.getElementById('adminLoginGate');
+        if (gate) {
+          gate.classList.add('hidden');
+          gate.classList.remove('flex');
+        }
+        if (passInput) passInput.value = '';
+        setupRoleSwitcher();
+        updateUserUI();
+        renderActiveTab();
+      } else {
+        if (errorBox && errorMsg) {
+          errorMsg.textContent = (res && res.message) ? res.message : 'अमान्य पासवर्ड! कृपया पुनः प्रयास करें।';
+          errorBox.classList.remove('hidden');
+        }
+        if (passInput) {
+          passInput.focus();
+          passInput.classList.add('border-rose-500');
+          setTimeout(() => passInput.classList.remove('border-rose-500'), 2500);
+        }
+      }
+    }, 200);
+  };
+
+  window.toggleAdminPasswordVisibility = function () {
+    const input = document.getElementById('adminPasswordInput');
+    const icon = document.getElementById('adminPasswordEyeIcon');
+    if (!input || !icon) return;
+
+    if (input.type === 'password') {
+      input.type = 'text';
+      icon.className = 'fa-regular fa-eye-slash';
+    } else {
+      input.type = 'password';
+      icon.className = 'fa-regular fa-eye';
+    }
+  };
+
+  window.handleAdminLogout = function () {
+    if (confirm('क्या आप वाकई प्रशासनिक कंसोल से लॉगआउट करना चाहते हैं?')) {
+      if (window.DantewadaAuth) {
+        window.DantewadaAuth.logout();
+      }
+      checkAdminAuthentication();
+    }
+  };
+
+  window.openChangePasswordModal = function () {
+    const modal = document.getElementById('changePasswordModal');
+    const feedback = document.getElementById('changePassFeedback');
+    if (feedback) feedback.className = 'hidden';
+
+    if (modal) {
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      setTimeout(() => {
+        const currInput = document.getElementById('currentPassInput');
+        if (currInput) currInput.focus();
+      }, 100);
+    }
+  };
+
+  window.closeChangePasswordModal = function () {
+    const modal = document.getElementById('changePasswordModal');
+    if (modal) {
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+  };
+
+  window.saveNewAdminPassword = function (e) {
+    if (e && e.preventDefault) e.preventDefault();
+    const curr = document.getElementById('currentPassInput').value;
+    const newP = document.getElementById('newPassInput').value;
+    const conf = document.getElementById('confirmPassInput').value;
+    const feedback = document.getElementById('changePassFeedback');
+
+    if (!curr || !newP || !conf) {
+      if (feedback) {
+        feedback.className = 'p-3 rounded-xl text-xs font-semibold bg-rose-50 text-rose-800 border border-rose-200 block';
+        feedback.textContent = 'कृपया सभी आवश्यक फ़ील्ड भरें।';
+      }
+      return;
+    }
+
+    if (newP !== conf) {
+      if (feedback) {
+        feedback.className = 'p-3 rounded-xl text-xs font-semibold bg-rose-50 text-rose-800 border border-rose-200 block';
+        feedback.textContent = 'नया पासवर्ड और पुष्टि पासवर्ड मेल नहीं खाते!';
+      }
+      return;
+    }
+
+    const res = window.DantewadaAuth.setAdminPassword(curr, newP);
+    if (res && res.success) {
+      alert('✅ ' + res.message);
+      e.target.reset();
+      window.closeChangePasswordModal();
+    } else {
+      if (feedback) {
+        feedback.className = 'p-3 rounded-xl text-xs font-semibold bg-rose-50 text-rose-800 border border-rose-200 block';
+        feedback.textContent = (res && res.message) ? res.message : 'पासवर्ड अपडेट करने में त्रुटि।';
+      }
+    }
+  };
 
   // -------------------------------------------------------------
   // Role & Permissions Setup

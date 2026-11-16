@@ -4,11 +4,20 @@ const vm = require('node:vm');
 
 function createBrowserEnv() {
   const store = new Map();
+  const sessionStore = new Map();
+
   const localStorageMock = {
     getItem: (k) => (store.has(k) ? store.get(k) : null),
     setItem: (k, v) => store.set(k, String(v)),
     removeItem: (k) => store.delete(k),
     clear: () => store.clear(),
+  };
+
+  const sessionStorageMock = {
+    getItem: (k) => (sessionStore.has(k) ? sessionStore.get(k) : null),
+    setItem: (k, v) => sessionStore.set(k, String(v)),
+    removeItem: (k) => sessionStore.delete(k),
+    clear: () => sessionStore.clear(),
   };
 
   const context = {
@@ -21,6 +30,7 @@ function createBrowserEnv() {
       createElement: () => ({ appendChild: () => {}, setAttribute: () => {} }),
     },
     localStorage: localStorageMock,
+    sessionStorage: sessionStorageMock,
     console,
     setTimeout,
     clearTimeout,

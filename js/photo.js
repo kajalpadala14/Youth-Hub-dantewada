@@ -590,9 +590,8 @@
           driveFileMeta = uploadRes;
         }
       } catch (err) {
-        console.warn('Drive upload for success story media warning:', err.message);
-        const base = await compressImage(fileOrUrl);
-        finalPhotoUrl = base.base64Data;
+        console.warn('Drive upload for success story media error:', err.message);
+        throw new Error('Google Drive फोटो अपलोड नहीं हो सका: ' + err.message);
       }
     } else if (typeof fileOrUrl === 'string' && fileOrUrl.startsWith('data:')) {
       progressCb({ percent: 30, status: 'मीडिया Google Drive फ़ोल्डर में अपलोड हो रही है...' });
@@ -603,7 +602,8 @@
           driveFileMeta = uploadRes;
         }
       } catch (err) {
-        finalPhotoUrl = fileOrUrl;
+        console.warn('Drive upload for success story media error:', err.message);
+        throw new Error('Google Drive फोटो अपलोड नहीं हो सका: ' + err.message);
       }
     }
 

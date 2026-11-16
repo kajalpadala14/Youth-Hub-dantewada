@@ -12,6 +12,26 @@
  */
 
 // =========================================================================
+// SECTION 0: GOOGLE DRIVE AUTHORIZATION & HEALTH CHECK
+// =========================================================================
+
+/**
+ * ONE-CLICK GOOGLE DRIVE AUTHORIZATION:
+ * Run this function in the Google Apps Script editor (Select 'testDrivePermission' -> Click 'Run')
+ * to trigger the Google Drive permission dialog and authorize folder 1FsudcSoQWifOd4gyKrRoTHfe2elzLRzO.
+ */
+function testDrivePermission() {
+  const folderId = "1FsudcSoQWifOd4gyKrRoTHfe2elzLRzO";
+  const folder = DriveApp.getFolderById(folderId);
+  Logger.log("✅ Google Drive folder accessed: " + folder.getName());
+  const testFile = folder.createFile("drive_auth_check.txt", "Google Drive authorized successfully at " + new Date().toISOString(), "text/plain");
+  Logger.log("✅ Test file created in Drive: " + testFile.getUrl());
+  testFile.setTrashed(true);
+  Logger.log("✅ Drive permissions are 100% active and working!");
+  return { success: true, folderName: folder.getName(), folderId: folderId };
+}
+
+// =========================================================================
 // SECTION 1: DATABASE SCHEMAS & TEMPLATES
 // =========================================================================
 
@@ -2023,16 +2043,9 @@ function uploadModulePhoto(payload) {
     };
   } catch (error) {
     return {
-      success: true,
-      fileId: "FILE_" + Date.now(),
-      fileUrl: payload.base64Data || payload.fileData || "",
-      directUrl: payload.base64Data || payload.fileData || "",
-      originalFileName: rawFileName,
-      fileName: rawFileName,
-      mimeType: mimeType,
-      isLocalFallback: true,
-      warning: "Drive permission pending: " + error.message,
-      folderId: TARGET_DRIVE_FOLDER_ID
+      success: false,
+      message: "Drive upload failed: " + error.message + ". Please run testDrivePermission in Apps Script editor to authorize Google Drive access for folder 1FsudcSoQWifOd4gyKrRoTHfe2elzLRzO.",
+      error: error.message
     };
   }
 }

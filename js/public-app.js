@@ -25,7 +25,7 @@
   const i18n = {
     hi: {
       portalTitle: 'Youth Hub Dantewada',
-      govSubtitle: 'जिला प्रशासन / जिला पंचायत, दंतेवाड़ा (छत्तीसगढ़)',
+      govSubtitle: 'जिला प्रशासन दंतेवाड़ा • छत्तीसगढ़',
       home: 'होम',
       about: 'पहल के बारे में',
       analytics: 'युवा सांख्यिकी',

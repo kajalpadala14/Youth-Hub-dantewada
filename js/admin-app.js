@@ -174,7 +174,7 @@
       if (select && window.DantewadaAuth) {
         const users = window.DantewadaAuth.getAllPresetUsers();
         const currentUser = window.DantewadaAuth.getCurrentUser();
-        const currentId = currentUser ? currentUser.id : 'usr_super';
+        const currentId = currentUser ? currentUser.id : 'usr_dist';
         select.innerHTML = users.map(u => {
           const roleDetails = window.DantewadaAuth.getRoleDetails(u.role);
           const isSelected = u.id === currentId ? 'selected' : '';
@@ -205,7 +205,7 @@
 
     if (errorBox) errorBox.classList.add('hidden');
 
-    const userId = userSelect ? userSelect.value : 'usr_super';
+    const userId = userSelect ? userSelect.value : 'usr_dist';
     const password = passInput ? passInput.value : '';
 
     if (!password) {
@@ -393,8 +393,17 @@
     if (userRoleEl) userRoleEl.textContent = `${roleDetails.name} (${roleDetails.nameHi})`;
     if (userAvatarEl) {
       const parts = (user.name || '').trim().split(/\s+/).filter(Boolean);
-      const initials = parts.length > 1 ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase() : (user.name || 'AV').slice(0, 2).toUpperCase();
+      const initials = (user.role === 'super_admin' || user.id === 'usr_super' || user.id === 'usr_dist') ? 'EO' : (parts.length > 1 ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase() : (user.name || 'EO').slice(0, 2).toUpperCase());
       userAvatarEl.textContent = initials;
+    }
+
+    const drawerUserNameEl = document.getElementById('adminDrawerUserName');
+    const drawerUserRoleEl = document.getElementById('adminDrawerUserRole');
+    const drawerUserAvatarEl = document.getElementById('adminDrawerUserAvatar');
+    if (drawerUserNameEl) drawerUserNameEl.textContent = user.name;
+    if (drawerUserRoleEl) drawerUserRoleEl.textContent = `${roleDetails.name} (${roleDetails.nameHi})`;
+    if (drawerUserAvatarEl) {
+      drawerUserAvatarEl.textContent = (user.role === 'super_admin' || user.id === 'usr_super' || user.id === 'usr_dist') ? 'EO' : (user.name || 'EO').slice(0, 2).toUpperCase();
     }
 
     if (blockBadgeEl) {
@@ -871,7 +880,7 @@
       "NAME", "VILLAGE", "MOBILE NO.", "INSTITUTE", "SKILL TRAINING"
     ],
     Education_Linked: [
-      "Name", "Faather Name", "Mother Name", "Email", "Gender", "Education", "Phone Number", "Address"
+      "Name", "Father Name", "Mother Name", "Email", "Gender", "Education", "Phone Number", "Address"
     ],
     Entrepreneur_Identified: [
       "SR.no", "NAME", "FATHER NAME", "VILLAGE", "BLOCK", "LOAN AMOUNT", "BUSSINESS"
@@ -2149,10 +2158,33 @@
 
     content.innerHTML = `
       <div class="relative bg-white">
-        <!-- Header Banner & Media Preview -->
-        <div class="h-64 sm:h-80 w-full overflow-hidden rounded-t-2xl bg-slate-900 relative">
+        <!-- Modal Top Header Bar -->
+        <div class="p-4 sm:p-5 bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 text-white rounded-t-2xl flex items-start justify-between gap-3 border-b border-slate-800">
+          <div class="min-w-0">
+            <div class="flex flex-wrap items-center gap-2 mb-1.5">
+              <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-600 text-white shadow-xs">
+                ${escapeHtml(story.category || 'Employment')}
+              </span>
+              <span class="text-xs font-mono font-bold text-amber-300 bg-amber-500/15 border border-amber-500/25 px-2 py-0.5 rounded">
+                ${escapeHtml(story.id)}
+              </span>
+            </div>
+            <h2 class="text-lg sm:text-xl font-extrabold leading-tight text-white">${escapeHtml(story.title || 'सफलता की कहानी')}</h2>
+            <p class="text-xs text-slate-300 mt-1 flex flex-wrap items-center gap-2">
+              <span><i class="fa-solid fa-user mr-1 text-amber-400"></i><strong>${escapeHtml(story.youthName || '')}</strong></span>
+              <span>•</span>
+              <span><i class="fa-solid fa-location-dot mr-1 text-rose-400"></i>${escapeHtml(story.village || '')}, ${escapeHtml(story.block || 'Dantewada')}</span>
+            </p>
+          </div>
+          <button onclick="window.closeStoryModal()" class="text-slate-400 hover:text-white bg-white/10 hover:bg-white/20 rounded-full w-9 h-9 flex items-center justify-center transition shrink-0 cursor-pointer shadow-md" title="बंद करें">
+            <i class="fa-solid fa-xmark text-lg"></i>
+          </button>
+        </div>
+
+        <!-- Full Photo / Media Viewer (Pura Uncropped View) -->
+        <div class="bg-slate-950 p-2 sm:p-4 border-b border-slate-800 flex flex-col items-center justify-center">
           ${isPdf ? `
-            <div class="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-red-950 text-white p-6">
+            <div class="w-full py-12 flex flex-col items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-red-950 text-white p-6 rounded-xl">
               <i class="fa-solid fa-file-pdf text-6xl text-red-500 mb-3 animate-bounce"></i>
               <div class="text-lg font-bold">संलग्न पीडीएफ दस्तावेज (PDF Document)</div>
               <p class="text-xs text-slate-300 mt-1 mb-4">सफलता कहानी का संलग्न पीडीएफ डॉक्युमेंट</p>
@@ -2163,27 +2195,22 @@
               ` : ''}
             </div>
           ` : `
-            <img src="${fullPreviewUrl}"
-                 alt="${escapeHtml(story.youthName || 'Photo')}"
-                 referrerpolicy="no-referrer"
-                 class="w-full h-full object-cover"
-                 onerror="if (!this.dataset.fallback && '${fileId}') { this.dataset.fallback='1'; this.src='https://lh3.googleusercontent.com/d/${fileId}'; } else { this.onerror=null; this.src='https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=800&auto=format&fit=crop&q=80'; }">
+            <div class="relative w-full flex items-center justify-center bg-black/40 rounded-xl overflow-hidden p-1 sm:p-2">
+              <img src="${fullPreviewUrl}"
+                   alt="${escapeHtml(story.youthName || 'Photo')}"
+                   referrerpolicy="no-referrer"
+                   class="max-w-full max-h-[75vh] w-auto h-auto object-contain rounded-lg shadow-2xl transition-all block mx-auto"
+                   onerror="if (!this.dataset.fallback && '${fileId}') { this.dataset.fallback='1'; this.src='https://lh3.googleusercontent.com/d/${fileId}'; } else { this.onerror=null; this.src='https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=800&auto=format&fit=crop&q=80'; }">
+            </div>
+            <div class="w-full flex items-center justify-between text-[11px] text-slate-400 mt-2 px-1">
+              <span class="flex items-center gap-1.5"><i class="fa-solid fa-image text-emerald-400"></i> पूर्ण फोटो (Full Photo) — बिना क्रॉप</span>
+              ${driveOpenUrl ? `
+                <a href="${driveOpenUrl}" target="_blank" rel="noopener noreferrer" class="text-blue-400 hover:text-blue-300 font-semibold flex items-center gap-1 transition">
+                  <i class="fa-solid fa-arrow-up-right-from-square"></i> Google Drive में मूल फ़ाइल देखें
+                </a>
+              ` : ''}
+            </div>
           `}
-          <div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent pointer-events-none"></div>
-          <div class="absolute bottom-5 left-6 right-16 text-white pointer-events-none">
-            <span class="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-600/90 text-white shadow-xs mb-2">
-              ${escapeHtml(story.category || 'Employment')}
-            </span>
-            <h2 class="text-xl sm:text-2xl font-extrabold leading-tight drop-shadow-sm">${escapeHtml(story.title || 'सफलता की कहानी')}</h2>
-            <p class="text-xs text-slate-200 mt-1 flex items-center gap-2">
-              <span><i class="fa-solid fa-user mr-1"></i>${escapeHtml(story.youthName || '')}</span>
-              <span>•</span>
-              <span><i class="fa-solid fa-location-dot mr-1"></i>${escapeHtml(story.village || '')}, ${escapeHtml(story.block || 'Dantewada')}</span>
-            </p>
-          </div>
-          <button onclick="window.closeStoryModal()" class="absolute top-4 right-4 bg-black/60 hover:bg-black/90 text-white rounded-full w-9 h-9 flex items-center justify-center transition-colors shadow-lg z-10" title="बंद करें">
-            <i class="fa-solid fa-xmark text-lg"></i>
-          </button>
         </div>
 
         <!-- Body Content -->
@@ -2827,12 +2854,12 @@ Education_Linked: {
       num: 4,
       titleEn: "4. Education_Linked",
       titleHi: "शिक्षा से जुड़े युवा",
-      desc: "उच्च शिक्षा, कंप्यूटर कोडिंग, डिप्लोमा एवं स्नातक से जुड़े युवाओं का विवरण। (Faather Name typo handled)",
+      desc: "उच्च शिक्षा, कंप्यूटर कोडिंग, डिप्लोमा एवं स्नातक से जुड़े युवाओं का विवरण।",
       collection: "navgurukul",
       params: [
         "SR. NO.",
         "Name",
-        "Faather Name",
+        "Father Name",
         "Mother Name",
         "Email",
         "Gender",
@@ -2856,7 +2883,7 @@ Education_Linked: {
         window.DantewadaDB.data.navgurukul.unshift({
           id: window.DantewadaDB.data.navgurukul.length + 1,
           name: formData['Name'],
-          fatherName: formData['Faather Name'],
+          fatherName: formData['Father Name'] || formData['Faather Name'],
           motherName: formData['Mother Name'],
           email: formData['Email'],
           gender: formData['Gender'] || 'Female',
@@ -3636,7 +3663,7 @@ Bastar_Munne_Report: {
       paramsPillsEl.innerHTML = cfg.params.map((p, idx) => `
         <span class="px-2.5 py-1 bg-blue-50 text-blue-900 border border-blue-200 rounded-lg text-xs font-semibold flex items-center gap-1 shadow-2xs">
           <span class="font-mono text-[10px] text-blue-500 font-bold">#${idx + 1}</span>
-          <span>${p}</span>
+          <span>${p.replace(/\bFaather\b/gi, 'Father')}</span>
         </span>
       `).join('');
     }
@@ -3724,7 +3751,7 @@ Bastar_Munne_Report: {
       thead.innerHTML = `
         <tr>
           ${!isCalculatedSheet ? `<th class="p-3 w-10 text-center"><input type="checkbox" id="selectAllSheetRows" onchange="window.toggleSelectAllSheetRows(this.checked)" class="rounded text-blue-600 cursor-pointer" title="सभी चुनें / हटाएं"></th>` : ''}
-          ${cfg.params.map(p => `<th class="p-3 whitespace-nowrap">${p}</th>`).join('')}
+          ${cfg.params.map(p => `<th class="p-3 whitespace-nowrap">${p.replace(/\bFaather\b/gi, 'Father')}</th>`).join('')}
           <th class="p-3 text-right whitespace-nowrap">कार्रवाई</th>
         </tr>
       `;
@@ -5105,8 +5132,8 @@ Bastar_Munne_Report: {
 
         return `
           <div>
-            <label class="block font-bold text-slate-700 mb-1">${param}</label>
-            <input type="${inputType}" name="${param}" placeholder="${placeholder}" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-blue-600 font-medium text-slate-800">
+            <label class="block font-bold text-slate-700 mb-1">${param.replace(/\bFaather\b/gi, 'Father')}</label>
+            <input type="${inputType}" name="${param}" placeholder="${placeholder.replace(/\bFaather\b/gi, 'Father')}" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-blue-600 font-medium text-slate-800">
           </div>
         `;
       }).join('');
@@ -5781,7 +5808,7 @@ Bastar_Munne_Report: {
     if (thead && tbody && rows.length > 0) {
       const sample = rows.slice(0, 8);
       const cols = Object.keys(sample[0] || {}).filter(c => !c.startsWith('_'));
-      thead.innerHTML = `<tr>${cols.map(c => `<th class="p-2.5 text-[11px] whitespace-nowrap bg-slate-100">${c}</th>`).join('')}</tr>`;
+      thead.innerHTML = `<tr>${cols.map(c => `<th class="p-2.5 text-[11px] whitespace-nowrap bg-slate-100">${c.replace(/\bFaather\b/gi, 'Father')}</th>`).join('')}</tr>`;
       tbody.innerHTML = sample.map(r => `
         <tr class="hover:bg-slate-50 transition border-b border-slate-100">
           ${cols.map(c => `<td class="p-2 text-[11px] text-slate-800 whitespace-nowrap">${r[c] || '-'}</td>`).join('')}
@@ -5977,11 +6004,13 @@ Bastar_Munne_Report: {
     const syncIcon = document.getElementById('cloudSyncIcon');
     const syncLabel = document.getElementById('cloudSyncLabel');
     const liveStatusText = document.getElementById('headerLiveStatusText');
+    const liveStatusMobileText = document.getElementById('headerLiveStatusMobileText');
 
     if (syncBtn) syncBtn.disabled = true;
     if (syncIcon) syncIcon.classList.add('fa-spin');
     if (syncLabel) syncLabel.textContent = 'सिंक हो रहा है...';
     if (liveStatusText) liveStatusText.textContent = 'सिंक जारी...';
+    if (liveStatusMobileText) liveStatusMobileText.textContent = '...';
 
     try {
       const res = await window.DantewadaDB.syncFromGoogleSheet();
@@ -5993,6 +6022,7 @@ Bastar_Munne_Report: {
         
         if (syncLabel) syncLabel.textContent = `सिंक पूर्ण (${res.totalSynced})`;
         if (liveStatusText) liveStatusText.textContent = `Google Sheet कनेक्टेड (${res.totalSynced})`;
+        if (liveStatusMobileText) liveStatusMobileText.textContent = `${res.totalSynced}`;
 
         if (showNotice) {
           alert(`✅ सफलता!\n\nगूगल शीट से कुल ${res.totalSynced} लाइव रिकॉर्ड्स सफलतापूर्वक सिंक हो गए हैं।\n\nडैशबोर्ड और 16 शीट्स डेटा लाइव अपडेट हो चुका है।`);
@@ -6000,6 +6030,7 @@ Bastar_Munne_Report: {
       } else {
         if (syncLabel) syncLabel.textContent = 'सिंक विफल';
         if (liveStatusText) liveStatusText.textContent = 'सिंक विफल';
+        if (liveStatusMobileText) liveStatusMobileText.textContent = '!';
         if (showNotice) {
           alert('❌ गूगल शीट सिंक विफल:\n\n' + (res ? res.message : 'कृपया अपना Apps Script Web App URL चेक करें।'));
         }

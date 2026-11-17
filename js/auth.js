@@ -60,59 +60,12 @@
   const DEFAULT_USERS = [
     {
       id: 'usr_super',
-      email: 'admin@dantewada.gov.in',
-      name: 'Amit Varma',
+      aliasId: 'usr_dist',
+      email: 'district.admin@dantewada.gov.in',
+      name: 'जिला रोजगार अधिकारी (District Employment Officer)',
       role: 'super_admin',
       block: 'All',
-      department: 'District Administration Dantewada'
-    },
-    {
-      id: 'usr_dist',
-      email: 'district.admin@dantewada.gov.in',
-      name: 'Dr. S. Beck (Assistant Director, Employment)',
-      role: 'district_admin',
-      block: 'All',
-      department: 'District Employment & Livelihood Exchange'
-    },
-    {
-      id: 'usr_block_geedam',
-      email: 'bdo.geedam@dantewada.gov.in',
-      name: 'Shri R.K. Kashyap (BDO Geedam)',
-      role: 'block_officer',
-      block: 'Geedam',
-      department: 'Janpad Panchayat Geedam'
-    },
-    {
-      id: 'usr_block_dantewada',
-      email: 'bdo.dantewada@dantewada.gov.in',
-      name: 'Shri V.K. Sahu (BDO Dantewada)',
-      role: 'block_officer',
-      block: 'Dantewada',
-      department: 'Janpad Panchayat Dantewada'
-    },
-    {
-      id: 'usr_field',
-      email: 'field.staff@dantewada.gov.in',
-      name: 'Smt. Anita Mandavi (Senior Field Coordinator)',
-      role: 'field_staff',
-      block: 'All',
-      department: 'Youth Hub Field Operations'
-    },
-    {
-      id: 'usr_deo',
-      email: 'deo@dantewada.gov.in',
-      name: 'Rohan Baghel (Lead DEO)',
-      role: 'deo',
-      block: 'All',
-      department: 'Zilla Panchayat Data Cell'
-    },
-    {
-      id: 'usr_reviewer',
-      email: 'reviewer@dantewada.gov.in',
-      name: 'Ms. Sunita Soren (District PRO & Media In-charge)',
-      role: 'gallery_reviewer',
-      block: 'All',
-      department: 'District Public Relations'
+      department: 'District Employment & Livelihood Exchange, Dantewada'
     }
   ];
 
@@ -187,11 +140,12 @@
       if (userIdOrEmail) {
         matchedUser = DEFAULT_USERS.find(u => 
           u.id === userIdOrEmail || 
+          u.aliasId === userIdOrEmail ||
           u.email.toLowerCase() === String(userIdOrEmail).toLowerCase().trim()
         );
       }
       if (!matchedUser) {
-        matchedUser = this.currentUser || DEFAULT_USERS[0];
+        matchedUser = DEFAULT_USERS[0];
       }
 
       this.saveUser(matchedUser);
@@ -242,16 +196,18 @@
         const saved = localStorage.getItem(STORAGE_KEY);
         if (saved) {
           const parsed = JSON.parse(saved);
-          if (parsed && (parsed.id === 'usr_super' || parsed.role === 'super_admin')) {
-            parsed.name = 'Amit Varma';
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
+          // If already District Employment Officer (Super Admin), keep it
+          if (parsed && (parsed.id === 'usr_super' || parsed.id === 'usr_dist') && parsed.name === DEFAULT_USERS[0].name) {
+            return parsed;
           }
-          return parsed;
+          // Any other user or legacy user is cleaned up and replaced by Employment Officer
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_USERS[0]));
+          return DEFAULT_USERS[0];
         }
       } catch (e) {
         console.error('Error loading user from localStorage:', e);
       }
-      // Default to Super Admin for smooth administrative workflow
+      // Default to Super Admin (District Employment Officer)
       return DEFAULT_USERS[0];
     }
 
@@ -280,7 +236,7 @@
     }
 
     switchUser(userId) {
-      const found = DEFAULT_USERS.find(u => u.id === userId);
+      const found = DEFAULT_USERS.find(u => u.id === userId || u.aliasId === userId);
       if (found) {
         this.saveUser(found);
         return found;

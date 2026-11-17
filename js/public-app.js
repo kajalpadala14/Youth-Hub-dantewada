@@ -534,9 +534,33 @@
 
     content.innerHTML = `
       <div class="relative bg-white">
-        <div class="h-64 sm:h-80 w-full overflow-hidden rounded-t-2xl bg-slate-900 relative">
+        <!-- Modal Top Header Bar -->
+        <div class="p-4 sm:p-5 bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 text-white rounded-t-2xl flex items-start justify-between gap-3 border-b border-slate-800">
+          <div class="min-w-0">
+            <div class="flex flex-wrap items-center gap-2 mb-1.5">
+              <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-600 text-white shadow-xs">
+                ${story.category || 'सफलता की कहानी'}
+              </span>
+              <span class="text-xs font-mono font-bold text-amber-300 bg-amber-500/15 border border-amber-500/25 px-2 py-0.5 rounded">
+                ${story.id}
+              </span>
+            </div>
+            <h2 class="text-lg sm:text-xl font-extrabold leading-tight text-white">${story.title || 'सफलता की कहानी'}</h2>
+            <p class="text-xs text-slate-300 mt-1 flex flex-wrap items-center gap-2">
+              <span><i class="fa-solid fa-user mr-1 text-amber-400"></i><strong>${story.youthName || ''}</strong></span>
+              <span>•</span>
+              <span><i class="fa-solid fa-location-dot mr-1 text-rose-400"></i>${story.village || ''}, ${story.block || 'Dantewada'}</span>
+            </p>
+          </div>
+          <button onclick="window.closeStoryModal()" class="text-slate-400 hover:text-white bg-white/10 hover:bg-white/20 rounded-full w-9 h-9 flex items-center justify-center transition shrink-0 cursor-pointer shadow-md" title="बंद करें">
+            <i class="fa-solid fa-xmark text-lg"></i>
+          </button>
+        </div>
+
+        <!-- Full Photo / Media Viewer (Pura Uncropped View) -->
+        <div class="bg-slate-950 p-2 sm:p-4 border-b border-slate-800 flex flex-col items-center justify-center">
           ${isPdf ? `
-            <div class="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-red-950 text-white p-6">
+            <div class="w-full py-12 flex flex-col items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-red-950 text-white p-6 rounded-xl">
               <i class="fa-solid fa-file-pdf text-6xl text-red-500 mb-3 animate-pulse"></i>
               <div class="text-lg font-bold">संलग्न पीडीएफ दस्तावेज (PDF Document)</div>
               ${driveOpenUrl ? `
@@ -546,21 +570,22 @@
               ` : ''}
             </div>
           ` : `
-            <img src="${fullPreviewUrl}"
-                 alt="${story.youthName}"
-                 referrerpolicy="no-referrer"
-                 class="w-full h-full object-cover"
-                 onerror="if (!this.dataset.fallback && '${fileId}') { this.dataset.fallback='1'; this.src='https://lh3.googleusercontent.com/d/${fileId}'; } else { this.onerror=null; this.src='https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=800&auto=format&fit=crop&q=80'; }">
+            <div class="relative w-full flex items-center justify-center bg-black/40 rounded-xl overflow-hidden p-1 sm:p-2">
+              <img src="${fullPreviewUrl}"
+                   alt="${story.youthName}"
+                   referrerpolicy="no-referrer"
+                   class="max-w-full max-h-[75vh] w-auto h-auto object-contain rounded-lg shadow-2xl transition-all block mx-auto"
+                   onerror="if (!this.dataset.fallback && '${fileId}') { this.dataset.fallback='1'; this.src='https://lh3.googleusercontent.com/d/${fileId}'; } else { this.onerror=null; this.src='https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=800&auto=format&fit=crop&q=80'; }">
+            </div>
+            <div class="w-full flex items-center justify-between text-[11px] text-slate-400 mt-2 px-1">
+              <span class="flex items-center gap-1.5"><i class="fa-solid fa-image text-emerald-400"></i> पूर्ण फोटो (Full Photo) — बिना क्रॉप</span>
+              ${driveOpenUrl ? `
+                <a href="${driveOpenUrl}" target="_blank" rel="noopener noreferrer" class="text-blue-400 hover:text-blue-300 font-semibold flex items-center gap-1 transition">
+                  <i class="fa-solid fa-arrow-up-right-from-square"></i> मूल उच्च-रेजोल्यूशन फोटो खोलें
+                </a>
+              ` : ''}
+            </div>
           `}
-          <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none"></div>
-          <div class="absolute bottom-6 left-6 right-6 text-white pointer-events-none">
-            <span class="badge-status badge-published mb-2">${story.category}</span>
-            <h2 class="text-2xl sm:text-3xl font-extrabold leading-tight mb-1">${story.title}</h2>
-            <p class="text-sm text-slate-200"><i class="fa-solid fa-location-dot mr-1"></i>${story.youthName} | ${story.village}, Block: ${story.block || 'Dantewada'}</p>
-          </div>
-          <button onclick="window.closeStoryModal()" class="absolute top-4 right-4 bg-black/50 hover:bg-black/80 text-white rounded-full w-9 h-9 flex items-center justify-center transition-colors">
-            <i class="fa-solid fa-xmark text-lg"></i>
-          </button>
         </div>
 
         <div class="p-6 sm:p-8 space-y-6">

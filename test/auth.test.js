@@ -61,4 +61,22 @@ describe('Authentication & Password Protection Unit Tests', () => {
     assert.equal(loginRes.success, true);
     assert.equal(auth.isAuthenticated(), true);
   });
+
+  test('Employment Officer is configured as Super Admin with full administrative privileges', () => {
+    const res = auth.authenticateWithPassword('usr_dist', 'admin123', true);
+    assert.equal(res.success, true);
+    assert.equal(res.user.role, 'super_admin');
+    assert.match(res.user.name, /Employment Officer|रोजगार अधिकारी/i);
+    assert.equal(auth.can('all'), true);
+    assert.equal(auth.can('audit_logs'), true);
+    assert.equal(auth.can('settings'), true);
+    assert.equal(auth.can('youth_delete'), true);
+  });
+
+  test('Preset users list only contains Employment Officer as Super Admin and removed other users', () => {
+    const users = auth.getAllPresetUsers();
+    assert.equal(users.length, 1);
+    assert.equal(users[0].role, 'super_admin');
+    assert.match(users[0].name, /Employment Officer|रोजगार अधिकारी/i);
+  });
 });

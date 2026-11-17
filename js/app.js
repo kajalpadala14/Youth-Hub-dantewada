@@ -77,8 +77,8 @@ const App = (function() {
     let displayRole = currentUser.role;
     let initials = (currentUser.name || "U").substring(0, 2).toUpperCase();
 
-    if (currentUser.role === "ADMIN") {
-      displayRole = "👑 जिला रोजगार अधिकारी (Admin)";
+    if (currentUser.role === "ADMIN" || currentUser.role === "SUPER_ADMIN" || currentUser.role === "super_admin") {
+      displayRole = "👑 जिला रोजगार अधिकारी (Super Admin)";
       initials = "EO";
     } else if (currentUser.block === "Dantewada") {
       displayRole = "🏢 Youth Hub Dantewada";
@@ -96,7 +96,7 @@ const App = (function() {
     // Role-based visibility for Admin Users view
     const usersNav = document.querySelector('[data-view="users"]');
     if (usersNav) {
-      usersNav.style.display = currentUser.role === "ADMIN" ? "flex" : "none";
+      usersNav.style.display = (currentUser.role === "ADMIN" || currentUser.role === "SUPER_ADMIN" || currentUser.role === "super_admin") ? "flex" : "none";
     }
 
     // Block Filter Lock for Hub Operators
@@ -704,7 +704,7 @@ const App = (function() {
         User_ID: "USR-001",
         Name: "जिला रोजगार अधिकारी (District Employment Officer)",
         Email: "eo.dantewada@gmail.com",
-        Role: "ADMIN",
+        Role: "SUPER_ADMIN",
         Block: "All",
         Youth_Hub: "All",
         Status: "Active",
@@ -776,7 +776,7 @@ const App = (function() {
     const dataEl = document.getElementById("kpiDataOperators");
 
     if (totalEl) totalEl.textContent = users.length;
-    if (adminEl) adminEl.textContent = users.filter(u => u.Role === "ADMIN").length;
+    if (adminEl) adminEl.textContent = users.filter(u => u.Role === "ADMIN" || u.Role === "SUPER_ADMIN").length;
     if (hubEl) hubEl.textContent = users.filter(u => u.Role === "HUB_OPERATOR").length;
     if (dataEl) dataEl.textContent = users.filter(u => u.Role === "DATA_OPERATOR" || u.Role === "FIELD_MOBILIZER").length;
   }
@@ -796,7 +796,7 @@ const App = (function() {
       // Role badge styling
       let roleBadgeClass = "badge info";
       let roleIcon = "fa-user";
-      if (u.Role === "ADMIN") {
+      if (u.Role === "ADMIN" || u.Role === "SUPER_ADMIN") {
         roleBadgeClass = "badge-role-admin";
         roleIcon = "fa-crown";
       } else if (u.Role === "HUB_OPERATOR") {

@@ -27,6 +27,7 @@ body {
   height: 4px;
   background: linear-gradient(90deg, #ff9933 0%, #ff9933 33.3%, #ffffff 33.3%, #ffffff 66.6%, #138808 66.6%, #138808 100%);
   width: 100%;
+  flex-shrink: 0;
 }
 
 /* Government Portal Header Branding */

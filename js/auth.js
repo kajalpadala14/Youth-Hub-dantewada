@@ -72,6 +72,8 @@
   const STORAGE_KEY = 'DANTEWADA_AUTH_USER';
   const SESSION_KEY = 'DANTEWADA_ADMIN_SESSION';
   const CUSTOM_PASS_KEY = 'DANTEWADA_ADMIN_CUSTOM_PASSWORD';
+  const CUSTOM_USERS_KEY = 'DANTEWADA_CUSTOM_USERS';
+  const CUSTOM_ROLES_KEY = 'DANTEWADA_CUSTOM_ROLES';
   const DEFAULT_PASSWORDS = ['admin123', 'dantewada@2026', 'admin@2026', 'dantewada', 'admin'];
 
   class AuthService {
@@ -123,28 +125,61 @@
 
     /**
      * Authenticates administrative user with password.
-     * @param {string} userIdOrEmail Selected user ID or email
+     * Supports both Super Admin master password and custom user credentials.
+     * @param {string} userIdOrEmail Selected user ID, username, or email
      * @param {string} password Secret password
      * @param {boolean} [remember=true] Persist session across browser restarts
      * @return {Object} Status and user details
      */
     authenticateWithPassword(userIdOrEmail, password, remember = true) {
-      if (!this.verifyPassword(password)) {
+      if (!password || typeof password !== 'string') {
+        return {
+          success: false,
+          message: 'अमान्य पासवर्ड (Incorrect Password)! कृपया सही पासवर्ड दर्ज करें।'
+        };
+      }
+      const cleanPass = password.trim();
+      if (!cleanPass) {
         return {
           success: false,
           message: 'अमान्य पासवर्ड (Incorrect Password)! कृपया सही पासवर्ड दर्ज करें।'
         };
       }
 
+      const allUsers = this.getAllUsers();
       let matchedUser = null;
+
       if (userIdOrEmail) {
-        matchedUser = DEFAULT_USERS.find(u => 
-          u.id === userIdOrEmail || 
-          u.aliasId === userIdOrEmail ||
-          u.email.toLowerCase() === String(userIdOrEmail).toLowerCase().trim()
+        const target = String(userIdOrEmail).toLowerCase().trim();
+        matchedUser = allUsers.find(u => 
+          u.id === target || 
+          u.aliasId === target ||
+          (u.username && u.username.toLowerCase() === target) ||
+          (u.email && u.email.toLowerCase() === target)
         );
       }
-      if (!matchedUser) {
+
+      if (matchedUser) {
+        let passValid = false;
+        if (matchedUser.password) {
+          passValid = (cleanPass === matchedUser.password.trim()) || this.verifyPassword(cleanPass);
+        } else {
+          passValid = this.verifyPassword(cleanPass);
+        }
+
+        if (!passValid) {
+          return {
+            success: false,
+            message: 'अमान्य पासवर्ड (Incorrect Password)! कृपया सही पासवर्ड दर्ज करें।'
+          };
+        }
+      } else {
+        if (!this.verifyPassword(cleanPass)) {
+          return {
+            success: false,
+            message: 'अमान्य पासवर्ड (Incorrect Password)! कृपया सही पासवर्ड दर्ज करें।'
+          };
+        }
         matchedUser = DEFAULT_USERS[0];
       }
 
@@ -200,7 +235,13 @@
           if (parsed && (parsed.id === 'usr_super' || parsed.id === 'usr_dist') && parsed.name === DEFAULT_USERS[0].name) {
             return parsed;
           }
-          // Any other user or legacy user is cleaned up and replaced by Employment Officer
+          // If valid custom user, keep it
+          const allUsers = this.getAllUsers ? this.getAllUsers() : DEFAULT_USERS;
+          const match = allUsers.find(u => u.id === parsed.id || u.aliasId === parsed.id || (u.username && u.username === parsed.username));
+          if (match) {
+            return match;
+          }
+          // Fallback to Employment Officer
           localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_USERS[0]));
           return DEFAULT_USERS[0];
         }
@@ -232,7 +273,185 @@
       for (const key in ROLES) {
         if (ROLES[key].id === id) return ROLES[key];
       }
+      const customRoles = this.getCustomRoles ? this.getCustomRoles() : [];
+      const custom = customRoles.find(r => r.id === id);
+      if (custom) return custom;
       return ROLES.PUBLIC_VISITOR;
+    }
+
+    // ==========================================
+    // CUSTOM USER & ROLE MANAGEMENT
+    // ==========================================
+
+    getCustomUsers() {
+      try {
+        if (typeof localStorage === 'undefined') return [];
+        const raw = localStorage.getItem(CUSTOM_USERS_KEY);
+        return raw ? JSON.parse(raw) : [];
+      } catch (e) {
+        return [];
+      }
+    }
+
+    saveCustomUsers(users) {
+      try {
+        if (typeof localStorage !== 'undefined') {
+          localStorage.setItem(CUSTOM_USERS_KEY, JSON.stringify(users));
+        }
+      } catch (e) {
+        console.error('Error saving custom users:', e);
+      }
+    }
+
+    getAllUsers() {
+      return [...DEFAULT_USERS, ...this.getCustomUsers()];
+    }
+
+    addUser(userData) {
+      if (!userData || typeof userData !== 'object') {
+        return { success: false, message: 'अमान्य डेटा!' };
+      }
+      const name = String(userData.name || '').trim();
+      const username = String(userData.username || '').trim().toLowerCase();
+      const password = String(userData.password || '').trim();
+      const role = String(userData.role || 'deo').trim();
+      const block = String(userData.block || 'All').trim();
+      const email = String(userData.email || (username ? `${username}@dantewada.gov.in` : '')).trim().toLowerCase();
+
+      if (!name || name.length < 2) {
+        return { success: false, message: 'कृपया उपयोगकर्ता का पूरा नाम दर्ज करें।' };
+      }
+      if (!username || username.length < 3) {
+        return { success: false, message: 'यूजर आईडी कम से कम 3 अक्षरों की होनी चाहिए।' };
+      }
+      if (!password || password.length < 4) {
+        return { success: false, message: 'पासवर्ड कम से कम 4 अक्षरों का होना चाहिए।' };
+      }
+
+      const all = this.getAllUsers();
+      const exists = all.some(u => 
+        (u.username && u.username.toLowerCase() === username) || 
+        (u.email && u.email.toLowerCase() === email) ||
+        u.id === username
+      );
+      if (exists) {
+        return { success: false, message: `यूजर आईडी '${username}' पहले से उपयोग में है। कृपया दूसरी आईडी चुनें।` };
+      }
+
+      const newUser = {
+        id: 'usr_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
+        name,
+        username,
+        email,
+        role,
+        block,
+        department: userData.department || 'District Administration, Dantewada',
+        password,
+        createdAt: new Date().toISOString(),
+        status: 'active'
+      };
+
+      const custom = this.getCustomUsers();
+      custom.push(newUser);
+      this.saveCustomUsers(custom);
+
+      return { success: true, user: newUser, message: `उपयोगकर्ता '${name}' (${username}) सफलतापूर्वक बनाया गया!` };
+    }
+
+    deleteUser(userId) {
+      if (!userId) return { success: false, message: 'यूजर आईडी आवश्यक है।' };
+      if (userId === 'usr_super' || userId === 'usr_dist') {
+        return { success: false, message: 'मुख्य सुपर एडमिन को हटाया नहीं जा सकता।' };
+      }
+
+      const custom = this.getCustomUsers();
+      const filtered = custom.filter(u => u.id !== userId && u.username !== userId);
+      if (filtered.length === custom.length) {
+        return { success: false, message: 'उपयोगकर्ता नहीं मिला।' };
+      }
+
+      this.saveCustomUsers(filtered);
+      return { success: true, message: 'उपयोगकर्ता सफलतापूर्वक हटा दिया गया।' };
+    }
+
+    updateUserPassword(userId, newPassword) {
+      if (!newPassword || newPassword.trim().length < 4) {
+        return { success: false, message: 'पासवर्ड कम से कम 4 अक्षरों का होना चाहिए।' };
+      }
+      if (userId === 'usr_super' || userId === 'usr_dist') {
+        try {
+          localStorage.setItem(CUSTOM_PASS_KEY, newPassword.trim());
+          return { success: true, message: 'सुपर एडमिन पासवर्ड अपडेट हो गया।' };
+        } catch (e) {
+          return { success: false, message: 'पासवर्ड सुरक्षित करने में त्रुटि।' };
+        }
+      }
+
+      const custom = this.getCustomUsers();
+      const user = custom.find(u => u.id === userId || u.username === userId);
+      if (!user) {
+        return { success: false, message: 'उपयोगकर्ता नहीं मिला।' };
+      }
+
+      user.password = newPassword.trim();
+      this.saveCustomUsers(custom);
+      return { success: true, message: `उपयोगकर्ता '${user.name}' का पासवर्ड अपडेट हो गया।` };
+    }
+
+    getCustomRoles() {
+      try {
+        if (typeof localStorage === 'undefined') return [];
+        const raw = localStorage.getItem(CUSTOM_ROLES_KEY);
+        return raw ? JSON.parse(raw) : [];
+      } catch (e) {
+        return [];
+      }
+    }
+
+    saveCustomRoles(roles) {
+      try {
+        if (typeof localStorage !== 'undefined') {
+          localStorage.setItem(CUSTOM_ROLES_KEY, JSON.stringify(roles));
+        }
+      } catch (e) {
+        console.error('Error saving custom roles:', e);
+      }
+    }
+
+    addCustomRole(roleData) {
+      if (!roleData || typeof roleData !== 'object') {
+        return { success: false, message: 'अमान्य रोल डेटा!' };
+      }
+      const name = String(roleData.name || '').trim();
+      const nameHi = String(roleData.nameHi || name).trim();
+      const id = String(roleData.id || name.toLowerCase().replace(/[^a-z0-9]/g, '_')).trim().toLowerCase();
+      const permissions = Array.isArray(roleData.permissions) ? roleData.permissions : ['youth_read'];
+
+      if (!name || name.length < 2) {
+        return { success: false, message: 'कृपया रोल का नाम दर्ज करें।' };
+      }
+      if (!id || id.length < 2) {
+        return { success: false, message: 'रोल आईडी कम से कम 2 अक्षरों की होनी चाहिए।' };
+      }
+
+      const allRoles = this.getAllRoles();
+      if (allRoles.some(r => r.id === id)) {
+        return { success: false, message: `रोल आईडी '${id}' पहले से मौजूद है।` };
+      }
+
+      const newRole = {
+        id,
+        name,
+        nameHi,
+        permissions,
+        isCustom: true
+      };
+
+      const customRoles = this.getCustomRoles();
+      customRoles.push(newRole);
+      this.saveCustomRoles(customRoles);
+
+      return { success: true, role: newRole, message: `नया रोल '${nameHi}' सफलतापूर्वक बनाया गया!` };
     }
 
     switchUser(userId) {

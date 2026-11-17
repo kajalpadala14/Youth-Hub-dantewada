@@ -197,6 +197,7 @@
     if (e && e.preventDefault) e.preventDefault();
 
     const userSelect = document.getElementById('adminLoginUserSelect');
+    const usernameInput = document.getElementById('adminUsernameInput');
     const passInput = document.getElementById('adminPasswordInput');
     const rememberMe = document.getElementById('adminRememberMe');
     const errorBox = document.getElementById('adminLoginError');
@@ -205,7 +206,8 @@
 
     if (errorBox) errorBox.classList.add('hidden');
 
-    const userId = userSelect ? userSelect.value : 'usr_dist';
+    const enteredUsername = usernameInput ? usernameInput.value.trim() : '';
+    const userId = enteredUsername || (userSelect ? userSelect.value : 'usr_dist');
     const password = passInput ? passInput.value : '';
 
     if (!password) {
@@ -451,7 +453,8 @@
     visits: { group: 'CORE / मुख्य', active: 'Field Visits & Photo Gallery (फील्ड विजिट एवं गैलरी)' },
     monitoring: { group: 'ANALYTICS / विश्लेषण', active: 'Visit Monitoring & Follow-up (फॉलो-अप)' },
     reports: { group: 'ANALYTICS / विश्लेषण', active: 'Reports & Analytics (रिपोर्ट्स)' },
-    audit: { group: 'ADMINISTRATION / प्रशासन', active: 'Audit Logs & System (ऑडिट लॉग)' }
+    audit: { group: 'ADMINISTRATION / प्रशासन', active: 'Audit Logs & System (ऑडिट लॉग)' },
+    users: { group: 'ADMINISTRATION / प्रशासन', active: 'User & Role Management (उपयोगकर्ता व रोल)' }
   };
 
   function closeMobileSidebar() {
@@ -628,6 +631,9 @@
         break;
       case 'audit':
         renderAuditLogs();
+        break;
+      case 'users':
+        renderUsersManagement();
         break;
     }
   }
@@ -2670,6 +2676,309 @@
       window.DantewadaDB.resetToDefaults();
       alert('सैंपल डेटाबेस सफलतापूर्वक लोड कर दिया गया।');
       location.reload();
+    }
+  };
+
+  // -------------------------------------------------------------
+  // User & Role Management
+  // -------------------------------------------------------------
+  function renderUsersManagement() {
+    if (!window.DantewadaAuth) return;
+    const users = window.DantewadaAuth.getAllUsers();
+    const roles = window.DantewadaAuth.getAllRoles();
+
+    const userCountEl = document.getElementById('userCountStat');
+    const roleCountEl = document.getElementById('roleCountStat');
+    if (userCountEl) userCountEl.textContent = users.length;
+    if (roleCountEl) roleCountEl.textContent = roles.length;
+
+    const roleSelect = document.getElementById('newUserRole');
+    if (roleSelect) {
+      roleSelect.innerHTML = roles.map(r => `
+        <option value="${escapeHtml(r.id)}">${escapeHtml(r.nameHi || r.name)} (${escapeHtml(r.name)})</option>
+      `).join('');
+    }
+
+    renderUsersTableList(users);
+  }
+
+  function renderUsersTableList(usersList) {
+    const tbody = document.getElementById('usersListTableBody');
+    if (!tbody) return;
+
+    const users = usersList || (window.DantewadaAuth ? window.DantewadaAuth.getAllUsers() : []);
+    if (!users || users.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-400">कोई उपयोगकर्ता नहीं मिला।</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = users.map(u => {
+      const roleDetails = window.DantewadaAuth.getRoleDetails(u.role);
+      const isSuper = (u.id === 'usr_super' || u.id === 'usr_dist');
+      const passText = isSuper ? '(मास्टर एडमिन पासवर्ड)' : (u.password || '••••••');
+
+      let badgeClass = 'bg-slate-100 text-slate-700 border-slate-200';
+      if (u.role === 'super_admin') badgeClass = 'bg-amber-100 text-amber-800 border-amber-300 font-bold';
+      else if (u.role === 'district_admin') badgeClass = 'bg-blue-100 text-blue-800 border-blue-300';
+      else if (u.role === 'block_officer') badgeClass = 'bg-teal-100 text-teal-800 border-teal-300';
+      else if (u.role === 'deo') badgeClass = 'bg-emerald-100 text-emerald-800 border-emerald-300';
+      else if (u.role === 'field_staff') badgeClass = 'bg-indigo-100 text-indigo-800 border-indigo-300';
+      else if (u.role === 'gallery_reviewer') badgeClass = 'bg-purple-100 text-purple-800 border-purple-300';
+
+      return `
+        <tr class="hover:bg-slate-50 transition border-b border-slate-100 text-xs">
+          <td class="p-3.5">
+            <div class="flex items-center gap-2.5">
+              <div class="w-8 h-8 rounded-xl bg-purple-100 text-purple-700 font-bold flex items-center justify-center text-xs shrink-0 shadow-xs">
+                ${escapeHtml((u.name || 'U').slice(0, 2).toUpperCase())}
+              </div>
+              <div>
+                <strong class="block text-slate-900">${escapeHtml(u.name)}</strong>
+                <span class="text-[11px] text-slate-400 font-mono">${escapeHtml(u.email || '-')}</span>
+              </div>
+            </div>
+          </td>
+          <td class="p-3.5 font-mono font-semibold text-purple-900">
+            ${escapeHtml(u.username || u.id)}
+          </td>
+          <td class="p-3.5">
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold border ${badgeClass}">
+              ${escapeHtml(roleDetails.nameHi || roleDetails.name)}
+            </span>
+          </td>
+          <td class="p-3.5 text-slate-600 font-medium">
+            ${escapeHtml(u.block || 'All')}
+          </td>
+          <td class="p-3.5 font-mono">
+            <div class="inline-flex items-center gap-1.5 bg-slate-100 px-2 py-1 rounded-lg border border-slate-200">
+              <span id="userPassDisplay_${u.id}" class="text-slate-600">${isSuper ? '••••••' : '••••••••'}</span>
+              ${!isSuper ? `
+                <button type="button" onclick="window.toggleUserPassVisibility('${u.id}', '${escapeHtml(passText)}')" class="text-slate-400 hover:text-slate-700 transition" title="पासवर्ड देखें / छुपाएं">
+                  <i id="userPassEye_${u.id}" class="fa-regular fa-eye text-[11px]"></i>
+                </button>
+              ` : ''}
+            </div>
+          </td>
+          <td class="p-3.5">
+            <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> सक्रिय (Active)
+            </span>
+          </td>
+          <td class="p-3.5 text-center">
+            <div class="inline-flex items-center gap-1.5">
+              <button onclick="window.openResetUserPassModal('${u.id}', '${escapeHtml(u.name)}')" class="px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold text-[11px] transition flex items-center gap-1" title="पासवर्ड रीसेट करें">
+                <i class="fa-solid fa-key text-[10px]"></i> रीसेट
+              </button>
+              ${!isSuper ? `
+                <button onclick="window.deleteUserRecord('${u.id}', '${escapeHtml(u.name)}')" class="px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 font-semibold text-[11px] transition flex items-center gap-1" title="यूजर हटाएं">
+                  <i class="fa-solid fa-trash-can text-[10px]"></i> हटाएं
+                </button>
+              ` : `
+                <span class="text-[10px] text-slate-400 italic px-2">मुख्य सुपर एडमिन</span>
+              `}
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  window.renderUsersManagement = renderUsersManagement;
+
+  window.filterUsersTable = function () {
+    const query = (document.getElementById('usersTableSearch')?.value || '').toLowerCase().trim();
+    const users = window.DantewadaAuth ? window.DantewadaAuth.getAllUsers() : [];
+    if (!query) {
+      renderUsersTableList(users);
+      return;
+    }
+    const filtered = users.filter(u => {
+      const name = (u.name || '').toLowerCase();
+      const username = (u.username || u.id || '').toLowerCase();
+      const email = (u.email || '').toLowerCase();
+      const role = (u.role || '').toLowerCase();
+      const block = (u.block || '').toLowerCase();
+      return name.includes(query) || username.includes(query) || email.includes(query) || role.includes(query) || block.includes(query);
+    });
+    renderUsersTableList(filtered);
+  };
+
+  window.handleCreateUser = function (e) {
+    if (e && e.preventDefault) e.preventDefault();
+    const feedback = document.getElementById('createUserFeedback');
+    const nameInput = document.getElementById('newUserName');
+    const usernameInput = document.getElementById('newUserUsername');
+    const emailInput = document.getElementById('newUserEmail');
+    const roleSelect = document.getElementById('newUserRole');
+    const blockSelect = document.getElementById('newUserBlock');
+    const passInput = document.getElementById('newUserPassword');
+
+    if (!window.DantewadaAuth) return;
+
+    const userData = {
+      name: nameInput?.value,
+      username: usernameInput?.value,
+      email: emailInput?.value,
+      role: roleSelect?.value,
+      block: blockSelect?.value,
+      password: passInput?.value
+    };
+
+    const res = window.DantewadaAuth.addUser(userData);
+    if (feedback) {
+      feedback.classList.remove('hidden', 'bg-rose-50', 'text-rose-800', 'border-rose-200', 'bg-emerald-50', 'text-emerald-800', 'border-emerald-200');
+      if (res.success) {
+        feedback.classList.add('bg-emerald-50', 'text-emerald-800', 'border', 'border-emerald-200', 'block');
+        feedback.innerHTML = `<i class="fa-solid fa-circle-check mr-1.5"></i> ${escapeHtml(res.message)}`;
+        if (e.target && e.target.reset) e.target.reset();
+        renderUsersManagement();
+      } else {
+        feedback.classList.add('bg-rose-50', 'text-rose-800', 'border', 'border-rose-200', 'block');
+        feedback.innerHTML = `<i class="fa-solid fa-circle-exclamation mr-1.5"></i> ${escapeHtml(res.message)}`;
+      }
+    }
+  };
+
+  window.handleCreateCustomRole = function (e) {
+    if (e && e.preventDefault) e.preventDefault();
+    const feedback = document.getElementById('createRoleFeedback');
+    const nameInput = document.getElementById('newRoleName');
+    const idInput = document.getElementById('newRoleId');
+    const permBoxes = document.querySelectorAll('input[name="rolePerm"]:checked');
+
+    if (!window.DantewadaAuth) return;
+
+    const permissions = Array.from(permBoxes).map(cb => cb.value);
+    const roleData = {
+      name: nameInput?.value,
+      id: idInput?.value,
+      permissions
+    };
+
+    const res = window.DantewadaAuth.addCustomRole(roleData);
+    if (feedback) {
+      feedback.classList.remove('hidden', 'bg-rose-50', 'text-rose-800', 'border-rose-200', 'bg-indigo-50', 'text-indigo-800', 'border-indigo-200');
+      if (res.success) {
+        feedback.classList.add('bg-indigo-50', 'text-indigo-800', 'border', 'border-indigo-200', 'block');
+        feedback.innerHTML = `<i class="fa-solid fa-circle-check mr-1.5"></i> ${escapeHtml(res.message)}`;
+        if (e.target && e.target.reset) e.target.reset();
+        renderUsersManagement();
+      } else {
+        feedback.classList.add('bg-rose-50', 'text-rose-800', 'border', 'border-rose-200', 'block');
+        feedback.innerHTML = `<i class="fa-solid fa-circle-exclamation mr-1.5"></i> ${escapeHtml(res.message)}`;
+      }
+    }
+  };
+
+  window.deleteUserRecord = function (userId, name) {
+    if (!window.DantewadaAuth) return;
+    if (confirm(`क्या आप उपयोगकर्ता '${name}' (${userId}) को हटाना चाहते हैं?`)) {
+      const res = window.DantewadaAuth.deleteUser(userId);
+      alert(res.message);
+      if (res.success) {
+        renderUsersManagement();
+      }
+    }
+  };
+
+  window.openResetUserPassModal = function (userId, name) {
+    const modal = document.getElementById('resetUserPasswordModal');
+    const idInput = document.getElementById('resetUserIdInput');
+    const nameDisplay = document.getElementById('resetUserNameDisplay');
+    const passInput = document.getElementById('resetUserNewPassInput');
+    const feedback = document.getElementById('resetUserPassFeedback');
+
+    if (idInput) idInput.value = userId;
+    if (nameDisplay) nameDisplay.textContent = `${name} (${userId})`;
+    if (passInput) passInput.value = '';
+    if (feedback) feedback.className = 'hidden';
+
+    if (modal) {
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+  };
+
+  window.closeResetUserPassModal = function () {
+    const modal = document.getElementById('resetUserPasswordModal');
+    if (modal) {
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+  };
+
+  window.saveUserResetPassword = function (e) {
+    if (e && e.preventDefault) e.preventDefault();
+    const idInput = document.getElementById('resetUserIdInput');
+    const passInput = document.getElementById('resetUserNewPassInput');
+    const feedback = document.getElementById('resetUserPassFeedback');
+
+    if (!window.DantewadaAuth) return;
+
+    const res = window.DantewadaAuth.updateUserPassword(idInput.value, passInput.value);
+    if (feedback) {
+      feedback.classList.remove('hidden', 'bg-rose-50', 'text-rose-800', 'border-rose-200', 'bg-emerald-50', 'text-emerald-800', 'border-emerald-200');
+      if (res.success) {
+        feedback.classList.add('bg-emerald-50', 'text-emerald-800', 'border', 'border-emerald-200', 'block');
+        feedback.innerHTML = `<i class="fa-solid fa-circle-check mr-1.5"></i> ${escapeHtml(res.message)}`;
+        setTimeout(() => {
+          window.closeResetUserPassModal();
+          renderUsersManagement();
+        }, 1200);
+      } else {
+        feedback.classList.add('bg-rose-50', 'text-rose-800', 'border', 'border-rose-200', 'block');
+        feedback.innerHTML = `<i class="fa-solid fa-circle-exclamation mr-1.5"></i> ${escapeHtml(res.message)}`;
+      }
+    }
+  };
+
+  window.toggleUserPassVisibility = function (userId, realPass) {
+    const displayEl = document.getElementById(`userPassDisplay_${userId}`);
+    const eyeIcon = document.getElementById(`userPassEye_${userId}`);
+    if (!displayEl || !eyeIcon) return;
+
+    if (displayEl.textContent === '••••••••' || displayEl.textContent === '••••••') {
+      displayEl.textContent = realPass;
+      displayEl.classList.add('text-purple-700', 'font-bold');
+      eyeIcon.classList.remove('fa-eye');
+      eyeIcon.classList.add('fa-eye-slash');
+    } else {
+      displayEl.textContent = '••••••••';
+      displayEl.classList.remove('text-purple-700', 'font-bold');
+      eyeIcon.classList.remove('fa-eye-slash');
+      eyeIcon.classList.add('fa-eye');
+    }
+  };
+
+  window.toggleNewUserPassVisibility = function () {
+    const input = document.getElementById('newUserPassword');
+    const icon = document.getElementById('newUserPassEyeIcon');
+    if (!input || !icon) return;
+    if (input.type === 'password') {
+      input.type = 'text';
+      icon.classList.remove('fa-eye');
+      icon.classList.add('fa-eye-slash');
+    } else {
+      input.type = 'password';
+      icon.classList.remove('fa-eye-slash');
+      icon.classList.add('fa-eye');
+    }
+  };
+
+  window.generateRandomUserPass = function () {
+    const input = document.getElementById('newUserPassword');
+    if (!input) return;
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789@#%';
+    let pass = 'Dant@';
+    for (let i = 0; i < 4; i++) {
+      pass += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    input.value = pass;
+    input.type = 'text';
+    const icon = document.getElementById('newUserPassEyeIcon');
+    if (icon) {
+      icon.classList.remove('fa-eye');
+      icon.classList.add('fa-eye-slash');
     }
   };
 

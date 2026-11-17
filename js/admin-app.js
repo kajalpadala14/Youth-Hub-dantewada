@@ -695,24 +695,24 @@
     setVal('kpi-photos', kpis.visitPhotosCount);
     setVal('kpi-stories', kpis.successStoriesCount);
 
-    // Update the 16 Database Category Module KPI Cards
+    // Update the 16 Database Category Module KPI Cards (1 to 16)
     const sheetKpis = [
       { id: 'kpi-card-val-employment-registration', key: 'Employment_Registration' },
       { id: 'kpi-card-val-employed', key: 'Employed' },
       { id: 'kpi-card-val-skill-linked', key: 'Skill_Linked' },
       { id: 'kpi-card-val-education-linked', key: 'Education_Linked' },
+      { id: 'kpi-card-val-iim-candidate-list', key: 'IIM_Candidate_List' },
       { id: 'kpi-card-val-entrepreneur-identified', key: 'Entrepreneur_Identified' },
       { id: 'kpi-card-val-pmegp-pmfme-loan', key: 'PMEGP_PMFME_Loan' },
-      { id: 'kpi-card-val-rang-de-loan', key: 'Rang_De_Loan' },
-      { id: 'kpi-card-val-iim-candidate-list', key: 'IIM_Candidate_List' },
       { id: 'kpi-card-val-training-conducted', key: 'Training_Conducted' },
       { id: 'kpi-card-val-my-bharat-registration', key: 'MY_Bharat_Registration' },
-      { id: 'kpi-card-val-youth-hub-trainings', key: 'Youth_Hub_Trainings' },
-      { id: 'kpi-card-val-bastar-munne-shivir', key: 'Bastar_Munne_Shivir' },
       { id: 'kpi-card-val-meetings-vo-clf-trif', key: 'Meetings_VO_CLF_TRIF' },
+      { id: 'kpi-card-val-youth-hub-trainings', key: 'Youth_Hub_Trainings' },
+      { id: 'kpi-card-val-m-form', key: 'M_Form' },
       { id: 'kpi-card-val-counselling', key: 'Counselling' },
+      { id: 'kpi-card-val-bastar-munne-shivir', key: 'Bastar_Munne_Shivir' },
       { id: 'kpi-card-val-startup-ideas', key: 'Startup_Ideas' },
-      { id: 'kpi-card-val-m-form', key: 'M_Form' }
+      { id: 'kpi-card-val-rang-de-loan', key: 'Rang_De_Loan' }
     ];
 
     sheetKpis.forEach(item => {

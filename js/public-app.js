@@ -100,19 +100,16 @@
     // Always sync on page load so the public portal reflects the current sheet.
     if (window.DantewadaDB && typeof window.DantewadaDB.syncFromGoogleSheet === 'function') {
       window.DantewadaDB.syncFromGoogleSheet().then(result => {
+        renderPublicKPIs();
+        renderPublicStories();
         if (!result || !result.success) {
           const status = document.getElementById('publicDataSyncStatus');
-          renderPublicKPIs();
           if (status) status.textContent = 'Backend data unavailable';
         }
       }).catch(error => {
         console.error('Live Google Sheets sync failed; public data remains empty:', error);
         renderPublicKPIs();
-        renderPublicCharts();
         renderPublicStories();
-        renderPublicStartups();
-        renderPublicVisits();
-        renderPublicTrainings();
         const status = document.getElementById('publicDataSyncStatus');
         if (status) status.textContent = 'Backend data unavailable';
       });
@@ -352,11 +349,14 @@
     if (!container) return;
 
     let stories = window.DantewadaDB.getSuccessStories({ isPublicOnly: true });
-    if (filterCategory !== 'All') {
+    if (!stories || stories.length === 0) {
+      stories = window.DantewadaDB.getSuccessStories();
+    }
+    if (filterCategory && filterCategory !== 'All') {
       stories = stories.filter(s => (s.category || '').toLowerCase() === filterCategory.toLowerCase());
     }
 
-    if (stories.length === 0) {
+    if (!stories || stories.length === 0) {
       container.innerHTML = `
         <div class="col-span-full py-12 text-center text-slate-500 bg-white rounded-2xl border border-slate-200">
           <i class="fa-regular fa-folder-open text-4xl mb-3 text-slate-300"></i>
@@ -369,47 +369,50 @@
     container.innerHTML = stories.map(s => {
       const isPdf = Boolean(s.isPdf) || (s.photoUrl && (s.photoUrl.startsWith('data:application/pdf') || s.photoUrl.toLowerCase().endsWith('.pdf')));
       const fileId = window.PhotoModule ? window.PhotoModule.extractDriveFileId(s.photoUrl) : '';
+      const directPhoto = fileId ? `https://lh3.googleusercontent.com/d/${fileId}` : (s.photoUrl || '');
       const thumbUrl = (window.PhotoModule && typeof window.PhotoModule.formatDriveThumbnail === 'function')
         ? window.PhotoModule.formatDriveThumbnail(s.photoUrl, 'w800')
-        : (fileId ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w800` : (s.photoUrl || 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=800&auto=format&fit=crop&q=80'));
+        : (fileId ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w800` : s.photoUrl);
+      const displayImg = directPhoto || thumbUrl || 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=800&auto=format&fit=crop&q=80';
 
       return `
-      <div class="gov-card flex flex-col overflow-hidden h-full">
-        <div class="relative h-48 w-full bg-slate-100 overflow-hidden">
+      <div class="gov-card flex flex-col overflow-hidden h-full rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition">
+        <div class="relative h-60 w-full bg-slate-900 overflow-hidden flex items-center justify-center">
           ${isPdf ? `
             <div class="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-red-950 text-white p-4">
               <i class="fa-solid fa-file-pdf text-4xl text-red-500 mb-2"></i>
               <span class="text-xs font-bold uppercase tracking-wider">PDF सफलता दस्तावेज</span>
             </div>
           ` : `
-            <img src="${thumbUrl}"
-                 alt="${s.youthName}"
+            <img src="${displayImg}"
+                 alt="${escapeHtml(s.youthName || 'युवा')}"
                  referrerpolicy="no-referrer"
-                 class="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
-                 onerror="if (!this.dataset.fallback && '${fileId}') { this.dataset.fallback='1'; this.src='https://lh3.googleusercontent.com/d/${fileId}'; } else { this.onerror=null; this.src='https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=800&auto=format&fit=crop&q=80'; }">
+                 loading="lazy"
+                 class="w-full h-full object-contain p-1.5 transition-transform duration-300 hover:scale-105"
+                 onerror="if (!this.dataset.fallback && '${fileId}') { this.dataset.fallback='1'; this.src='https://drive.google.com/thumbnail?id=${fileId}&sz=w800'; } else { this.onerror=null; this.src='https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=800&auto=format&fit=crop&q=80'; }">
           `}
           <div class="absolute top-3 right-3">
-            <span class="badge-status badge-published shadow-sm">${s.category || 'Success'}</span>
+            <span class="badge-status badge-published shadow-sm">${escapeHtml(s.category || 'Success')}</span>
           </div>
           ${s.featured ? '<div class="absolute top-3 left-3"><span class="bg-amber-500 text-white text-xs font-bold px-2 py-0.5 rounded-full shadow-sm"><i class="fa-solid fa-star text-xs mr-1"></i>Featured</span></div>' : ''}
         </div>
         <div class="p-5 flex-1 flex flex-col">
           <div class="text-xs font-semibold text-blue-700 uppercase tracking-wider mb-1 flex items-center gap-1.5">
-            <i class="fa-solid fa-location-dot"></i> ${s.village || 'Dantewada'}, ${s.block || 'Dantewada'}
+            <i class="fa-solid fa-location-dot"></i> ${escapeHtml(s.village || 'Dantewada')}${s.block ? `, ${escapeHtml(s.block)}` : ''}
           </div>
-          <h3 class="text-lg font-bold text-slate-900 mb-2 leading-snug">${s.title}</h3>
-          <p class="text-sm text-slate-600 line-clamp-3 mb-4 flex-1">${s.summary}</p>
+          <h3 class="text-base sm:text-lg font-bold text-slate-900 mb-2 leading-snug">${escapeHtml(s.title || 'सफलता की कहानी')}</h3>
+          <p class="text-xs sm:text-sm text-slate-600 line-clamp-3 mb-4 flex-1">${escapeHtml(s.summary || s.fullStory || '')}</p>
           
           <div class="pt-4 border-t border-slate-100 flex items-center justify-between mt-auto">
             <div class="flex items-center gap-2">
               <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-800 font-bold flex items-center justify-center text-xs">
                 ${(s.youthName || 'Y').slice(0, 2).toUpperCase()}
               </div>
-              <span class="text-xs font-semibold text-slate-800">${s.youthName}</span>
+              <span class="text-xs font-semibold text-slate-800">${escapeHtml(s.youthName || 'सफल युवा')}</span>
             </div>
             <button onclick="window.openStoryModal('${s.id}')" 
                     class="text-xs font-semibold text-blue-700 hover:text-blue-900 flex items-center gap-1 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors">
-              पूरी कहानी <i class="fa-solid fa-arrow-right text-[10px]"></i>
+              पूरी कहानी देखें <i class="fa-solid fa-arrow-right text-[10px]"></i>
             </button>
           </div>
         </div>

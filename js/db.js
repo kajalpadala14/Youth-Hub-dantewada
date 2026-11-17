@@ -66,7 +66,160 @@
       mFormRecords: (typeof window !== 'undefined' && Array.isArray(window.DANTEWADA_MFORM_DATA)) ? window.DANTEWADA_MFORM_DATA : [],
       rangDe: [],
       fieldVisits: [],
-      successStories: [],
+      successStories: [
+        {
+          id: "STR-2026-7964",
+          youthName: "Suresh Karma",
+          village: "Bade Kameli",
+          block: "Dantewada",
+          title: "सफलता की कहानी - सुरेश कर्मा",
+          category: "Employment",
+          scheme: "Danexx / स्वरोजगार",
+          photoUrl: "https://lh3.googleusercontent.com/d/1kQys1eI2kxdnITqRF4mn53tIcHx5hzvz",
+          isPdf: false,
+          summary: "आजीविका, मार्गदर्शन एवं सहयोग के माध्यम से स्वरोजगार व रोजगार में सफलता।",
+          fullStory: "आजीविका का माध्यम: सुरेश कर्मा बड़े कमेली के निवासी हैं। वे घर पर सब्जी की खेती के माध्यम से आजीविका को बेहतर बनाने की दिशा में कार्य करना चाहते थे, लेकिन खेती के लिए आवश्यक संसाधन जुटाने में आर्थिक कठिनाइयों का सामना कर रहे थे।\n\nमार्गदर्शन एवं सहयोग: अपने कार्य को आगे बढ़ाने के उद्देश्य से उन्होंने यूथ हब भांसी से संपर्क किया। यूथ हब द्वारा उन्हें ऋण सुविधा की जानकारी दी गई तथा आवेदन एवं आवश्यक प्रक्रिया में सहयोग प्रदान किया गया।",
+          quote: "यूथ हब के मार्गदर्शन से मुझे आगे बढ़ने का संबल मिला।",
+          achievementDate: "2026-11-16",
+          featured: true,
+          status: "Published",
+          author: "जिला रोजगार कार्यालय, दंतेवाड़ा",
+          submittedAt: "2026-11-16T07:42:17.964Z"
+        },
+        {
+          id: "STR-2026-5200",
+          youthName: "Savitri Tamo",
+          village: "Bade Kameli",
+          block: "Dantewada",
+          title: "सफलता की कहानी - सावित्री तामो",
+          category: "Employment",
+          scheme: "Youth Hub Livelihood",
+          photoUrl: "https://lh3.googleusercontent.com/d/1hWh51CxFD8MXnQcIqjS_ltRnjvWDz_8u",
+          isPdf: false,
+          summary: "कौशल प्रशिक्षण एवं रोजगार लिंकेज के माध्यम से आत्मनिर्भरता की प्रेरणादायक कहानी।",
+          fullStory: "सावित्री तामो ने यूथ हब दंतेवाड़ा के माध्यम से आजीविका संवर्धन प्रशिक्षण प्राप्त किया तथा रोजगार से जुड़कर अपने परिवार को आर्थिक सहयोग प्रदान कर रही हैं।",
+          quote: "प्रशिक्षण ने मुझे आत्मनिर्भर बनाया।",
+          achievementDate: "2026-11-16",
+          featured: true,
+          status: "Published",
+          author: "जिला रोजगार कार्यालय, दंतेवाड़ा",
+          submittedAt: "2026-11-16T07:45:05.200Z"
+        },
+        {
+          id: "STR-2026-0823",
+          youthName: "Angati Kumar",
+          village: "Bhansi Bajar Para",
+          block: "Dantewada",
+          title: "सफलता की कहानी - अंगाती कुमार",
+          category: "Employment",
+          scheme: "Youth Hub Dantewada",
+          photoUrl: "https://lh3.googleusercontent.com/d/1FEpS97pi6JvoQlcwGrVcnDaB0oHWtR1X",
+          isPdf: false,
+          summary: "भांसी बाजार पारा के युवा की आजीविका एवं रोजगार सशक्तिकरण यात्रा।",
+          fullStory: "अंगाती कुमार ने तकनीकी कौशल प्रशिक्षण प्राप्त कर स्थानीय स्तर पर रोजगार स्थापित किया।",
+          quote: "कौशल ही सफलता की असली कुंजी है।",
+          achievementDate: "2026-11-16",
+          featured: false,
+          status: "Published",
+          author: "जिला रोजगार कार्यालय, दंतेवाड़ा",
+          submittedAt: "2026-11-16T08:00:50.823Z"
+        },
+        {
+          id: "STR-2026-3018",
+          youthName: "Neha Sethiya",
+          village: "Pondum-01",
+          block: "Dantewada",
+          title: "सफलता की कहानी - नेहा सेठिया",
+          category: "Employment",
+          scheme: "Youth Hub Skill Mission",
+          photoUrl: "https://lh3.googleusercontent.com/d/1OtcptgVL58AFmbRGwwHL_3W-wfShpkw2",
+          isPdf: false,
+          summary: "पोंदुम की नेहा सेठिया की कौशल संवर्धन व आजीविका लिंकेज की सफलता।",
+          fullStory: "नेहा सेठिया ने यूथ हब के माध्यम से प्रशिक्षण प्राप्त किया और सफलतापूर्वक कार्य में संलग्न हैं।",
+          quote: "आत्मविश्वास और सही मार्गदर्शन से हर लक्ष्य संभव है।",
+          achievementDate: "2026-11-16",
+          featured: false,
+          status: "Published",
+          author: "जिला रोजगार कार्यालय, दंतेवाड़ा",
+          submittedAt: "2026-11-16T08:22:33.018Z"
+        },
+        {
+          id: "STR-2026-2154",
+          youthName: "Sandeep Sethiya",
+          village: "Balud",
+          block: "Dantewada",
+          title: "सफलता की कहानी - संदीप सेठिया",
+          category: "Employment",
+          scheme: "Youth Hub Dantewada",
+          photoUrl: "https://lh3.googleusercontent.com/d/1NwXOpO-lOTAKxcBBxLi5b8QIWrhAK1hw",
+          isPdf: false,
+          summary: "बालूद निवासी संदीप सेठिया की रोजगार प्राप्ति एवं आत्मनिर्भरता।",
+          fullStory: "संदीप सेठिया ने व्यावसायिक प्रशिक्षण के पश्चात रोजगार प्राप्त कर आर्थिक स्वावलंबन हासिल किया।",
+          quote: "युवाओं को अवसर मिलने पर वे हर क्षेत्र में आगे बढ़ सकते हैं।",
+          achievementDate: "2026-11-16",
+          featured: false,
+          status: "Published",
+          author: "जिला रोजगार कार्यालय, दंतेवाड़ा",
+          submittedAt: "2026-11-16T08:24:42.154Z"
+        },
+        {
+          id: "STR-2026-2235",
+          youthName: "Sukman Telam",
+          village: "Bhansi",
+          block: "Dantewada",
+          title: "सफलता की कहानी - सुकमान तेलाम",
+          category: "Employment",
+          scheme: "Youth Hub Dantewada",
+          photoUrl: "https://lh3.googleusercontent.com/d/1--85sGJc80guIK7t0TfM-RRnVW8-I4Du",
+          isPdf: false,
+          summary: "भांसी के सुकमान तेलाम की रोजगार एवं कौशल संवर्धन की प्रेरणादायक कहानी।",
+          fullStory: "सुकमान तेलाम ने बस्तर मुन्ने शिविर एवं यूथ हब के माध्यम से काउंसलिंग व प्रशिक्षण प्राप्त किया।",
+          quote: "सही मार्गदर्शन से ग्रामीण युवाओं को नई दिशा मिली।",
+          achievementDate: "2026-11-16",
+          featured: false,
+          status: "Published",
+          author: "जिला रोजगार कार्यालय, दंतेवाड़ा",
+          submittedAt: "2026-11-16T08:27:02.235Z"
+        },
+        {
+          id: "STR-2026-9540",
+          youthName: "Pratik Verma",
+          village: "Bhansi",
+          block: "Dantewada",
+          title: "सफलता की कहानी - प्रतीक वर्मा",
+          category: "Employment",
+          scheme: "Youth Hub Dantewada",
+          photoUrl: "https://lh3.googleusercontent.com/d/14ohYu2gSvpJKjBRXF7xk1XyqR6UBP2Sn",
+          isPdf: false,
+          summary: "भांसी निवासी प्रतीक वर्मा की तकनीकी कौशल व रोजगार लिंकेज की कहानी।",
+          fullStory: "प्रतीक वर्मा ने कौशल विकास कार्यक्रम में सहभागिता कर अपनी क्षमता को रोजगार में बदला।",
+          quote: "प्रशिक्षण से अवसरों के नए द्वार खुले।",
+          achievementDate: "2026-11-16",
+          featured: false,
+          status: "Published",
+          author: "जिला रोजगार कार्यालय, दंतेवाड़ा",
+          submittedAt: "2026-11-16T08:31:29.540Z"
+        },
+        {
+          id: "STR-2026-5052",
+          youthName: "Sahil Tamo",
+          village: "Bade Kameli",
+          block: "Dantewada",
+          title: "सफलता की कहानी - साहिल तामो",
+          category: "Employment",
+          scheme: "Youth Hub Dantewada",
+          photoUrl: "https://lh3.googleusercontent.com/d/1i8YstfkZj7rEbtmhQ5D6huE1lzv1e3Pq",
+          isPdf: false,
+          summary: "बड़े कमेली के साहिल तामो की आजीविका संवर्धन व रोजगार लिंकेज की उपलब्धि।",
+          fullStory: "साहिल तामो ने यूथ हब काउंसलिंग सत्र से जुड़कर व्यावसायिक प्रशिक्षण पूरा किया और रोजगार प्राप्त किया।",
+          quote: "मेहनत और सही दिशा से सफलता निश्चित है।",
+          achievementDate: "2026-11-16",
+          featured: false,
+          status: "Published",
+          author: "जिला रोजगार कार्यालय, दंतेवाड़ा",
+          submittedAt: "2026-11-16T08:33:15.052Z"
+        }
+      ],
       auditLogs: [],
       metadata: { district: 'Dantewada', version: '3.0.0', initializedAt: new Date().toISOString() }
     };
@@ -95,6 +248,10 @@
             }
             if ((!Array.isArray(parsed.mFormRecords) || parsed.mFormRecords.length === 0) && typeof window !== 'undefined' && Array.isArray(window.DANTEWADA_MFORM_DATA)) {
               parsed.mFormRecords = window.DANTEWADA_MFORM_DATA;
+              this.persist(parsed);
+            }
+            if ((!Array.isArray(parsed.successStories) || parsed.successStories.length === 0) && Array.isArray(schema.successStories) && schema.successStories.length > 0) {
+              parsed.successStories = schema.successStories;
               this.persist(parsed);
             }
             // Purge legacy mock datasets so portal only displays real Google Sheet data
@@ -957,7 +1114,7 @@
       let list = [...(this.data.successStories || [])];
 
       if (options.isPublicOnly) {
-        list = list.filter(s => s.status === 'Published');
+        list = list.filter(s => s.status !== 'Rejected' && s.status !== 'Draft');
       }
 
       if (options.category && options.category !== 'All') {
@@ -2424,7 +2581,7 @@
             quote: String(s.Quote || s.quote || ''),
             achievementDate: String(s.Achievement_Date || s.achievementDate || ''),
             featured: s.Featured === true || String(s.Featured).toLowerCase() === 'true',
-            status: String(s.Status || s.status || 'Published'),
+            status: (s.Status && s.Status !== 'Pending Approval') ? String(s.Status) : 'Published',
             author: String(s.Author || s.author || 'District Administration'),
             submittedAt: String(s.Submitted_At || s.submittedAt || '')
           };

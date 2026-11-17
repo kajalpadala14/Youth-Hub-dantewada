@@ -24,7 +24,7 @@
 
   const i18n = {
     hi: {
-      portalTitle: 'दंतेवाड़ा युवा विकास पोर्टल',
+      portalTitle: 'यूथ हब दंतेवाड़ा (Youth Hub Dantewada)',
       govSubtitle: 'जिला प्रशासन / जिला पंचायत, दंतेवाड़ा (छत्तीसगढ़)',
       home: 'होम',
       about: 'पहल के बारे में',
@@ -47,7 +47,7 @@
       storiesCount: 'सफलता की कहानियाँ'
     },
     en: {
-      portalTitle: 'Dantewada Youth Development Portal',
+      portalTitle: 'Youth Hub Dantewada',
       govSubtitle: 'District Administration / Zilla Panchayat, Dantewada (C.G.)',
       home: 'Home',
       about: 'About Initiative',

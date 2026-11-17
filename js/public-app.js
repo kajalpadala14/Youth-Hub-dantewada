@@ -591,38 +591,18 @@
           `}
         </div>
 
-        <div class="p-6 sm:p-8 space-y-6">
-          ${story.quote ? `
-            <blockquote class="p-4 rounded-xl bg-blue-50 border-l-4 border-blue-600 text-blue-950 italic text-base">
-              "${story.quote}"
-            </blockquote>
-          ` : ''}
-
+        <!-- Bottom Actions -->
+        <div class="p-3 sm:p-4 bg-slate-900 border-t border-slate-800 flex items-center justify-between">
           <div>
-            <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">सफलता की कहानी (Full Story)</h4>
-            <div class="text-slate-700 leading-relaxed text-base space-y-3">
-              <p>${story.fullStory || story.summary}</p>
-            </div>
+            ${driveOpenUrl ? `
+              <a href="${driveOpenUrl}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs shadow transition">
+                <i class="fa-solid fa-arrow-up-right-from-square"></i> Google Drive में मूल फ़ाइल देखें
+              </a>
+            ` : '<span></span>'}
           </div>
-
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs">
-            <div>
-              <span class="text-slate-400 block mb-0.5">संबंधित योजना</span>
-              <strong class="text-slate-800 text-sm">${story.scheme || 'Youth Hub'}</strong>
-            </div>
-            <div>
-              <span class="text-slate-400 block mb-0.5">मासिक आय / प्रभाव</span>
-              <strong class="text-green-700 text-sm">${story.monthlyIncome || 'सत्यापित'}</strong>
-            </div>
-            <div>
-              <span class="text-slate-400 block mb-0.5">उपलब्धि की तारीख</span>
-              <strong class="text-slate-800 text-sm">${story.achievementDate || '2026'}</strong>
-            </div>
-            <div>
-              <span class="text-slate-400 block mb-0.5">सत्यापनकर्ता</span>
-              <strong class="text-slate-800 text-sm">${story.author || 'जिला प्रशासन'}</strong>
-            </div>
-          </div>
+          <button onclick="window.closeStoryModal()" class="px-5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold text-xs border border-slate-700 transition cursor-pointer">
+            बंद करें
+          </button>
         </div>
       </div>
     `;

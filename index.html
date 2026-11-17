@@ -63,16 +63,9 @@
       <nav class="hidden lg:flex items-center gap-6 text-sm font-semibold text-slate-700">
         <a href="#home" class="hover:text-blue-700 transition" data-i18n="home">होम</a>
         <a href="#about" class="hover:text-blue-700 transition" data-i18n="about">पहल</a>
-        <a href="#analytics" class="hover:text-blue-700 transition" data-i18n="analytics">सांख्यिकी</a>
         <a href="#stories" class="hover:text-blue-700 transition" data-i18n="successStories">सफलता की कहानियाँ</a>
-        <a href="#startups" class="hover:text-blue-700 transition flex items-center gap-1.5 text-amber-700 font-bold" data-i18n="startupsNav">
-          <span>स्टार्टअप हंट</span>
-          <span class="bg-amber-100 text-amber-800 text-[10px] font-extrabold px-1.5 py-0.2 rounded-full border border-amber-300">—</span>
-        </a>
-        <a href="#visits" class="hover:text-blue-700 transition" data-i18n="visits">फील्ड विजिट्स</a>
-        <a href="#trainings" class="hover:text-blue-700 transition" data-i18n="trainings">प्रशिक्षण</a>
-        <a href="#initiatives" class="hover:text-blue-700 transition" data-i18n="initiatives">योजनाएं</a>
         <a href="#contact" class="hover:text-blue-700 transition" data-i18n="contact">संपर्क</a>
+        <a href="#startups" class="hidden"></a>
       </nav>
 
       <div class="flex items-center gap-2 sm:gap-3 shrink-0">
@@ -97,32 +90,9 @@
         <i class="fa-solid fa-landmark w-5 text-emerald-400 text-center"></i>
         <span>पहल (About)</span>
       </a>
-      <a href="#analytics" class="mobile-nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-800/90 transition text-slate-200" data-i18n="analytics">
-        <i class="fa-solid fa-chart-pie w-5 text-purple-400 text-center"></i>
-        <span>सांख्यिकी (Analytics)</span>
-      </a>
       <a href="#stories" class="mobile-nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-800/90 transition text-slate-200" data-i18n="successStories">
         <i class="fa-solid fa-book-open w-5 text-rose-400 text-center"></i>
         <span>सफलता की कहानियाँ (Stories)</span>
-      </a>
-      <a href="#startups" class="mobile-nav-link flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-slate-800/90 transition text-amber-300 font-bold" data-i18n="startupsNav">
-        <div class="flex items-center gap-3">
-          <i class="fa-solid fa-rocket w-5 text-amber-400 text-center"></i>
-          <span>स्टार्टअप हंट (— Ideas)</span>
-        </div>
-        <span class="bg-amber-400/20 text-amber-300 text-xs font-bold px-2 py-0.5 rounded-full border border-amber-400/30">—</span>
-      </a>
-      <a href="#visits" class="mobile-nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-800/90 transition text-slate-200" data-i18n="visits">
-        <i class="fa-solid fa-camera w-5 text-cyan-400 text-center"></i>
-        <span>फील्ड विजिट्स (Visits)</span>
-      </a>
-      <a href="#trainings" class="mobile-nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-800/90 transition text-slate-200" data-i18n="trainings">
-        <i class="fa-solid fa-graduation-cap w-5 text-teal-400 text-center"></i>
-        <span>प्रशिक्षण (Trainings)</span>
-      </a>
-      <a href="#initiatives" class="mobile-nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-800/90 transition text-slate-200" data-i18n="initiatives">
-        <i class="fa-solid fa-hand-holding-dollar w-5 text-amber-400 text-center"></i>
-        <span>योजनाएं (Schemes)</span>
       </a>
       <a href="#contact" class="mobile-nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-800/90 transition text-slate-200" data-i18n="contact">
         <i class="fa-solid fa-phone w-5 text-blue-400 text-center"></i>
@@ -152,11 +122,11 @@
           दंतेवाड़ा जिले के युवाओं के रोजगार, कौशल प्रशिक्षण, उद्यमिता एवं फील्ड मॉनिटरिंग का डिजिटल सार्वजनिक मंच।
         </p>
         <div class="flex flex-wrap items-center gap-4">
-          <a href="#analytics" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold px-6 py-3 rounded-xl shadow-lg transition flex items-center gap-2">
-            <i class="fa-solid fa-chart-pie"></i> <span data-i18n="viewAnalyticsBtn">सार्वजनिक आंकड़े देखें</span>
-          </a>
-          <a href="#stories" class="bg-white/10 hover:bg-white/20 text-white border border-white/30 font-semibold px-6 py-3 rounded-xl backdrop-blur-sm transition flex items-center gap-2">
+          <a href="#stories" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold px-6 py-3 rounded-xl shadow-lg transition flex items-center gap-2">
             <i class="fa-solid fa-book-open"></i> <span data-i18n="readStoriesBtn">सफलता की कहानियाँ</span>
+          </a>
+          <a href="#about" class="bg-white/10 hover:bg-white/20 text-white border border-white/30 font-semibold px-6 py-3 rounded-xl backdrop-blur-sm transition flex items-center gap-2">
+            <i class="fa-solid fa-compass"></i> <span data-i18n="about">पहल के बारे में</span>
           </a>
         </div>
       </div>
@@ -254,52 +224,6 @@
     </div>
   </section>
 
-  <!-- 3. Public Analytics & Safe Dashboard -->
-  <section id="analytics" class="py-16 bg-slate-50 border-b border-slate-200">
-    <div class="max-w-7xl mx-auto px-4 sm:px-8">
-      <div class="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
-        <div>
-          <span class="text-xs font-bold text-blue-800 uppercase tracking-wider bg-blue-100 px-3 py-1 rounded-full">
-            सार्वजनिक सांख्यिकी
-          </span>
-          <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-2">
-            दंतेवाड़ा युवा विकास डैशबोर्ड
-          </h2>
-          <p class="text-xs sm:text-sm text-slate-500 mt-1">
-            व्यक्तिगत गोपनीयता (PII) सुरक्षित रखते हुए जिले के चारों ब्लॉकों का वास्तविक विश्लेषणात्मक विवरण।
-          </p>
-        </div>
-        <div class="text-xs text-slate-500 bg-white px-3 py-2 rounded-xl border border-slate-200 shadow-sm flex items-center gap-2">
-          <i class="fa-solid fa-shield-halved text-green-600"></i>
-          <span>संवेदनशील डेटा सुरक्षित व एन्क्रिप्टेड</span>
-        </div>
-      </div>
-
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <!-- Block Chart -->
-        <div class="gov-card p-6">
-          <div class="flex items-center justify-between mb-4">
-            <h3 class="font-bold text-slate-800 text-sm">ब्लॉकवार पंजीकृत युवा (Block Distribution)</h3>
-            <span class="text-xs text-slate-400"><i class="fa-solid fa-chart-column mr-1"></i>Live Data</span>
-          </div>
-          <div class="h-64">
-            <canvas id="pubBlockChart"></canvas>
-          </div>
-        </div>
-
-        <!-- Category Chart -->
-        <div class="gov-card p-6">
-          <div class="flex items-center justify-between mb-4">
-            <h3 class="font-bold text-slate-800 text-sm">सामाजिक वर्गवार अनुपात (Category Ratio)</h3>
-            <span class="text-xs text-slate-400"><i class="fa-solid fa-chart-pie mr-1"></i>Live Data</span>
-          </div>
-          <div class="h-64">
-            <canvas id="pubCatChart"></canvas>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
 
   <!-- 4. Public Success Gallery -->
   <section id="stories" class="py-16 bg-white border-b border-slate-200">
@@ -341,200 +265,8 @@
     </div>
   </section>
 
-  <!-- 4.5 Youth Startups & Innovation Ideas (— Ideas) -->
-  <section id="startups" class="py-16 bg-gradient-to-b from-amber-50/40 via-white to-slate-50 border-b border-slate-200">
-    <div class="max-w-7xl mx-auto px-4 sm:px-8">
-      <!-- Section Header -->
-      <div class="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
-        <div>
-          <span class="inline-flex items-center gap-1.5 text-xs font-bold text-amber-800 uppercase tracking-wider bg-amber-100/80 px-3 py-1 rounded-full border border-amber-300">
-            <i class="fa-solid fa-rocket text-amber-600"></i>
-            स्टार्टअप हंट (Startup Hunt) | — Ideas
-          </span>
-          <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-2">
-            दंतेवाड़ा एवं बस्तर संभाग — स्टार्टअप हंट (Startup Hunt)
-          </h2>
-          <p class="text-xs sm:text-sm text-slate-500 mt-1">
-            चयनित युवा उद्यमियों द्वारा प्रस्तुत — वास्तविक नवाचार प्रस्ताव — विचार, बिज़नेस मॉडल, लक्षित ग्राहक, आवश्यक निवेश व संपर्क
-          </p>
-        </div>
-
-        <!-- Search Box -->
-        <div class="relative w-full md:w-72">
-          <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-          <input 
-            type="text" 
-            id="publicStartupSearchInput" 
-            placeholder="स्टार्टअप, संस्थापक या विचार खोजें..." 
-            class="w-full pl-9 pr-4 py-2 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 shadow-sm"
-          />
-        </div>
-      </div>
-
-      <!-- District Filter Tabs -->
-      <div class="flex items-center gap-2 mb-6 sm:mb-8 text-xs overflow-x-auto touch-scroll-row pb-1.5 sm:pb-0">
-        <button onclick="window.filterPublicStartups('All')" class="startup-filter-tab whitespace-nowrap bg-blue-900 text-white font-bold px-3.5 py-1.5 rounded-lg border border-blue-900 shadow-sm transition">
-          सभी जिले (All - —)
-        </button>
-        <button onclick="window.filterPublicStartups('Dantewada')" class="startup-filter-tab whitespace-nowrap bg-white text-slate-700 hover:bg-slate-50 font-semibold px-3.5 py-1.5 rounded-lg border border-slate-200 shadow-sm transition">
-          दंतेवाड़ा (Dantewada - —)
-        </button>
-        <button onclick="window.filterPublicStartups('Sukma')" class="startup-filter-tab whitespace-nowrap bg-white text-slate-700 hover:bg-slate-50 font-semibold px-3.5 py-1.5 rounded-lg border border-slate-200 shadow-sm transition">
-          सुकमा (Sukma - —)
-        </button>
-        <button onclick="window.filterPublicStartups('Bastar')" class="startup-filter-tab whitespace-nowrap bg-white text-slate-700 hover:bg-slate-50 font-semibold px-3.5 py-1.5 rounded-lg border border-slate-200 shadow-sm transition">
-          बस्तर (Bastar - —)
-        </button>
-        <button onclick="window.filterPublicStartups('Kondagaon')" class="startup-filter-tab whitespace-nowrap bg-white text-slate-700 hover:bg-slate-50 font-semibold px-3.5 py-1.5 rounded-lg border border-slate-200 shadow-sm transition">
-          कोण्डागांव (Kondagaon - —)
-        </button>
-        <button onclick="window.filterPublicStartups('Durg')" class="startup-filter-tab whitespace-nowrap bg-white text-slate-700 hover:bg-slate-50 font-semibold px-3.5 py-1.5 rounded-lg border border-slate-200 shadow-sm transition">
-          दुर्ग (Durg - —)
-        </button>
-      </div>
-
-      <!-- Startups Grid Container -->
-      <div id="publicStartupsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <!-- Rendered via js/public-app.js -->
-      </div>
-
-      <!-- Pagination / Load More -->
-      <div class="mt-8 text-center" id="publicStartupPagination">
-        <button id="loadMoreStartupsBtn" onclick="window.loadMorePublicStartups()" class="inline-flex items-center gap-2 bg-white hover:bg-amber-50 text-amber-900 font-bold px-6 py-2.5 rounded-xl border border-amber-300 shadow-sm text-xs transition">
-          <span>और स्टार्टअप्स देखें (Load More)</span>
-          <i class="fa-solid fa-chevron-down text-[10px]"></i>
-        </button>
-      </div>
-    </div>
-  </section>
-
-  <!-- 5. Public Visit Gallery -->
-  <section id="visits" class="py-16 bg-slate-50 border-b border-slate-200">
-    <div class="max-w-7xl mx-auto px-4 sm:px-8">
-      <div class="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
-        <div>
-          <span class="text-xs font-bold text-purple-700 uppercase tracking-wider bg-purple-50 px-3 py-1 rounded-full border border-purple-200">
-            पारदर्शी फील्ड मॉनिटरिंग
-          </span>
-          <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-2">
-            स्वीकृत फील्ड विजिट व फोटो गैलरी
-          </h2>
-          <p class="text-xs sm:text-sm text-slate-500 mt-1">
-            अधिकारियों एवं फील्ड समन्वयकों द्वारा जमीनी सत्यापन के बाद स्वीकृत की गई वास्तविक तस्वीरें।
-          </p>
-        </div>
-
-        <!-- Block Filter -->
-        <div class="flex items-center gap-2 text-xs overflow-x-auto touch-scroll-row pb-1 sm:pb-0 w-full md:w-auto">
-          <button onclick="window.filterVisitsByBlock('All')" class="visit-tab-btn whitespace-nowrap bg-blue-800 text-white font-semibold px-3.5 py-1.5 rounded-lg border border-slate-200 shadow-sm transition">
-            सभी ब्लॉक
-          </button>
-          <button onclick="window.filterVisitsByBlock('Dantewada')" class="visit-tab-btn whitespace-nowrap bg-white text-slate-700 font-semibold px-3.5 py-1.5 rounded-lg border border-slate-200 shadow-sm transition">
-            दंतेवाड़ा
-          </button>
-          <button onclick="window.filterVisitsByBlock('Geedam')" class="visit-tab-btn whitespace-nowrap bg-white text-slate-700 font-semibold px-3.5 py-1.5 rounded-lg border border-slate-200 shadow-sm transition">
-            गीदम
-          </button>
-          <button onclick="window.filterVisitsByBlock('Katekalyan')" class="visit-tab-btn whitespace-nowrap bg-white text-slate-700 font-semibold px-3.5 py-1.5 rounded-lg border border-slate-200 shadow-sm transition">
-            कटेकल्याण
-          </button>
-          <button onclick="window.filterVisitsByBlock('Kuakonda')" class="visit-tab-btn whitespace-nowrap bg-white text-slate-700 font-semibold px-3.5 py-1.5 rounded-lg border border-slate-200 shadow-sm transition">
-            कुआकोंडा
-          </button>
-        </div>
-      </div>
-
-      <!-- Visits Grid -->
-      <div id="publicVisitsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <!-- Rendered via js/public-app.js -->
-      </div>
-    </div>
-  </section>
-
-  <!-- 6. Training & Activities -->
-  <section id="trainings" class="py-16 bg-white border-b border-slate-200">
-    <div class="max-w-7xl mx-auto px-4 sm:px-8">
-      <div class="text-center max-w-2xl mx-auto mb-10">
-        <span class="text-xs font-bold text-teal-800 uppercase tracking-wider bg-teal-50 px-3 py-1 rounded-full border border-teal-200">
-          कौशल संवर्धन
-        </span>
-        <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-2">
-          प्रशिक्षण कार्यक्रम एवं बस्तर मुन्ने शिविर
-        </h2>
-        <p class="text-xs sm:text-sm text-slate-500 mt-1">
-          जिले के युवाओं के लिए आयोजित व्यावसायिक प्रशिक्षण एवं रोजगार उन्मुखी कार्यशालाएं।
-        </p>
-      </div>
-
-      <div id="publicTrainingsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <!-- Rendered via js/public-app.js -->
-      </div>
-    </div>
-  </section>
-
-  <!-- 7. Employment & Entrepreneurship Initiatives -->
-  <section id="initiatives" class="py-16 bg-slate-50 border-b border-slate-200">
-    <div class="max-w-7xl mx-auto px-4 sm:px-8">
-      <div class="text-center max-w-2xl mx-auto mb-12">
-        <span class="text-xs font-bold text-amber-800 uppercase tracking-wider bg-amber-50 px-3 py-1 rounded-full border border-amber-200">
-          स्वरोजगार व योजनाएं
-        </span>
-        <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-2">
-          स्वरोजगार एवं उद्यमिता के अवसर
-        </h2>
-        <p class="text-xs sm:text-sm text-slate-500 mt-1">
-          दंतेवाड़ा के युवाओं के लिए केंद्र व राज्य सरकार की प्रमुख वित्तीय एवं सब्सिडी योजनाएं।
-        </p>
-      </div>
-
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div class="gov-card p-6 flex flex-col justify-between">
-          <div>
-            <div class="w-12 h-12 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center text-xl mb-4">
-              <i class="fa-solid fa-industry"></i>
-            </div>
-            <h3 class="font-bold text-slate-900 text-lg mb-2">PMEGP योजना (खादी एवं ग्रामोद्योग)</h3>
-            <p class="text-xs text-slate-600 leading-relaxed mb-4">
-              विनिर्माण में ₹50 लाख और सेवा क्षेत्र में ₹20 लाख तक का ऋण। ग्रामीण क्षेत्र के युवाओं हेतु 35% तक की पूँजीगत सब्सिडी उपलब्ध।
-            </p>
-          </div>
-          <div class="pt-4 border-t border-slate-100 text-xs text-blue-700 font-semibold">
-            पात्रता: 8वीं पास / 18 वर्ष से अधिक
-          </div>
-        </div>
-
-        <div class="gov-card p-6 flex flex-col justify-between">
-          <div>
-            <div class="w-12 h-12 rounded-xl bg-green-100 text-green-800 flex items-center justify-center text-xl mb-4">
-              <i class="fa-solid fa-wheat-awn"></i>
-            </div>
-            <h3 class="font-bold text-slate-900 text-lg mb-2">PMFME खाद्य प्रसंस्करण योजना</h3>
-            <p class="text-xs text-slate-600 leading-relaxed mb-4">
-              महुआ, इमली, कोदो-कुटकी, आटा चक्की एवं पैकेजिंग इकाइयों के उन्नयन हेतु 35% क्रेडिट-लिंक्ड सब्सिडी (अधिकतम ₹10 लाख)।
-            </p>
-          </div>
-          <div class="pt-4 border-t border-slate-100 text-xs text-green-700 font-semibold">
-            सपोर्ट: मशीनरी खरीद व पैकेजिंग डिजाइन
-          </div>
-        </div>
-
-        <div class="gov-card p-6 flex flex-col justify-between">
-          <div>
-            <div class="w-12 h-12 rounded-xl bg-blue-100 text-blue-800 flex items-center justify-center text-xl mb-4">
-              <i class="fa-solid fa-building-columns"></i>
-            </div>
-            <h3 class="font-bold text-slate-900 text-lg mb-2">मुद्रा एवं बैंक सखी / मित्र लिंकेज</h3>
-            <p class="text-xs text-slate-600 leading-relaxed mb-4">
-              बिना किसी बंधक (कोलेटरल) के ₹50,000 से ₹10 लाख तक का ऋण। ग्रामीण क्षेत्रों में डिजिटल बैंकिंग कियोस्क स्थापित करने हेतु सहायता।
-            </p>
-          </div>
-          <div class="pt-4 border-t border-slate-100 text-xs text-blue-700 font-semibold">
-            सहयोग: लीड बैंक प्रबंधक (LDM) दंतेवाड़ा
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
+  <!-- Hidden container for compatibility -->
+  <div id="startups" class="hidden"></div>
 
   <!-- 8. Contact & Department Information -->
   <section id="contact" class="py-16 bg-white">

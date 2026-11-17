@@ -1,7 +1,7 @@
 {
   "name": "dantewada-youth-development-portal",
   "version": "2.0.0",
-  "description": "Dantewada Youth Development, Employment & Success Story Portal - District Administration / Zilla Panchayat Dantewada",
+  "description": "Dantewada Youth Development, Employment & Success Story Portal - District Administration Dantewada",
   "scripts": {
     "build": "echo Static build ready",
     "start": "node server.js",
@@ -18,6 +18,6 @@
     "success-stories",
     "chhattisgarh"
   ],
-  "author": "District Administration / Zilla Panchayat, Dantewada",
+  "author": "District Administration, Dantewada",
   "license": "ISC"
 }

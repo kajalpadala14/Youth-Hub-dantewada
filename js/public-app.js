@@ -48,7 +48,7 @@
     },
     en: {
       portalTitle: 'Youth Hub Dantewada',
-      govSubtitle: 'District Administration / Zilla Panchayat, Dantewada (C.G.)',
+      govSubtitle: 'District Administration, Dantewada (C.G.)',
       home: 'Home',
       about: 'About Initiative',
       analytics: 'Youth Analytics',

@@ -187,7 +187,7 @@ if (require.main === module) {
   server.listen(PORT, () => {
     console.log(`=======================================================`);
     console.log(`🏛️  Dantewada Youth Development & Success Story Portal`);
-    console.log(`🏢  District Administration / Zilla Panchayat, Dantewada`);
+    console.log(`🏢  District Administration, Dantewada`);
     console.log(`🌐  Public Portal:    http://localhost:${PORT}/index.html`);
     console.log(`📊  Admin Dashboard:  http://localhost:${PORT}/admin.html`);
     console.log(`🛡️  Security:         Headers & Path Guard Active`);

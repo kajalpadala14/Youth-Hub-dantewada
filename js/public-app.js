@@ -24,7 +24,7 @@
 
   const i18n = {
     hi: {
-      portalTitle: 'यूथ हब दंतेवाड़ा (Youth Hub Dantewada)',
+      portalTitle: 'Youth Hub Dantewada',
       govSubtitle: 'जिला प्रशासन / जिला पंचायत, दंतेवाड़ा (छत्तीसगढ़)',
       home: 'होम',
       about: 'पहल के बारे में',

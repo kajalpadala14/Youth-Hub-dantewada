@@ -1003,16 +1003,6 @@
     }
   };
 
-  window.submitGrievanceForm = function (e) {
-    e.preventDefault();
-    const alertBox = document.getElementById('contactSuccessMsg');
-    if (alertBox) {
-      alertBox.classList.remove('hidden');
-      setTimeout(() => alertBox.classList.add('hidden'), 5000);
-      e.target.reset();
-    }
-  };
-
   document.addEventListener('DOMContentLoaded', init);
   window.addEventListener('db:changed', () => {
     renderPublicKPIs();

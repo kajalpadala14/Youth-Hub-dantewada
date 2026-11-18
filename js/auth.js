@@ -146,7 +146,7 @@
         };
       }
 
-      const allUsers = this.getAllUsers();
+      const allUsers = this._getRawUsers();
       let matchedUser = null;
 
       if (userIdOrEmail) {
@@ -303,8 +303,56 @@
       }
     }
 
-    getAllUsers() {
+    _getRawUsers() {
       return [...DEFAULT_USERS, ...this.getCustomUsers()];
+    }
+
+    /**
+     * Retrieves all users.
+     * Passwords are strictly sanitized/masked for non-super admins.
+     * @param {boolean} [forceIncludePasswords=false]
+     * @return {Array<Object>}
+     */
+    getAllUsers(forceIncludePasswords = false) {
+      const raw = this._getRawUsers();
+      if (this.isSuperAdmin() || forceIncludePasswords) {
+        return raw;
+      }
+      return raw.map(u => ({
+        ...u,
+        password: '••••••••'
+      }));
+    }
+
+    /**
+     * Checks if a user (or current user) is Super Admin.
+     * @param {Object} [user]
+     * @return {boolean}
+     */
+    isSuperAdmin(user = null) {
+      const u = user || this.currentUser;
+      if (!u) return false;
+      return u.role === 'super_admin' || u.id === 'usr_super' || u.id === 'usr_dist';
+    }
+
+    /**
+     * Securely retrieves a user's password.
+     * STRICT SECURITY POLICY: Passwords are ONLY shown/accessible to Super Admin.
+     * @param {string} userId
+     * @return {string|null}
+     */
+    getUserPassword(userId) {
+      if (!this.isSuperAdmin()) {
+        console.warn('Security Alert: Attempted to access password by non-super admin.');
+        return null;
+      }
+      const raw = this._getRawUsers();
+      const user = raw.find(u => u.id === userId || u.aliasId === userId || (u.username && u.username === userId));
+      if (!user) return null;
+      if (this.isSuperAdmin(user)) {
+        return '(मास्टर एडमिन पासवर्ड)';
+      }
+      return user.password || '••••••';
     }
 
     addUser(userData) {
@@ -455,7 +503,8 @@
     }
 
     switchUser(userId) {
-      const found = DEFAULT_USERS.find(u => u.id === userId || u.aliasId === userId);
+      const all = this._getRawUsers();
+      const found = all.find(u => u.id === userId || u.aliasId === userId || (u.username && u.username === userId));
       if (found) {
         this.saveUser(found);
         return found;

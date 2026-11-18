@@ -737,6 +737,10 @@ function findSheet(ss, requestedName) {
       const alternate = ss.getSheetByName(cleanReq === "M_Form" ? "M Form" : "M_Form");
       if (alternate && getSheetRecordCount(alternate) > getSheetRecordCount(sheet)) return alternate;
     }
+    if (normalizedExact === "startuphunt" || normalizedExact === "entrepreneuridentified") {
+      const alternate = ss.getSheetByName(cleanReq === "Entrepreneur_Identified" ? "Startup hunt" : "Entrepreneur_Identified");
+      if (alternate && getSheetRecordCount(alternate) > getSheetRecordCount(sheet)) return alternate;
+    }
     return sheet;
   }
 
@@ -1739,8 +1743,7 @@ function getAllData(ss) {
     "Rang de loan": "Rang_De_Loan",
     "Startup hunt": "Entrepreneur_Identified",
     "Startup_Hunt": "Entrepreneur_Identified",
-    "Startup Hunt": "Entrepreneur_Identified",
-    "Entrepreneur_Identified": "Startup hunt"
+    "Startup Hunt": "Entrepreneur_Identified"
   };
 
   for (const [aliasKey, targetKey] of Object.entries(canonicalAliases)) {

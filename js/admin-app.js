@@ -37,11 +37,11 @@
       rang_de_loan: 'Rang de loan',
       M_Form: 'M Form',
       m_form: 'M Form',
-      Entrepreneur_Identified: 'Startup hunt',
-      entrepreneur_identified: 'Startup hunt',
-      Startup_Hunt: 'Startup hunt',
-      startup_hunt: 'Startup hunt',
-      'Startup hunt': 'Startup hunt'
+      Entrepreneur_Identified: 'Entrepreneur_Identified',
+      entrepreneur_identified: 'Entrepreneur_Identified',
+      Startup_Hunt: 'Entrepreneur_Identified',
+      startup_hunt: 'Entrepreneur_Identified',
+      'Startup hunt': 'Entrepreneur_Identified'
     };
     return map[sheetKey] || sheetKey;
   }
@@ -280,6 +280,10 @@
   };
 
   window.openChangePasswordModal = function () {
+    if (!window.DantewadaAuth || !window.DantewadaAuth.isSuperAdmin()) {
+      alert('सुरक्षा प्रतिबंध: एडमिन पासवर्ड बदलने की अनुमति केवल सुपर एडमिन को है। (Access Denied: Only Super Admin can change admin password)');
+      return;
+    }
     const modal = document.getElementById('changePasswordModal');
     const feedback = document.getElementById('changePassFeedback');
     if (feedback) feedback.className = 'hidden';
@@ -304,6 +308,10 @@
 
   window.saveNewAdminPassword = function (e) {
     if (e && e.preventDefault) e.preventDefault();
+    if (!window.DantewadaAuth || !window.DantewadaAuth.isSuperAdmin()) {
+      alert('सुरक्षा प्रतिबंध: एडमिन पासवर्ड बदलने की अनुमति केवल सुपर एडमिन को है।');
+      return;
+    }
     const curr = document.getElementById('currentPassInput').value;
     const newP = document.getElementById('newPassInput').value;
     const conf = document.getElementById('confirmPassInput').value;
@@ -423,7 +431,8 @@
 
   function updateNavRestrictions() {
     if (!window.DantewadaAuth) return;
-    document.querySelectorAll('.admin-nav-item').forEach(item => {
+    const isSuper = window.DantewadaAuth.isSuperAdmin();
+    document.querySelectorAll('.admin-nav-item, .bilingual-nav-btn').forEach(item => {
       const tab = item.getAttribute('data-tab');
       let allowed = true;
 
@@ -434,8 +443,21 @@
 
       if (allowed) {
         item.classList.remove('opacity-40', 'pointer-events-none');
+        item.removeAttribute('title');
       } else {
         item.classList.add('opacity-40', 'pointer-events-none');
+        item.setAttribute('title', 'केवल अधिकृत उपयोगकर्ताओं के लिए आरक्षित');
+      }
+    });
+
+    // Restrict Master Admin change-password triggers to Super Admin
+    document.querySelectorAll('[onclick*="openChangePasswordModal"]').forEach(el => {
+      if (isSuper) {
+        el.classList.remove('opacity-40', 'pointer-events-none');
+        el.removeAttribute('title');
+      } else {
+        el.classList.add('opacity-40', 'pointer-events-none');
+        el.setAttribute('title', 'मास्टर एडमिन पासवर्ड केवल सुपर एडमिन बदल सकते हैं');
       }
     });
   }
@@ -2684,6 +2706,8 @@
   // -------------------------------------------------------------
   function renderUsersManagement() {
     if (!window.DantewadaAuth) return;
+    const isSuper = window.DantewadaAuth.isSuperAdmin();
+
     const users = window.DantewadaAuth.getAllUsers();
     const roles = window.DantewadaAuth.getAllRoles();
 
@@ -2699,6 +2723,41 @@
       `).join('');
     }
 
+    // Security Notice for password access policy
+    const noticeEl = document.getElementById('userMgmtSecurityNotice');
+    if (noticeEl) {
+      if (!isSuper) {
+        noticeEl.classList.remove('hidden');
+        noticeEl.innerHTML = `<i class="fa-solid fa-shield-halved text-amber-600 text-sm"></i> <span><strong>सुरक्षा नीति:</strong> सिस्टम पासवर्ड केवल <strong>सुपर एडमिन</strong> को प्रदर्शित होते हैं। गैर-सुपर एडमिन हेतु पासवर्ड व क्रेडेंशियल संशोधन पूर्णतः सुरक्षित/प्रतिबंधित हैं।</span>`;
+      } else {
+        noticeEl.classList.add('hidden');
+      }
+    }
+
+    // Toggle button state for form submission if non-super admin
+    const createUserSubmitBtn = document.getElementById('createUserSubmitBtn');
+    const createRoleSubmitBtn = document.getElementById('createRoleSubmitBtn');
+    if (createUserSubmitBtn) {
+      createUserSubmitBtn.disabled = !isSuper;
+      if (!isSuper) {
+        createUserSubmitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        createUserSubmitBtn.title = 'केवल सुपर एडमिन उपयोगकर्ता बना सकते हैं';
+      } else {
+        createUserSubmitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        createUserSubmitBtn.title = '';
+      }
+    }
+    if (createRoleSubmitBtn) {
+      createRoleSubmitBtn.disabled = !isSuper;
+      if (!isSuper) {
+        createRoleSubmitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        createRoleSubmitBtn.title = 'केवल सुपर एडमिन रोल बना सकते हैं';
+      } else {
+        createRoleSubmitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        createRoleSubmitBtn.title = '';
+      }
+    }
+
     renderUsersTableList(users);
   }
 
@@ -2712,10 +2771,11 @@
       return;
     }
 
+    const isViewerSuper = window.DantewadaAuth && window.DantewadaAuth.isSuperAdmin();
+
     tbody.innerHTML = users.map(u => {
       const roleDetails = window.DantewadaAuth.getRoleDetails(u.role);
-      const isSuper = (u.id === 'usr_super' || u.id === 'usr_dist');
-      const passText = isSuper ? '(मास्टर एडमिन पासवर्ड)' : (u.password || '••••••');
+      const isSuper = (u.id === 'usr_super' || u.id === 'usr_dist' || u.role === 'super_admin');
 
       let badgeClass = 'bg-slate-100 text-slate-700 border-slate-200';
       if (u.role === 'super_admin') badgeClass = 'bg-amber-100 text-amber-800 border-amber-300 font-bold';
@@ -2750,14 +2810,20 @@
             ${escapeHtml(u.block || 'All')}
           </td>
           <td class="p-3.5 font-mono">
-            <div class="inline-flex items-center gap-1.5 bg-slate-100 px-2 py-1 rounded-lg border border-slate-200">
-              <span id="userPassDisplay_${u.id}" class="text-slate-600">${isSuper ? '••••••' : '••••••••'}</span>
-              ${!isSuper ? `
-                <button type="button" onclick="window.toggleUserPassVisibility('${u.id}', '${escapeHtml(passText)}')" class="text-slate-400 hover:text-slate-700 transition" title="पासवर्ड देखें / छुपाएं">
+            ${isViewerSuper ? `
+              <div class="inline-flex items-center gap-1.5 bg-slate-100 px-2 py-1 rounded-lg border border-slate-200">
+                <span id="userPassDisplay_${u.id}" class="text-slate-600 font-mono tracking-wider">••••••••</span>
+                <button type="button" onclick="window.toggleUserPassVisibility('${u.id}')" class="text-slate-400 hover:text-purple-700 transition cursor-pointer p-0.5" title="पासवर्ड देखें / छुपाएं (केवल सुपर एडमिन)">
                   <i id="userPassEye_${u.id}" class="fa-regular fa-eye text-[11px]"></i>
                 </button>
-              ` : ''}
-            </div>
+              </div>
+            ` : `
+              <div class="inline-flex items-center gap-1.5 bg-slate-100/90 px-2.5 py-1 rounded-lg border border-slate-200 text-slate-400 select-none" title="सुरक्षा नीति: पासवर्ड केवल सुपर एडमिन को ही दिखाई देता है">
+                <i class="fa-solid fa-lock text-[10px] text-amber-500"></i>
+                <span class="font-mono tracking-widest text-[11px]">••••••••</span>
+                <span class="text-[10px] text-slate-400 italic hidden sm:inline">(केवल सुपर एडमिन)</span>
+              </div>
+            `}
           </td>
           <td class="p-3.5">
             <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
@@ -2765,18 +2831,24 @@
             </span>
           </td>
           <td class="p-3.5 text-center">
-            <div class="inline-flex items-center gap-1.5">
-              <button onclick="window.openResetUserPassModal('${u.id}', '${escapeHtml(u.name)}')" class="px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold text-[11px] transition flex items-center gap-1" title="पासवर्ड रीसेट करें">
-                <i class="fa-solid fa-key text-[10px]"></i> रीसेट
-              </button>
-              ${!isSuper ? `
-                <button onclick="window.deleteUserRecord('${u.id}', '${escapeHtml(u.name)}')" class="px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 font-semibold text-[11px] transition flex items-center gap-1" title="यूजर हटाएं">
-                  <i class="fa-solid fa-trash-can text-[10px]"></i> हटाएं
+            ${isViewerSuper ? `
+              <div class="inline-flex items-center gap-1.5">
+                <button onclick="window.openResetUserPassModal('${u.id}', '${escapeHtml(u.name)}')" class="px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold text-[11px] transition flex items-center gap-1 cursor-pointer" title="पासवर्ड रीसेट करें">
+                  <i class="fa-solid fa-key text-[10px]"></i> रीसेट
                 </button>
-              ` : `
-                <span class="text-[10px] text-slate-400 italic px-2">मुख्य सुपर एडमिन</span>
-              `}
-            </div>
+                ${!isSuper ? `
+                  <button onclick="window.deleteUserRecord('${u.id}', '${escapeHtml(u.name)}')" class="px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 font-semibold text-[11px] transition flex items-center gap-1 cursor-pointer" title="यूजर हटाएं">
+                    <i class="fa-solid fa-trash-can text-[10px]"></i> हटाएं
+                  </button>
+                ` : `
+                  <span class="text-[10px] text-slate-400 italic px-2">मुख्य सुपर एडमिन</span>
+                `}
+              </div>
+            ` : `
+              <span class="inline-flex items-center gap-1 text-[11px] text-slate-400 italic px-2 py-0.5 bg-slate-50 rounded border border-slate-200">
+                <i class="fa-solid fa-lock text-[9px]"></i> केवल पठन (Read-Only)
+              </span>
+            `}
           </td>
         </tr>
       `;
@@ -2805,6 +2877,10 @@
 
   window.handleCreateUser = function (e) {
     if (e && e.preventDefault) e.preventDefault();
+    if (!window.DantewadaAuth || !window.DantewadaAuth.isSuperAdmin()) {
+      alert('सुरक्षा प्रतिबंध: नया उपयोगकर्ता बनाने की अनुमति केवल सुपर एडमिन को है।');
+      return;
+    }
     const feedback = document.getElementById('createUserFeedback');
     const nameInput = document.getElementById('newUserName');
     const usernameInput = document.getElementById('newUserUsername');
@@ -2841,6 +2917,10 @@
 
   window.handleCreateCustomRole = function (e) {
     if (e && e.preventDefault) e.preventDefault();
+    if (!window.DantewadaAuth || !window.DantewadaAuth.isSuperAdmin()) {
+      alert('सुरक्षा प्रतिबंध: रोल निर्माण केवल सुपर एडमिन द्वारा ही किया जा सकता है।');
+      return;
+    }
     const feedback = document.getElementById('createRoleFeedback');
     const nameInput = document.getElementById('newRoleName');
     const idInput = document.getElementById('newRoleId');
@@ -2872,6 +2952,10 @@
 
   window.deleteUserRecord = function (userId, name) {
     if (!window.DantewadaAuth) return;
+    if (!window.DantewadaAuth.isSuperAdmin()) {
+      alert('सुरक्षा प्रतिबंध: उपयोगकर्ता हटाने की अनुमति केवल सुपर एडमिन को है।');
+      return;
+    }
     if (confirm(`क्या आप उपयोगकर्ता '${name}' (${userId}) को हटाना चाहते हैं?`)) {
       const res = window.DantewadaAuth.deleteUser(userId);
       alert(res.message);
@@ -2882,6 +2966,10 @@
   };
 
   window.openResetUserPassModal = function (userId, name) {
+    if (!window.DantewadaAuth || !window.DantewadaAuth.isSuperAdmin()) {
+      alert('सुरक्षा प्रतिबंध: पासवर्ड केवल सुपर एडमिन द्वारा ही रीसेट किया जा सकता है।');
+      return;
+    }
     const modal = document.getElementById('resetUserPasswordModal');
     const idInput = document.getElementById('resetUserIdInput');
     const nameDisplay = document.getElementById('resetUserNameDisplay');
@@ -2909,6 +2997,10 @@
 
   window.saveUserResetPassword = function (e) {
     if (e && e.preventDefault) e.preventDefault();
+    if (!window.DantewadaAuth || !window.DantewadaAuth.isSuperAdmin()) {
+      alert('सुरक्षा प्रतिबंध: पासवर्ड केवल सुपर एडमिन द्वारा ही रीसेट किया जा सकता है।');
+      return;
+    }
     const idInput = document.getElementById('resetUserIdInput');
     const passInput = document.getElementById('resetUserNewPassInput');
     const feedback = document.getElementById('resetUserPassFeedback');
@@ -2932,18 +3024,25 @@
     }
   };
 
-  window.toggleUserPassVisibility = function (userId, realPass) {
+  window.toggleUserPassVisibility = function (userId) {
+    if (!window.DantewadaAuth || !window.DantewadaAuth.isSuperAdmin()) {
+      alert('सुरक्षा प्रतिबंध: पासवर्ड देखने की अनुमति केवल सुपर एडमिन को है। (Access Denied: Passwords can only be viewed by Super Admin)');
+      return;
+    }
     const displayEl = document.getElementById(`userPassDisplay_${userId}`);
     const eyeIcon = document.getElementById(`userPassEye_${userId}`);
     if (!displayEl || !eyeIcon) return;
 
-    if (displayEl.textContent === '••••••••' || displayEl.textContent === '••••••') {
+    if (displayEl.getAttribute('data-revealed') !== 'true') {
+      const realPass = window.DantewadaAuth.getUserPassword(userId) || '••••••••';
       displayEl.textContent = realPass;
+      displayEl.setAttribute('data-revealed', 'true');
       displayEl.classList.add('text-purple-700', 'font-bold');
       eyeIcon.classList.remove('fa-eye');
       eyeIcon.classList.add('fa-eye-slash');
     } else {
       displayEl.textContent = '••••••••';
+      displayEl.removeAttribute('data-revealed');
       displayEl.classList.remove('text-purple-700', 'font-bold');
       eyeIcon.classList.remove('fa-eye-slash');
       eyeIcon.classList.add('fa-eye');
@@ -5096,41 +5195,54 @@ Bastar_Munne_Report: {
   window.deleteSheetRow = async function (sheetKey, index) {
     if (!confirm('क्या आप निश्चित हैं कि यह रिकॉर्ड हटाना चाहते हैं? यह Google Sheet से भी डिलीट हो जाएगा।')) return;
     const cfg = SHEET_CONFIGS[sheetKey];
-    let rowToDelete = null;
-    if (cfg && window.DantewadaDB.data[cfg.collection]) {
-      rowToDelete = window.DantewadaDB.data[cfg.collection][index];
-    }
+    const searchInput = document.getElementById('sheetSearchInput');
+    const blockSelect = document.getElementById('sheetBlockFilter');
+    const options = {
+      search: searchInput ? searchInput.value : '',
+      block: blockSelect ? blockSelect.value : 'All'
+    };
+    const displayedRows = window.DantewadaDB ? window.DantewadaDB.getSheetData(sheetKey, options) : [];
+    let rowToDelete = (displayedRows && displayedRows[index]) || (cfg && window.DantewadaDB.data[cfg.collection] ? window.DantewadaDB.data[cfg.collection][index] : null);
 
     // Cloud backend delete
     if (typeof API !== 'undefined' && API.call) {
-      const idVal = rowToDelete ? (rowToDelete.name || rowToDelete.NAME || rowToDelete.founderName || rowToDelete.startupName || rowToDelete.title || rowToDelete.Candidate_Name || rowToDelete.id || rowToDelete['SR. NO.'] || rowToDelete.sNo || '') : '';
+      const idVal = rowToDelete ? (rowToDelete.name || rowToDelete.NAME || rowToDelete.founderName || rowToDelete.startupName || rowToDelete.title || rowToDelete.Candidate_Name || rowToDelete.id || rowToDelete['SR. NO.'] || rowToDelete['SR.no'] || rowToDelete.sNo || '') : '';
       try {
+        const targetSheet = getCloudSheetName(sheetKey);
         const res = await API.call('deleteRecord', {
-          sheetName: getCloudSheetName(sheetKey),
+          sheetName: targetSheet,
           rowIndex: index,
           idValue: idVal,
           rowData: rowToDelete
         });
         console.log('Cloud deleteRecord result:', res);
         if (res && res.success) {
-          const syncResult = await window.DantewadaDB.syncFromGoogleSheet();
-          if (!syncResult || !syncResult.success) {
-            alert('Cloud delete completed, but the table could not refresh. Reload the page to see the backend data.');
-            return;
+          // Immediately update local collection
+          if (cfg && Array.isArray(window.DantewadaDB.data[cfg.collection])) {
+            const coll = window.DantewadaDB.data[cfg.collection];
+            const targetIdx = coll.findIndex(r => {
+              if (r === rowToDelete) return true;
+              const rId = r.id || r['SR.no'] || r['SR. NO.'] || r.sNo || '';
+              const rName = r.name || r.NAME || r.founderName || r.startupName || r.title || '';
+              if (idVal && (rName === idVal || rId === idVal)) return true;
+              return false;
+            });
+            if (targetIdx !== -1) {
+              coll.splice(targetIdx, 1);
+            }
+            if (sheetKey === 'Entrepreneur_Identified' && Array.isArray(window.DantewadaDB.data.entrepreneurIdeas)) {
+              const ideas = window.DantewadaDB.data.entrepreneurIdeas;
+              const ideaIdx = ideas.findIndex(i => (i.name === idVal || i.founderName === idVal || i.startupName === idVal || String(i.id) === String(idVal)));
+              if (ideaIdx !== -1) ideas.splice(ideaIdx, 1);
+            }
+            window.DantewadaDB.persist();
           }
+          await window.DantewadaDB.syncFromGoogleSheet();
           renderSheetTable();
           updateSidebarBadgeCounts();
           alert(`✅ सफलतापूर्वक Google Sheet से भी '${idVal || 'रिकॉर्ड'}' हटा दिया गया!`);
         } else if (res && !res.success) {
           alert('Google Sheets rejected the delete. The record remains in the UI: ' + (res.message || 'unknown error'));
-          return;
-          if ((res.message || '').toLowerCase().includes('no data rows')) {
-            alert(`ℹ️ सूचना: आपकी Google Sheet में इस शीट के अंदर कोई डेटा पंक्ति नहीं मिली (शीट पहले से खाली है)। रिकॉर्ड पोर्टल से हटा दिया गया है।`);
-          } else if ((res.message || '').includes('Unknown action')) {
-            alert(`⚠️ चेतावनी: Google Apps Script में Code.gs का नया कोड Deploy नहीं किया गया है।`);
-          } else {
-            alert(`ℹ️ Google Sheet सूचना: ${res.message}`);
-          }
         }
       } catch (err) {
         console.warn('Cloud deleteRecord failed:', err);
@@ -5251,11 +5363,27 @@ Bastar_Munne_Report: {
           cloudDeletedCount = itemsToDelete.length;
         }
         if (cloudDeletedCount > 0) {
-          const syncResult = await window.DantewadaDB.syncFromGoogleSheet();
-          if (!syncResult || !syncResult.success) {
-            alert('Cloud delete completed, but the table could not refresh. Reload the page to see the backend data.');
-            return;
+          if (cfg && Array.isArray(window.DantewadaDB.data[cfg.collection])) {
+            const coll = window.DantewadaDB.data[cfg.collection];
+            itemsToDelete.forEach(item => {
+              const idVal = item.name || item.NAME || item.founderName || item.startupName || item.title || item.id || item['SR. NO.'] || item['SR.no'] || '';
+              const fIdx = coll.findIndex(r => {
+                if (r === item) return true;
+                const rName = r.name || r.NAME || r.founderName || r.startupName || r.title || r.id || '';
+                return rName && rName === idVal;
+              });
+              if (fIdx !== -1) coll.splice(fIdx, 1);
+            });
+            if (currentActiveSheet === 'Entrepreneur_Identified' && Array.isArray(window.DantewadaDB.data.entrepreneurIdeas)) {
+              itemsToDelete.forEach(item => {
+                const idVal = item.name || item.NAME || item.founderName || item.startupName || item.id || '';
+                const idx = window.DantewadaDB.data.entrepreneurIdeas.findIndex(i => i.name === idVal || i.founderName === idVal || i.startupName === idVal || String(i.id) === String(idVal));
+                if (idx !== -1) window.DantewadaDB.data.entrepreneurIdeas.splice(idx, 1);
+              });
+            }
+            window.DantewadaDB.persist();
           }
+          await window.DantewadaDB.syncFromGoogleSheet();
           renderSheetTable();
           updateSidebarBadgeCounts();
         }
@@ -5332,11 +5460,14 @@ Bastar_Munne_Report: {
           alert('Google Sheets clear failed. The records are still shown: ' + ((res && res.message) || 'unknown error'));
           return;
         }
-        const syncResult = await window.DantewadaDB.syncFromGoogleSheet();
-        if (!syncResult || !syncResult.success) {
-          alert('Cloud clear completed, but the table could not refresh. Reload the page to see the backend data.');
-          return;
+        if (cfg && Array.isArray(window.DantewadaDB.data[cfg.collection])) {
+          window.DantewadaDB.data[cfg.collection] = [];
+          if (currentActiveSheet === 'Entrepreneur_Identified') {
+            window.DantewadaDB.data.entrepreneurIdeas = [];
+          }
+          window.DantewadaDB.persist();
         }
+        await window.DantewadaDB.syncFromGoogleSheet();
         renderSheetTable();
         updateSidebarBadgeCounts();
         if (res && res.success) {

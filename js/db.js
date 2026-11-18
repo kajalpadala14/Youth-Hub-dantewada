@@ -2367,9 +2367,9 @@
       }
 
       // 9. Entrepreneur_Identified (Startup Hunt)
-      const startupHuntRecords = sheetDataMap['Startup hunt'] || sheetDataMap['Startup_Hunt'] || sheetDataMap['Startup Hunt'] || [];
       const entOrigRecords = sheetDataMap['Entrepreneur_Identified'] || [];
-      const entIdentifiedRecords = startupHuntRecords.length > 0 ? startupHuntRecords : entOrigRecords;
+      const startupHuntRecords = sheetDataMap['Startup_Hunt'] || sheetDataMap['Startup Hunt'] || sheetDataMap['Startup hunt'] || [];
+      const entIdentifiedRecords = fetchedSheets.has('Entrepreneur_Identified') ? entOrigRecords : (entOrigRecords.length > 0 ? entOrigRecords : startupHuntRecords);
       if (fetchedSheets.has('Entrepreneur_Identified') || fetchedSheets.has('Startup hunt') || fetchedSheets.has('Startup_Hunt') || entIdentifiedRecords.length > 0) {
         const validEnt = entIdentifiedRecords.filter(r => {
           const name = String(r['FOUNDER NAME'] || r.NAME || r['NAME '] || r.Founder || '').trim();

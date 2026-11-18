@@ -498,6 +498,7 @@ test('Dantewada Youth Development Portal - Backend & Data Integrity Test', async
     assert.strictEqual(mockWindow.getCloudSheetName('Youth_Hub_Trainings'), 'Youth_Hub_Trainee');
     assert.strictEqual(mockWindow.getCloudSheetName('Meetings_VO_CLF_TRIF'), 'VO CLF Meeting');
     assert.strictEqual(mockWindow.getCloudSheetName('Startup_District_Ideas'), 'Entrepreneur_Identified');
+    assert.strictEqual(mockWindow.getCloudSheetName('Entrepreneur_Identified'), 'Entrepreneur_Identified');
     assert.strictEqual(mockWindow.getCloudSheetName('Bastar_Munne_Report'), 'Bastar_Munne_Shivir');
 
     // Test dual header preparation for Startup Hunt

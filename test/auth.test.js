@@ -145,4 +145,55 @@ describe('Authentication & Password Protection Unit Tests', () => {
     const delSuperRes = auth.deleteUser('usr_super');
     assert.equal(delSuperRes.success, false);
   });
+
+  test('Password Visibility Policy: Passwords are ONLY accessible/shown to Super Admin, masked for others', () => {
+    // Switch to Super Admin
+    auth.switchUser('usr_super');
+    assert.equal(auth.isSuperAdmin(), true);
+
+    // Create a target user with a known password
+    const userRes = auth.addUser({
+      name: 'Sunita Markam',
+      username: 'sunita_deo',
+      password: 'SecureSunita@2026',
+      role: 'deo',
+      block: 'Dantewada'
+    });
+    assert.equal(userRes.success, true);
+    const targetUserId = userRes.user.id;
+
+    // 1. Super Admin can retrieve user password via getUserPassword
+    const superAdminFetchedPass = auth.getUserPassword(targetUserId);
+    assert.equal(superAdminFetchedPass, 'SecureSunita@2026');
+
+    // 2. Super Admin getAllUsers includes real passwords
+    const superUsersList = auth.getAllUsers();
+    const superFound = superUsersList.find(u => u.id === targetUserId);
+    assert.equal(superFound.password, 'SecureSunita@2026');
+
+    // 3. Switch to a non-super-admin user (e.g. DEO or Public)
+    auth.switchUser(targetUserId);
+    assert.equal(auth.isSuperAdmin(), false);
+
+    // 4. Non-super admin CANNOT retrieve password (returns null)
+    const nonSuperFetchedPass = auth.getUserPassword(targetUserId);
+    assert.equal(nonSuperFetchedPass, null);
+
+    // 5. Non-super admin getAllUsers masks passwords with bullets
+    const nonSuperUsersList = auth.getAllUsers();
+    const nonSuperFound = nonSuperUsersList.find(u => u.id === targetUserId);
+    assert.equal(nonSuperFound.password, '••••••••');
+
+    // 6. Logout / guest cannot access passwords either
+    auth.logout();
+    assert.equal(auth.isSuperAdmin(), false);
+    assert.equal(auth.getUserPassword(targetUserId), null);
+    const guestUsersList = auth.getAllUsers();
+    const guestFound = guestUsersList.find(u => u.id === targetUserId);
+    assert.equal(guestFound.password, '••••••••');
+
+    // Clean up
+    auth.switchUser('usr_super');
+    auth.deleteUser(targetUserId);
+  });
 });

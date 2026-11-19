@@ -238,18 +238,6 @@ const API = (function() {
           }));
           break;
 
-        case "Training_Conducted":
-        case "Training Conducted":
-          records = (d.trainingConducted || []).map((t, idx) => ({
-            "Sr.No": t.id || idx + 1,
-            "NAME ": t.name,
-            "ADDRESS": t.address,
-            "MOBILE NO.": t.mobile,
-            "INSTITUTE": t.institute,
-            "TRAINING": t.training
-          }));
-          break;
-
         case "Trainings":
           records = (d.youthHubTrainings || []).map((t, idx) => ({
             "Training_ID": t.id || ("TRG-HUB-" + (100 + idx)),

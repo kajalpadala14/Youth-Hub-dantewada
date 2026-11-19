@@ -58,7 +58,7 @@
       bastarShivir: [],
       bastarVillageCandidates: [],
       bastarMunneVillageReport: [],
-      trainingConducted: (typeof window !== 'undefined' && window.YOUTH_HUB_PORTAL_DATA && Array.isArray(window.YOUTH_HUB_PORTAL_DATA.trainingConducted)) ? window.YOUTH_HUB_PORTAL_DATA.trainingConducted : [],
+      trainingConducted: [],
       entrepreneursIdentified: [],
       entrepreneurIdeas: [],
       startupIdeas: [],

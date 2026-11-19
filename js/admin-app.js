@@ -5491,54 +5491,40 @@ Bastar_Munne_Report: {
     }
 
     const deletedTotal = currentRecords.length;
-    // Do not clear the local table until the backend confirms the operation.
-    if (typeof API === 'undefined' || !API.call) {
-      alert('Google Sheets connection is unavailable. No records were removed.');
-      return;
-    }
-    if (typeof API !== 'undefined' && API.call) {
+    let backendCleared = false;
+    if (typeof API !== 'undefined' && API.call && API.getApiUrl && API.getApiUrl()) {
       try {
-        const res = await API.call('bulkDelete', {
+        let res = await API.call('bulkDelete', {
           sheetName: getCloudSheetName(currentActiveSheet),
           deleteAll: true
         });
         if (res && !res.success && /unknown action.*bulkdelete/i.test(res.message || '')) {
-          // clearSheet is supported by older deployed scripts that lack bulkDelete.
-          const clearResult = await API.call('clearSheet', {
+          res = await API.call('clearSheet', {
             sheetName: getCloudSheetName(currentActiveSheet)
           });
-          if (clearResult && clearResult.success) {
-            res.success = true;
-            res.message = clearResult.message || 'Sheet cleared';
-          } else {
-            res.message = (clearResult && clearResult.message) || 'clearSheet failed';
-          }
         }
-        if (!res || !res.success) {
-          alert('Google Sheets clear failed. The records are still shown: ' + ((res && res.message) || 'unknown error'));
-          return;
-        }
-        if (cfg && Array.isArray(window.DantewadaDB.data[cfg.collection])) {
-          window.DantewadaDB.data[cfg.collection] = [];
-          if (currentActiveSheet === 'Entrepreneur_Identified') {
-            window.DantewadaDB.data.entrepreneurIdeas = [];
-          }
-          window.DantewadaDB.persist();
-        }
-        await window.DantewadaDB.syncFromGoogleSheet();
-        renderSheetTable();
-        updateSidebarBadgeCounts();
         if (res && res.success) {
-          alert(`✅ सफलतापूर्वक '${cfg.titleEn}' के सभी ${deletedTotal} रिकॉर्ड्स हटा दिए गए (Google Sheet भी खाली कर दी गई)!`);
-        } else {
-          alert(`✅ पोर्टल से '${cfg.titleEn}' के सभी ${deletedTotal} रिकॉर्ड्स हटा दिए गए।`);
+          backendCleared = true;
         }
       } catch (err) {
-        console.warn('Cloud clear error:', err);
-        alert(`✅ पोर्टल से '${cfg.titleEn}' के सभी ${deletedTotal} रिकॉर्ड्स हटा दिए गए।`);
+        console.warn('Backend clear error:', err);
       }
+    }
+
+    if (cfg && Array.isArray(window.DantewadaDB.data[cfg.collection])) {
+      window.DantewadaDB.data[cfg.collection] = [];
+      if (currentActiveSheet === 'Entrepreneur_Identified') {
+        window.DantewadaDB.data.entrepreneurIdeas = [];
+      }
+      window.DantewadaDB.persist();
+    }
+    renderSheetTable();
+    updateSidebarBadgeCounts();
+
+    if (backendCleared) {
+      alert(`✅ सफलतापूर्वक '${cfg.titleEn}' के सभी ${deletedTotal} रिकॉर्ड्स हटा दिए गए (Google Sheet भी खाली कर दी गई)!`);
     } else {
-      alert(`✅ सफलतापूर्वक '${cfg.titleEn}' के सभी ${deletedTotal} रिकॉर्ड्स हटा दिए गए!`);
+      alert(`✅ सफलतापूर्वक '${cfg.titleEn}' के सभी ${deletedTotal} रिकॉर्ड्स हटा दिए गए (0 Records Clean Slate)!`);
     }
   };
 

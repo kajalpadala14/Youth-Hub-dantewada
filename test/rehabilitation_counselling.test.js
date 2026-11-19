@@ -87,4 +87,12 @@ describe('Rehabilitation Counselling Module & Admin Sheet Tests', () => {
     assert.ok(codeGs.includes('action === "addRehabilitationCounselling"'), 'handleAction routes to Rehabilitation Counselling');
     assert.ok(codeGs.includes('"rehabilitation_counselling": "Rehabilitation Counselling"'), 'SHEET_ALIASES maps to Rehabilitation Counselling');
   });
+
+  test('Database purges corrupt mock/Bastar records from Rehabilitation Counselling to clean slate', () => {
+    // Verify db.js code has the purge logic and clean 0-state
+    const dbJs = fs.readFileSync(path.resolve(__dirname, '../js/db.js'), 'utf8');
+    assert.ok(dbJs.includes('cleanedRehabMockV3'), 'db.js contains cleanedRehabMockV3 purge flag');
+    assert.ok(dbJs.includes('r.name === \'SANJAY ILAMI\''), 'db.js explicitly checks and wipes SANJAY ILAMI mock leakage');
+    assert.ok(!dbJs.includes('rehabKeys = [\'Rehabilitation_Counselling\', \'Rehabilitation Counselling\', \'rehabilitation_counselling\', \'Rehabilitation\']'), 'rehabKeys does not include Bastar alias Rehabilitation');
+  });
 });

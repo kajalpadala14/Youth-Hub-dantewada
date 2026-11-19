@@ -65,7 +65,7 @@
       meetingsVoClfTrif: [],
       mFormRecords: (typeof window !== 'undefined' && Array.isArray(window.DANTEWADA_MFORM_DATA)) ? window.DANTEWADA_MFORM_DATA : [],
       rangDe: [],
-      rehabilitationCounselling: (typeof window !== 'undefined' && Array.isArray(window.DANTEWADA_REHABILITATION_DATA)) ? window.DANTEWADA_REHABILITATION_DATA : [],
+      rehabilitationCounselling: [],
       fieldVisits: [],
       successStories: [
         {
@@ -251,8 +251,10 @@
               parsed.mFormRecords = window.DANTEWADA_MFORM_DATA;
               this.persist(parsed);
             }
-            if ((!Array.isArray(parsed.rehabilitationCounselling) || parsed.rehabilitationCounselling.length === 0) && typeof window !== 'undefined' && Array.isArray(window.DANTEWADA_REHABILITATION_DATA)) {
-              parsed.rehabilitationCounselling = window.DANTEWADA_REHABILITATION_DATA;
+            // Purge corrupt / leaked mock data (SANJAY ILAMI, header rows from Bastar Munne) from rehabilitationCounselling
+            if (!parsed.metadata.cleanedRehabMockV3 || (Array.isArray(parsed.rehabilitationCounselling) && parsed.rehabilitationCounselling.some(r => r.name === 'SANJAY ILAMI' || r.name === 'NAME' || r.mobile === '7898425022' || r.name === 'SONU KUNJAM'))) {
+              parsed.rehabilitationCounselling = [];
+              parsed.metadata.cleanedRehabMockV3 = true;
               this.persist(parsed);
             }
             if ((!Array.isArray(parsed.successStories) || parsed.successStories.length === 0) && Array.isArray(schema.successStories) && schema.successStories.length > 0) {
@@ -671,10 +673,10 @@
         case 'rehabilitation_counselling':
         case 'Rehabilitation Counselling':
         case 'rehabilitationCounselling':
-          list = ((Array.isArray(this.data.rehabilitationCounselling) && this.data.rehabilitationCounselling.length > 0) ? this.data.rehabilitationCounselling : ((typeof window !== 'undefined' && Array.isArray(window.DANTEWADA_REHABILITATION_DATA)) ? window.DANTEWADA_REHABILITATION_DATA : [])).map(r => ({
+          list = (Array.isArray(this.data.rehabilitationCounselling) ? this.data.rehabilitationCounselling : []).map(r => ({
             id: r.id || '',
             name: r.name || r['NAME'] || r['NAME '] || r.candidateName || 'N/A',
-            address: r.address || r['ADDRESS'] || r.village || 'Dantewada',
+            address: r.address || r['ADDRESS'] || r.village || '',
             mobile: r.mobile || r['MOBILE NO.'] || r['MOBILE NUMBER'] || '-',
             institute: r.institute !== undefined && r.institute !== null ? (r.institute || r['INSTITUTE'] || '') : '',
             training: r.training !== undefined && r.training !== null ? (r.training || r['TRAINING'] || r.trade || '') : '',
@@ -2389,17 +2391,22 @@
       }
 
       // Rehabilitation_Counselling
-      const rehabKeys = ['Rehabilitation_Counselling', 'Rehabilitation Counselling', 'rehabilitation_counselling', 'Rehabilitation'];
+      const rehabKeys = ['Rehabilitation_Counselling', 'Rehabilitation Counselling', 'rehabilitation_counselling'];
       const rehabRecords = rehabKeys
         .map(key => sheetDataMap[key])
         .find(records => Array.isArray(records) && records.length > 0)
         || rehabKeys.map(key => sheetDataMap[key]).find(Array.isArray)
         || [];
       if (rehabKeys.some(key => fetchedSheets.has(key) || Array.isArray(sheetDataMap[key]))) {
-        this.data.rehabilitationCounselling = rehabRecords.map((r, idx) => ({
+        const validRehab = rehabRecords.filter(r => {
+          const name = String(r.NAME || r['NAME '] || r.Name || '').trim().toLowerCase();
+          const mob = String(r['MOBILE NO.'] || r['MOBILE N0.'] || r.Mobile || '').trim().toLowerCase();
+          return name && name !== 'name' && mob !== 'mobile no.' && mob !== 'mobile number';
+        });
+        this.data.rehabilitationCounselling = validRehab.map((r, idx) => ({
           id: r.id || r['SR. NO.'] || (idx + 1),
           name: String(r.NAME || r['NAME '] || r.Name || r.Candidate_Name || 'N/A').trim(),
-          address: String(r.ADDRESS || r.Address || r.Village || 'Dantewada').trim(),
+          address: String(r.ADDRESS || r.Address || r.Village || '').trim(),
           mobile: String(r['MOBILE NO.'] || r['MOBILE N0.'] || r.Mobile || '-').trim(),
           institute: String(r.INSTITUTE || r.Institute || '').trim(),
           training: String(r.TRAINING || r.Training || r.Trade || '').trim(),

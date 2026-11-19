@@ -3,56 +3,32 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 
-describe('Rehabilitation Counselling Module & Beneficiary Table Unit Tests', () => {
+describe('Rehabilitation Counselling Module & Admin Sheet Tests', () => {
   const indexHtml = fs.readFileSync(path.resolve(__dirname, '../index.html'), 'utf8');
   const adminHtml = fs.readFileSync(path.resolve(__dirname, '../admin.html'), 'utf8');
+  const adminAppJs = fs.readFileSync(path.resolve(__dirname, '../js/admin-app.js'), 'utf8');
   const rehabData = require('../js/rehabilitation-data.js');
   const supabaseService = require('../js/supabase.js');
 
-  test('Navigation tab is named "Rehabilitation Counselling" without duplicates', () => {
-    // Check desktop nav links
-    const desktopNavMatch = indexHtml.match(/<nav[^>]*>([\s\S]*?)<\/nav>/);
-    assert.ok(desktopNavMatch, 'Desktop nav must exist');
-    const desktopLinks = desktopNavMatch[1].match(/href="#rehabilitation-counselling"[^>]*>([\s\S]*?)<\/a>/g) || [];
-    assert.strictEqual(desktopLinks.length, 1, 'Exactly one rehabilitation-counselling link in desktop nav (no duplicate tabs)');
-    assert.ok(desktopLinks[0].includes('Rehabilitation Counselling'), 'Desktop nav link contains "Rehabilitation Counselling"');
-
-    // Check mobile nav links
-    const mobileMenuMatch = indexHtml.match(/id="mobileNavMenu"[^>]*>([\s\S]*?)<\/div>/);
-    assert.ok(mobileMenuMatch, 'Mobile menu must exist');
-    const mobileLinks = mobileMenuMatch[1].match(/href="#rehabilitation-counselling"/g) || [];
-    assert.strictEqual(mobileLinks.length, 1, 'Exactly one rehabilitation-counselling link in mobile menu');
+  test('Public page does NOT display Rehabilitation Counselling (removed per request)', () => {
+    assert.strictEqual(indexHtml.includes('id="rehabilitation-counselling"'), false, 'Public page must not have #rehabilitation-counselling section');
+    assert.strictEqual(indexHtml.includes('href="#rehabilitation-counselling"'), false, 'Public nav must not link to #rehabilitation-counselling');
   });
 
-  test('Rehabilitation Counselling section contains professional beneficiary data table', () => {
-    assert.ok(indexHtml.includes('id="rehabilitation-counselling"'), 'Rehabilitation Counselling section must exist');
-    assert.ok(indexHtml.includes('id="rehabBeneficiaryTable"'), 'Beneficiary data table element must exist');
-    assert.ok(indexHtml.includes('id="rehabTableBody"'), 'Table body must exist for dynamic rendering');
+  test('Admin portal includes Rehabilitation Counselling navigation, KPI card and Sheet Viewer', () => {
+    assert.ok(adminHtml.includes('data-sheet="Rehabilitation_Counselling"'), 'Sidebar includes Rehabilitation_Counselling button');
+    assert.ok(adminHtml.includes('17. Rehabilitation Counselling'), 'Title is 17. Rehabilitation Counselling');
+    assert.ok(adminHtml.includes('kpi-card-val-rehabilitation-counselling'), 'KPI card for Rehabilitation Counselling exists');
+    assert.ok(adminHtml.includes('openSheetViewer(\'Rehabilitation_Counselling\')'), 'Sheet viewer handler configured');
   });
 
-  test('Table header contains exact columns in exact order: NAME, ADDRESS, MOBILE NO., INSTITUTE, TRAINING', () => {
-    const tableHeaderRegex = /<table[^>]*id="rehabBeneficiaryTable"[^>]*>[\s\S]*?<thead>[\s\S]*?<\/thead>/;
-    const headerMatch = indexHtml.match(tableHeaderRegex);
-    assert.ok(headerMatch, 'Table thead must exist');
-    const theadContent = headerMatch[0];
-
-    const expectedColumns = ['NAME', 'ADDRESS', 'MOBILE NO.', 'INSTITUTE', 'TRAINING'];
-    let lastIndex = -1;
-    for (const col of expectedColumns) {
-      const idx = theadContent.indexOf(col);
-      assert.ok(idx !== -1, `Header must contain column "${col}"`);
-      assert.ok(idx > lastIndex, `Column "${col}" must appear after preceding column in exact order`);
-      lastIndex = idx;
-    }
-  });
-
-  test('Search, filter, sorting, and pagination controls exist', () => {
-    assert.ok(indexHtml.includes('id="rehabSearchInput"'), 'Search input must exist');
-    assert.ok(indexHtml.includes('id="rehabFilterInstitute"'), 'Institute filter dropdown must exist');
-    assert.ok(indexHtml.includes('id="rehabFilterTraining"'), 'Training filter dropdown must exist');
-    assert.ok(indexHtml.includes('id="rehabPageSize"'), 'Page size dropdown must exist');
-    assert.ok(indexHtml.includes('id="rehabPaginationContainer"'), 'Pagination container must exist');
-    assert.ok(indexHtml.includes('sortRehabTable'), 'Sort handler function referenced in headers');
+  test('Admin Sheet Viewer defines exact columns: NAME, ADDRESS, MOBILE NO., INSTITUTE, TRAINING', () => {
+    assert.ok(adminAppJs.includes('Rehabilitation_Counselling:'), 'SHEET_CONFIGS includes Rehabilitation_Counselling');
+    assert.ok(adminAppJs.includes('"NAME",'), 'Config includes NAME');
+    assert.ok(adminAppJs.includes('"ADDRESS",'), 'Config includes ADDRESS');
+    assert.ok(adminAppJs.includes('"MOBILE NO.",'), 'Config includes MOBILE NO.');
+    assert.ok(adminAppJs.includes('"INSTITUTE",'), 'Config includes INSTITUTE');
+    assert.ok(adminAppJs.includes('"TRAINING"'), 'Config includes TRAINING');
   });
 
   test('All 52 beneficiary records from uploaded Excel file are present with valid fields', () => {
@@ -91,11 +67,5 @@ describe('Rehabilitation Counselling Module & Beneficiary Table Unit Tests', () 
     assert.strictEqual(result.success, true);
     assert.strictEqual(result.data.length, 52);
     assert.strictEqual(result.data[0].name, 'FANAS');
-  });
-
-  test('Admin dashboard includes Rehabilitation Counselling navigation and sheet viewer', () => {
-    assert.ok(adminHtml.includes('data-sheet="Rehabilitation_Counselling"'), 'Sidebar includes Rehabilitation_Counselling');
-    assert.ok(adminHtml.includes('17. Rehabilitation Counselling'), 'Title is 17. Rehabilitation Counselling');
-    assert.ok(adminHtml.includes('kpi-card-val-rehabilitation-counselling'), 'KPI card for Rehabilitation Counselling exists');
   });
 });

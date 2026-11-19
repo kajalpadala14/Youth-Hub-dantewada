@@ -3942,8 +3942,8 @@ Rang_De_Loan: {
         item.name || item['NAME'] || item['NAME '] || item.candidateName || 'N/A',
         item.address || item['ADDRESS'] || item.village || 'Dantewada',
         item.mobile || item['MOBILE NO.'] || item['MOBILE NUMBER'] || '-',
-        item.institute || item['INSTITUTE'] || 'LIVELIHOOD',
-        item.training || item['TRAINING'] || item.trade || 'Computer Operator'
+        item.institute !== undefined && item.institute !== null ? (item.institute || item['INSTITUTE'] || '') : '',
+        item.training !== undefined && item.training !== null ? (item.training || item['TRAINING'] || item.trade || '') : ''
       ],
       saveRecord: (formData) => {
         if (!window.DantewadaDB.data.rehabilitationCounselling) {

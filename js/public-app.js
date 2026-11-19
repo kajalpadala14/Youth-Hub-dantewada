@@ -30,7 +30,7 @@
       about: 'पहल के बारे में',
       analytics: 'युवा सांख्यिकी',
       successStories: 'सफलता की कहानियाँ',
-      rehabilitationCounselling: 'पुनर्वास एवं काउंसलिंग',
+      rehabilitationCounselling: 'Rehabilitation Counselling',
       visits: 'फील्ड विजिट्स',
       trainings: 'प्रशिक्षण एवं गतिविधियाँ',
       initiatives: 'स्वरोजगार एवं उद्यमिता',
@@ -89,6 +89,7 @@
     renderPublicVisits();
     renderPublicTrainings();
     renderPublicInitiatives();
+    renderRehabilitationBeneficiaries();
     setupSmoothNav();
 
     // Bind public startup search input
@@ -104,6 +105,7 @@
       window.DantewadaDB.syncFromGoogleSheet().then(result => {
         renderPublicKPIs();
         renderPublicStories();
+        renderRehabilitationBeneficiaries();
         if (!result || !result.success) {
           const status = document.getElementById('publicDataSyncStatus');
           if (status) status.textContent = 'Backend data unavailable';
@@ -112,6 +114,7 @@
         console.error('Live Google Sheets sync failed; public data remains empty:', error);
         renderPublicKPIs();
         renderPublicStories();
+        renderRehabilitationBeneficiaries();
         const status = document.getElementById('publicDataSyncStatus');
         if (status) status.textContent = 'Backend data unavailable';
       });
@@ -1005,6 +1008,380 @@
     }
   };
 
+  // ---------------------------------------------------------------------------
+  // Rehabilitation Counselling Beneficiary Data Table Management
+  // ---------------------------------------------------------------------------
+  let rehabState = {
+    search: '',
+    institute: 'All',
+    training: 'All',
+    sortCol: 'name',
+    sortDir: 'asc',
+    page: 1,
+    pageSize: 10
+  };
+
+  async function getRehabilitationData() {
+    // 1. Supabase Backend Integration
+    if (window.YouthHubSupabase && typeof window.YouthHubSupabase.getRehabilitationBeneficiaries === 'function') {
+      try {
+        const result = await window.YouthHubSupabase.getRehabilitationBeneficiaries();
+        if (result && result.success && Array.isArray(result.data) && result.data.length > 0) {
+          const statusPill = document.getElementById('rehabBackendStatus');
+          if (statusPill) {
+            statusPill.innerHTML = result.source === 'supabase'
+              ? '<span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span><span>Supabase Live Connected</span>'
+              : '<span class="w-2 h-2 rounded-full bg-emerald-500"></span><span>Supabase / Local Dataset Synced</span>';
+          }
+          return result.data;
+        }
+      } catch (e) {
+        console.warn('[Rehab] Supabase fetch fallback to local:', e);
+      }
+    }
+
+    // 2. Local Database & Embedded Dataset fallback
+    if (window.DantewadaDB && Array.isArray(window.DantewadaDB.data.rehabilitationCounselling) && window.DantewadaDB.data.rehabilitationCounselling.length > 0) {
+      return window.DantewadaDB.data.rehabilitationCounselling;
+    }
+    if (Array.isArray(window.DANTEWADA_REHABILITATION_DATA) && window.DANTEWADA_REHABILITATION_DATA.length > 0) {
+      return window.DANTEWADA_REHABILITATION_DATA;
+    }
+    return [];
+  }
+
+  async function renderRehabilitationBeneficiaries() {
+    const tableBody = document.getElementById('rehabTableBody');
+    if (!tableBody) return;
+
+    const allRecords = await getRehabilitationData();
+
+    // 1. Filter by search query
+    let filtered = allRecords.filter(r => {
+      const q = (rehabState.search || '').toLowerCase().trim();
+      if (!q) return true;
+      const name = String(r.name || r['NAME'] || '').toLowerCase();
+      const addr = String(r.address || r['ADDRESS'] || '').toLowerCase();
+      const mobile = String(r.mobile || r['MOBILE NO.'] || '').toLowerCase();
+      const institute = String(r.institute || r['INSTITUTE'] || '').toLowerCase();
+      const training = String(r.training || r['TRAINING'] || '').toLowerCase();
+      return name.includes(q) || addr.includes(q) || mobile.includes(q) || institute.includes(q) || training.includes(q);
+    });
+
+    // 2. Filter by Institute
+    if (rehabState.institute && rehabState.institute !== 'All') {
+      filtered = filtered.filter(r => {
+        const inst = String(r.institute || r['INSTITUTE'] || '').trim().toUpperCase();
+        if (rehabState.institute === 'Not Specified') {
+          return !inst;
+        }
+        return inst.includes(rehabState.institute.toUpperCase());
+      });
+    }
+
+    // 3. Filter by Training
+    if (rehabState.training && rehabState.training !== 'All') {
+      filtered = filtered.filter(r => {
+        const trg = String(r.training || r['TRAINING'] || '').trim().toUpperCase();
+        if (rehabState.training === 'Not Specified') {
+          return !trg;
+        }
+        return trg.includes(rehabState.training.toUpperCase());
+      });
+    }
+
+    // 4. Sorting
+    filtered.sort((a, b) => {
+      let valA = '';
+      let valB = '';
+      if (rehabState.sortCol === 'name') {
+        valA = String(a.name || a['NAME'] || '');
+        valB = String(b.name || b['NAME'] || '');
+      } else if (rehabState.sortCol === 'address') {
+        valA = String(a.address || a['ADDRESS'] || '');
+        valB = String(b.address || b['ADDRESS'] || '');
+      } else if (rehabState.sortCol === 'mobile') {
+        valA = String(a.mobile || a['MOBILE NO.'] || '');
+        valB = String(b.mobile || b['MOBILE NO.'] || '');
+      } else if (rehabState.sortCol === 'institute') {
+        valA = String(a.institute || a['INSTITUTE'] || '');
+        valB = String(b.institute || b['INSTITUTE'] || '');
+      } else if (rehabState.sortCol === 'training') {
+        valA = String(a.training || a['TRAINING'] || '');
+        valB = String(b.training || b['TRAINING'] || '');
+      }
+      const cmp = valA.localeCompare(valB, undefined, { numeric: true, sensitivity: 'base' });
+      return rehabState.sortDir === 'desc' ? -cmp : cmp;
+    });
+
+    // Update sort header icons
+    ['name', 'address', 'mobile', 'institute', 'training'].forEach(col => {
+      const icon = document.getElementById(`sortIcon-${col}`);
+      if (icon) {
+        if (rehabState.sortCol === col) {
+          icon.className = rehabState.sortDir === 'desc' ? 'fa-solid fa-sort-down text-emerald-600 text-[11px]' : 'fa-solid fa-sort-up text-emerald-600 text-[11px]';
+        } else {
+          icon.className = 'fa-solid fa-sort text-slate-400 text-[10px]';
+        }
+      }
+    });
+
+    // Update total badges and summaries
+    const totalBadge = document.getElementById('rehabTotalBadge');
+    if (totalBadge) totalBadge.textContent = `${allRecords.length} Beneficiaries`;
+
+    const totalCountEl = document.getElementById('rehabTotalCount');
+    if (totalCountEl) totalCountEl.textContent = filtered.length;
+
+    // 5. Pagination calculation
+    const totalRecords = filtered.length;
+    const pageSize = rehabState.pageSize === 'All' ? (totalRecords || 1) : parseInt(rehabState.pageSize, 10);
+    const totalPages = Math.max(1, Math.ceil(totalRecords / (pageSize || 1)));
+    if (rehabState.page > totalPages) rehabState.page = 1;
+    const currentPage = rehabState.page;
+
+    const startIdx = totalRecords === 0 ? 0 : (currentPage - 1) * pageSize;
+    const endIdx = totalRecords === 0 ? 0 : Math.min(startIdx + pageSize, totalRecords);
+
+    const pageStartEl = document.getElementById('rehabPageStart');
+    if (pageStartEl) pageStartEl.textContent = totalRecords === 0 ? 0 : (startIdx + 1);
+
+    const pageEndEl = document.getElementById('rehabPageEnd');
+    if (pageEndEl) pageEndEl.textContent = endIdx;
+
+    const pageRecords = filtered.slice(startIdx, endIdx);
+
+    // 6. Render table rows with exact columns: NAME, ADDRESS, MOBILE NO., INSTITUTE, TRAINING
+    if (pageRecords.length === 0) {
+      tableBody.innerHTML = `
+        <tr>
+          <td colspan="5" class="py-12 text-center text-slate-500">
+            <div class="flex flex-col items-center justify-center">
+              <div class="w-12 h-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center text-lg mb-3">
+                <i class="fa-solid fa-user-slash"></i>
+              </div>
+              <p class="font-bold text-slate-700 text-sm">कोई लाभार्थी रिकॉर्ड नहीं मिला (No Records Found)</p>
+              <p class="text-xs text-slate-500 mt-1">खोज शब्द या फ़िल्टर बदलकर पुनः प्रयास करें।</p>
+              <button onclick="window.clearRehabSearch()" class="mt-3 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg transition">
+                फ़िल्टर रीसेट करें (Reset Filters)
+              </button>
+            </div>
+          </td>
+        </tr>
+      `;
+    } else {
+      tableBody.innerHTML = pageRecords.map((r) => {
+        const name = (r.name || r['NAME'] || '-').trim();
+        const address = (r.address || r['ADDRESS'] || '-').trim();
+        const mobile = (r.mobile || r['MOBILE NO.'] || '-').trim();
+        const institute = (r.institute || r['INSTITUTE'] || '').trim();
+        const training = (r.training || r['TRAINING'] || '').trim();
+
+        // Institute badge
+        let instBadge = `<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 text-slate-500">-</span>`;
+        if (institute) {
+          const upperInst = institute.toUpperCase();
+          if (upperInst.includes('LIVELIHOOD')) {
+            instBadge = `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200/80"><i class="fa-solid fa-graduation-cap text-[10px]"></i>LIVELIHOOD</span>`;
+          } else if (upperInst.includes('RSETI')) {
+            instBadge = `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-purple-50 text-purple-700 border border-purple-200/80"><i class="fa-solid fa-building-columns text-[10px]"></i>RSETI</span>`;
+          } else if (upperInst.includes('SUKMA') || upperInst.includes('MTC')) {
+            instBadge = `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/80"><i class="fa-solid fa-award text-[10px]"></i>MTC SUKMA</span>`;
+          } else {
+            instBadge = `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">${escapeHtml(institute)}</span>`;
+          }
+        }
+
+        // Training badge
+        let trgBadge = `<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 text-slate-500">-</span>`;
+        if (training) {
+          const upperTrg = training.toUpperCase();
+          if (upperTrg.includes('COMPUTER')) {
+            trgBadge = `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-200/80"><i class="fa-solid fa-laptop-code text-[10px]"></i>${escapeHtml(training)}</span>`;
+          } else if (upperTrg.includes('BEAUTI') || upperTrg.includes('PARLOR')) {
+            trgBadge = `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-pink-50 text-pink-700 border border-pink-200/80"><i class="fa-solid fa-wand-magic-sparkles text-[10px]"></i>${escapeHtml(training)}</span>`;
+          } else if (upperTrg.includes('FASION') || upperTrg.includes('FASHION') || upperTrg.includes('DESING')) {
+            trgBadge = `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200/80"><i class="fa-solid fa-scissors text-[10px]"></i>${escapeHtml(training)}</span>`;
+          } else if (upperTrg.includes('ELECTRICIAN')) {
+            trgBadge = `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-200/80"><i class="fa-solid fa-bolt text-[10px]"></i>${escapeHtml(training)}</span>`;
+          } else if (upperTrg.includes('DRIVING')) {
+            trgBadge = `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-cyan-50 text-cyan-800 border border-cyan-200/80"><i class="fa-solid fa-car text-[10px]"></i>${escapeHtml(training)}</span>`;
+          } else if (upperTrg.includes('PLUMBING')) {
+            trgBadge = `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-teal-50 text-teal-800 border border-teal-200/80"><i class="fa-solid fa-wrench text-[10px]"></i>${escapeHtml(training)}</span>`;
+          } else if (upperTrg.includes('HOTEL')) {
+            trgBadge = `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-orange-50 text-orange-800 border border-orange-200/80"><i class="fa-solid fa-utensils text-[10px]"></i>${escapeHtml(training)}</span>`;
+          } else if (upperTrg.includes('BIKE')) {
+            trgBadge = `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200/80"><i class="fa-solid fa-motorcycle text-[10px]"></i>${escapeHtml(training)}</span>`;
+          } else {
+            trgBadge = `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">${escapeHtml(training)}</span>`;
+          }
+        }
+
+        return `
+          <tr class="hover:bg-slate-50/90 transition-colors">
+            <td class="py-3.5 px-4 font-bold text-slate-900">
+              <div class="flex items-center gap-2">
+                <span class="w-6 h-6 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center text-[10px] shrink-0 font-mono font-normal">
+                  <i class="fa-solid fa-user"></i>
+                </span>
+                <span>${escapeHtml(name)}</span>
+              </div>
+            </td>
+            <td class="py-3.5 px-4 text-slate-700">
+              <div class="flex items-center gap-1.5">
+                <i class="fa-solid fa-location-dot text-slate-400 text-[10px] shrink-0"></i>
+                <span>${escapeHtml(address)}</span>
+              </div>
+            </td>
+            <td class="py-3.5 px-4 font-mono text-slate-700 whitespace-nowrap">
+              ${mobile && mobile !== '-' ? `
+                <a href="tel:${escapeHtml(mobile)}" class="inline-flex items-center gap-1 text-blue-700 hover:text-blue-900 hover:underline">
+                  <i class="fa-solid fa-phone text-[10px] text-emerald-600"></i>
+                  <span>${escapeHtml(mobile)}</span>
+                </a>
+              ` : '<span class="text-slate-400">-</span>'}
+            </td>
+            <td class="py-3.5 px-4 whitespace-nowrap">
+              ${instBadge}
+            </td>
+            <td class="py-3.5 px-4 whitespace-nowrap">
+              ${trgBadge}
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // 7. Render pagination controls
+    renderRehabPagination(currentPage, totalPages);
+  }
+
+  function renderRehabPagination(current, total) {
+    const container = document.getElementById('rehabPaginationContainer');
+    if (!container) return;
+
+    if (total <= 1) {
+      container.innerHTML = '';
+      return;
+    }
+
+    let html = `
+      <button 
+        onclick="window.goToRehabPage(${current - 1})" 
+        ${current === 1 ? 'disabled class="px-2.5 py-1 rounded-lg border border-slate-200 text-slate-300 text-xs cursor-not-allowed"' : 'class="px-2.5 py-1 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-100 text-xs transition font-semibold"'}
+        title="Previous Page"
+      >
+        <i class="fa-solid fa-chevron-left text-[10px]"></i>
+      </button>
+    `;
+
+    for (let p = 1; p <= total; p++) {
+      if (p === 1 || p === total || (p >= current - 1 && p <= current + 1)) {
+        if (p === current) {
+          html += `<button class="px-3 py-1 rounded-lg bg-emerald-600 text-white font-bold text-xs shadow-xs">${p}</button>`;
+        } else {
+          html += `<button onclick="window.goToRehabPage(${p})" class="px-3 py-1 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-100 text-xs transition font-semibold">${p}</button>`;
+        }
+      } else if (p === current - 2 || p === current + 2) {
+        html += `<span class="px-1 text-slate-400 text-xs">...</span>`;
+      }
+    }
+
+    html += `
+      <button 
+        onclick="window.goToRehabPage(${current + 1})" 
+        ${current === total ? 'disabled class="px-2.5 py-1 rounded-lg border border-slate-200 text-slate-300 text-xs cursor-not-allowed"' : 'class="px-2.5 py-1 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-100 text-xs transition font-semibold"'}
+        title="Next Page"
+      >
+        <i class="fa-solid fa-chevron-right text-[10px]"></i>
+      </button>
+    `;
+
+    container.innerHTML = html;
+  }
+
+  window.handleRehabSearch = function(val) {
+    rehabState.search = val;
+    rehabState.page = 1;
+    const clearBtn = document.getElementById('rehabClearSearchBtn');
+    if (clearBtn) {
+      if (val) clearBtn.classList.remove('hidden');
+      else clearBtn.classList.add('hidden');
+    }
+    renderRehabilitationBeneficiaries();
+  };
+
+  window.clearRehabSearch = function() {
+    rehabState.search = '';
+    rehabState.institute = 'All';
+    rehabState.training = 'All';
+    rehabState.page = 1;
+    const input = document.getElementById('rehabSearchInput');
+    if (input) input.value = '';
+    const instSelect = document.getElementById('rehabFilterInstitute');
+    if (instSelect) instSelect.value = 'All';
+    const trgSelect = document.getElementById('rehabFilterTraining');
+    if (trgSelect) trgSelect.value = 'All';
+    const clearBtn = document.getElementById('rehabClearSearchBtn');
+    if (clearBtn) clearBtn.classList.add('hidden');
+    renderRehabilitationBeneficiaries();
+  };
+
+  window.handleRehabInstituteFilter = function(val) {
+    rehabState.institute = val;
+    rehabState.page = 1;
+    renderRehabilitationBeneficiaries();
+  };
+
+  window.handleRehabTrainingFilter = function(val) {
+    rehabState.training = val;
+    rehabState.page = 1;
+    renderRehabilitationBeneficiaries();
+  };
+
+  window.handleRehabPageSizeChange = function(val) {
+    rehabState.pageSize = val;
+    rehabState.page = 1;
+    renderRehabilitationBeneficiaries();
+  };
+
+  window.sortRehabTable = function(col) {
+    if (rehabState.sortCol === col) {
+      rehabState.sortDir = rehabState.sortDir === 'asc' ? 'desc' : 'asc';
+    } else {
+      rehabState.sortCol = col;
+      rehabState.sortDir = 'asc';
+    }
+    renderRehabilitationBeneficiaries();
+  };
+
+  window.goToRehabPage = function(page) {
+    rehabState.page = page;
+    renderRehabilitationBeneficiaries();
+  };
+
+  window.exportRehabToCSV = async function() {
+    const records = await getRehabilitationData();
+    let csv = "NAME,ADDRESS,MOBILE NO.,INSTITUTE,TRAINING\r\n";
+    records.forEach((r) => {
+      const name = (r.name || r['NAME'] || '').replace(/"/g, '""');
+      const addr = (r.address || r['ADDRESS'] || '').replace(/"/g, '""');
+      const mob = (r.mobile || r['MOBILE NO.'] || '').replace(/"/g, '""');
+      const inst = (r.institute || r['INSTITUTE'] || '').replace(/"/g, '""');
+      const trg = (r.training || r['TRAINING'] || '').replace(/"/g, '""');
+      csv += `"${name}","${addr}","${mob}","${inst}","${trg}"\r\n`;
+    });
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'Rehabilitation_Counselling_Beneficiaries.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   document.addEventListener('DOMContentLoaded', init);
   window.addEventListener('db:changed', () => {
     renderPublicKPIs();
@@ -1013,5 +1390,6 @@
     renderPublicStartups();
     renderPublicVisits();
     renderPublicTrainings();
+    renderRehabilitationBeneficiaries();
   });
 })();

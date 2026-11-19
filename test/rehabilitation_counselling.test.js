@@ -68,4 +68,23 @@ describe('Rehabilitation Counselling Module & Admin Sheet Tests', () => {
     assert.strictEqual(result.data.length, 52);
     assert.strictEqual(result.data[0].name, 'FANAS');
   });
+
+  test('AppsScript Code.gs backend defines Rehabilitation Counselling template, schema, and routing', () => {
+    const codeGs = fs.readFileSync(path.resolve(__dirname, '../AppsScript/Code.gs'), 'utf8');
+    
+    // Check templates and schemas
+    assert.ok(codeGs.includes('"Rehabilitation Counselling":'), 'EXACT_EXCEL_TEMPLATES has "Rehabilitation Counselling"');
+    assert.ok(codeGs.includes('"Rehabilitation_Counselling":'), 'EXACT_EXCEL_TEMPLATES has "Rehabilitation_Counselling"');
+    
+    // Check exact columns
+    const expectedHeaders = ['"Sr.No"', '"NAME"', '"ADDRESS"', '"MOBILE NO."', '"INSTITUTE"', '"TRAINING"'];
+    for (const h of expectedHeaders) {
+      assert.ok(codeGs.includes(h), `Code.gs must include header ${h}`);
+    }
+
+    // Check action routing
+    assert.ok(codeGs.includes('case "addRehabilitationCounselling":'), 'handleAction includes addRehabilitationCounselling case');
+    assert.ok(codeGs.includes('action === "addRehabilitationCounselling"'), 'handleAction routes to Rehabilitation Counselling');
+    assert.ok(codeGs.includes('"rehabilitation_counselling": "Rehabilitation Counselling"'), 'SHEET_ALIASES maps to Rehabilitation Counselling');
+  });
 });

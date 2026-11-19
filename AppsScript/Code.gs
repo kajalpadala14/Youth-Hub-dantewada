@@ -232,6 +232,20 @@ const EXACT_EXCEL_TEMPLATES = {
       "Photo_Link", "Is_PDF", "Summary", "Full_Story", "Quote", "Achievement_Date",
       "Featured", "Status", "Author", "Submitted_At"
     ]
+  },
+
+  // 19. Rehabilitation Counselling
+  "Rehabilitation Counselling": {
+    hasTitle: false,
+    headers: [
+      "Sr.No", "NAME", "ADDRESS", "MOBILE NO.", "INSTITUTE", "TRAINING"
+    ]
+  },
+  "Rehabilitation_Counselling": {
+    hasTitle: false,
+    headers: [
+      "Sr.No", "NAME", "ADDRESS", "MOBILE NO.", "INSTITUTE", "TRAINING"
+    ]
   }
 };
 
@@ -396,6 +410,12 @@ const SHEETS_SCHEMA = {
     "Story_ID", "Youth_Name", "Village", "Block", "Title", "Category", "Scheme",
     "Photo_Link", "Is_PDF", "Summary", "Full_Story", "Quote", "Achievement_Date",
     "Featured", "Status", "Author", "Submitted_At"
+  ],
+  "Rehabilitation Counselling": [
+    "Sr.No", "NAME", "ADDRESS", "MOBILE NO.", "INSTITUTE", "TRAINING"
+  ],
+  Rehabilitation_Counselling: [
+    "Sr.No", "NAME", "ADDRESS", "MOBILE NO.", "INSTITUTE", "TRAINING"
   ]
 };
 
@@ -506,9 +526,9 @@ const SHEET_ALIASES = {
   "careercounselling": "Counselling",
 
   // Rehabilitation Counselling
-  "rehabilitation_counselling": "Rehabilitation_Counselling",
-  "rehabilitationcounselling": "Rehabilitation_Counselling",
-  "rehabilitation counselling": "Rehabilitation_Counselling",
+  "rehabilitation_counselling": "Rehabilitation Counselling",
+  "rehabilitationcounselling": "Rehabilitation Counselling",
+  "rehabilitation counselling": "Rehabilitation Counselling",
 
   // 14. Startups & Innovation
   "startup_hunt": "Entrepreneur_Identified",
@@ -1042,6 +1062,7 @@ function handleAction(action, payload) {
     case "addIIMRaipur":
     case "addTraining":
     case "addCounselling":
+    case "addRehabilitationCounselling":
     case "addMobilization":
     case "addActivity":
     case "addRehabilitation":
@@ -1058,6 +1079,7 @@ function handleAction(action, payload) {
         else if (action === "addMForm") sheetName = "M_Form";
         else if (action === "addMyBharat") sheetName = "MY_Bharat_Registration";
         else if (action === "addIIMRaipur") sheetName = "IIM_Candidate_List";
+        else if (action === "addRehabilitationCounselling") sheetName = "Rehabilitation Counselling";
         else if (action === "addMobilization" || action === "addActivity" || action === "addRehabilitation") sheetName = "Bastar_Munne_Shivir";
         else if (action === "addCounselling") sheetName = "Counselling";
         else if (action === "addPhotoUpload") sheetName = "Photo_Uploads";
@@ -1748,7 +1770,9 @@ function getAllData(ss) {
     "Rang de loan": "Rang_De_Loan",
     "Startup hunt": "Entrepreneur_Identified",
     "Startup_Hunt": "Entrepreneur_Identified",
-    "Startup Hunt": "Entrepreneur_Identified"
+    "Startup Hunt": "Entrepreneur_Identified",
+    "Rehabilitation_Counselling": "Rehabilitation Counselling",
+    "Rehabilitation Counselling": "Rehabilitation_Counselling"
   };
 
   for (const [aliasKey, targetKey] of Object.entries(canonicalAliases)) {
@@ -2461,6 +2485,7 @@ function setupDatabase(optionalSs) {
     "Youth_Hub_Trainee",
     "M_Form",
     "Counselling",
+    "Rehabilitation Counselling",
     "Bastar_Munne_Shivir",
     "Startup & Innovation Idea",
     "Rang_De_Loan"
@@ -2534,6 +2559,7 @@ function auditDatabase(ss) {
     ["Skill Linked", "Skill_Linked"],
     ["Education Linked", "Education_Linked"],
     ["Counselling", "Counselling"],
+    ["Rehabilitation Counselling", "Rehabilitation Counselling"],
     ["IIM Raipur List", "IIM_Candidate_List"],
     ["Training Conducted", "Training_Conducted"],
     ["MY Bharat", "MY_Bharat_Registration"],

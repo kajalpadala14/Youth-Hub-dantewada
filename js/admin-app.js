@@ -41,7 +41,11 @@
       entrepreneur_identified: 'Entrepreneur_Identified',
       Startup_Hunt: 'Entrepreneur_Identified',
       startup_hunt: 'Entrepreneur_Identified',
-      'Startup hunt': 'Entrepreneur_Identified'
+      'Startup hunt': 'Entrepreneur_Identified',
+      Rehabilitation_Counselling: 'Rehabilitation_Counselling',
+      rehabilitation_counselling: 'Rehabilitation_Counselling',
+      'Rehabilitation Counselling': 'Rehabilitation_Counselling',
+      'rehabilitation counselling': 'Rehabilitation_Counselling'
     };
     return map[sheetKey] || sheetKey;
   }
@@ -105,6 +109,17 @@
       if (nm) { clean['NAME '] = nm; clean['NAME'] = nm; }
       const mob = clean['MOBILE N0.'] || clean['MOBILE NO, '] || clean['MOBILE NO.'] || clean['mobile'] || '';
       if (mob) { clean['MOBILE N0.'] = mob; clean['MOBILE NO, '] = mob; clean['MOBILE NO.'] = mob; }
+    } else if (sheetKey === 'Rehabilitation_Counselling' || sheetKey === 'rehabilitation_counselling') {
+      const nm = clean['NAME '] || clean['NAME'] || clean['name'] || clean['Candidate_Name'] || '';
+      if (nm) { clean['NAME '] = nm; clean['NAME'] = nm; }
+      const mob = clean['MOBILE NO.'] || clean['MOBILE N0.'] || clean['MOBILE NO, '] || clean['mobile'] || '';
+      if (mob) { clean['MOBILE NO.'] = mob; }
+      const inst = clean['INSTITUTE'] || clean['Institute'] || 'LIVELIHOOD';
+      clean['INSTITUTE'] = inst;
+      const tr = clean['TRAINING'] || clean['Training'] || clean['Trade'] || 'Computer Operator';
+      clean['TRAINING'] = tr;
+      const addr = clean['ADDRESS'] || clean['Address'] || clean['Village'] || 'Dantewada';
+      clean['ADDRESS'] = addr;
     }
 
     return clean;
@@ -734,7 +749,8 @@
       { id: 'kpi-card-val-counselling', key: 'Counselling' },
       { id: 'kpi-card-val-bastar-munne-shivir', key: 'Bastar_Munne_Shivir' },
       { id: 'kpi-card-val-startup-ideas', key: 'Startup_Ideas' },
-      { id: 'kpi-card-val-rang-de-loan', key: 'Rang_De_Loan' }
+      { id: 'kpi-card-val-rang-de-loan', key: 'Rang_De_Loan' },
+      { id: 'kpi-card-val-rehabilitation-counselling', key: 'Rehabilitation_Counselling' }
     ];
 
     sheetKpis.forEach(item => {
@@ -948,6 +964,9 @@
     ],
     Counselling: [
       "SR. NO.", "Block Name", "Grampanchayat", "First Name", "Last Name", "Mobile Number", "Gender", "Email", "Pin Code", "Father's Name / Husband's Name", "Mother's Name", "Category", "Highest Qualification", "Current Occupation", "Aspired Career"
+    ],
+    Rehabilitation_Counselling: [
+      "SR. NO.", "NAME", "ADDRESS", "MOBILE NO.", "INSTITUTE", "TRAINING"
     ],
     Field_Visits: [
       "VISIT ID", "DATE", "OFFICER NAME", "BLOCK", "GRAM PANCHAYAT", "LOCATION", "PURPOSE", "SCHEME", "FINDINGS", "STATUS"
@@ -3904,6 +3923,45 @@ Rang_De_Loan: {
       }
     },
 
+    Rehabilitation_Counselling: {
+      num: 17,
+      titleEn: "17. Rehabilitation Counselling",
+      titleHi: "पुनर्वास एवं कौशल काउंसलिंग",
+      desc: "पुनर्वास एवं कौशल काउंसलिंग अंतर्गत पंजीकृत युवाओं का संपूर्ण डेटाबेस।",
+      collection: "rehabilitationCounselling",
+      params: [
+        "SR. NO.",
+        "NAME",
+        "ADDRESS",
+        "MOBILE NO.",
+        "INSTITUTE",
+        "TRAINING"
+      ],
+      mapRow: (item, idx) => [
+        idx + 1,
+        item.name || item['NAME'] || item['NAME '] || item.candidateName || 'N/A',
+        item.address || item['ADDRESS'] || item.village || 'Dantewada',
+        item.mobile || item['MOBILE NO.'] || item['MOBILE NUMBER'] || '-',
+        item.institute || item['INSTITUTE'] || 'LIVELIHOOD',
+        item.training || item['TRAINING'] || item.trade || 'Computer Operator'
+      ],
+      saveRecord: (formData) => {
+        if (!window.DantewadaDB.data.rehabilitationCounselling) {
+          window.DantewadaDB.data.rehabilitationCounselling = [];
+        }
+        window.DantewadaDB.data.rehabilitationCounselling.unshift({
+          id: String(window.DantewadaDB.data.rehabilitationCounselling.length + 1),
+          name: formData['NAME'] || formData['NAME '] || '',
+          address: formData['ADDRESS'] || '',
+          mobile: formData['MOBILE NO.'] || '-',
+          institute: formData['INSTITUTE'] || 'LIVELIHOOD',
+          training: formData['TRAINING'] || '',
+          block: (formData['ADDRESS'] || '').includes('Geedam') ? 'Geedam' : ((formData['ADDRESS'] || '').includes('Kuakonda') ? 'Kuakonda' : ((formData['ADDRESS'] || '').includes('Katekalyan') ? 'Katekalyan' : 'Dantewada'))
+        });
+        window.DantewadaDB.persist();
+      }
+    },
+
 Startup_District_Ideas: {
       num: "12-B",
       titleEn: "Startup Ideas by District",
@@ -6039,7 +6097,8 @@ Bastar_Munne_Report: {
       Youth_Hub_Trainings: ['youths attended trainings', 'dob,gender,mobile no.,remark'],
       Bastar_Munne_Shivir: ['bastar munne', 'aadhar,category,remark'],
       Meetings_VO_CLF_TRIF: ['vo / clf name', 'adhayaksh sachiv', 'discuss point', 'remarks', 'photo'],
-      M_Form: ['m-form', 'm form', 'aspired career', 'highest qualification', 'grampanchayat']
+      M_Form: ['m-form', 'm form', 'aspired career', 'highest qualification', 'grampanchayat'],
+      Rehabilitation_Counselling: ['rehab', 'rehabilitation', 'counselling', 'institute', 'training', 'computer operator']
     };
 
     const keywords = sectionKeywords[targetSheet] || [];

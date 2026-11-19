@@ -505,6 +505,11 @@ const SHEET_ALIASES = {
   "career_counselling": "Counselling",
   "careercounselling": "Counselling",
 
+  // Rehabilitation Counselling
+  "rehabilitation_counselling": "Rehabilitation_Counselling",
+  "rehabilitationcounselling": "Rehabilitation_Counselling",
+  "rehabilitation counselling": "Rehabilitation_Counselling",
+
   // 14. Startups & Innovation
   "startup_hunt": "Entrepreneur_Identified",
   "startuphunt": "Entrepreneur_Identified",

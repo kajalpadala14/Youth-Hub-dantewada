@@ -65,6 +65,7 @@
       meetingsVoClfTrif: [],
       mFormRecords: (typeof window !== 'undefined' && Array.isArray(window.DANTEWADA_MFORM_DATA)) ? window.DANTEWADA_MFORM_DATA : [],
       rangDe: [],
+      rehabilitationCounselling: [],
       fieldVisits: [],
       successStories: [
         {
@@ -660,6 +661,21 @@
 
         case 'Rang_De_Loan':
           list = this.data.rangDe || [];
+          break;
+
+        case 'Rehabilitation_Counselling':
+        case 'rehabilitation_counselling':
+        case 'Rehabilitation Counselling':
+        case 'rehabilitationCounselling':
+          list = (this.data.rehabilitationCounselling || []).map(r => ({
+            id: r.id || '',
+            name: r.name || r['NAME'] || r['NAME '] || r.candidateName || 'N/A',
+            address: r.address || r['ADDRESS'] || r.village || 'Dantewada',
+            mobile: r.mobile || r['MOBILE NO.'] || r['MOBILE NUMBER'] || '-',
+            institute: r.institute || r['INSTITUTE'] || 'LIVELIHOOD',
+            training: r.training || r['TRAINING'] || r.trade || 'Computer Operator',
+            block: r.block || 'Dantewada'
+          }));
           break;
 
         case 'IIM_Candidate_List':
@@ -1958,6 +1974,8 @@
         'NavGurukul',
         'RangDe_Loan',
         'Rang_De_Loan',
+        'Rehabilitation_Counselling',
+        'Rehabilitation Counselling',
         'Bastar_Munne_Shivir',
         'Training_Conducted',
         'MY_Bharat_Registration',
@@ -2364,6 +2382,25 @@
             secondAmount: fmtCurrency(raw2nd)
           };
         });
+      }
+
+      // Rehabilitation_Counselling
+      const rehabKeys = ['Rehabilitation_Counselling', 'Rehabilitation Counselling', 'rehabilitation_counselling', 'Rehabilitation'];
+      const rehabRecords = rehabKeys
+        .map(key => sheetDataMap[key])
+        .find(records => Array.isArray(records) && records.length > 0)
+        || rehabKeys.map(key => sheetDataMap[key]).find(Array.isArray)
+        || [];
+      if (rehabKeys.some(key => fetchedSheets.has(key) || Array.isArray(sheetDataMap[key]))) {
+        this.data.rehabilitationCounselling = rehabRecords.map((r, idx) => ({
+          id: r.id || r['SR. NO.'] || (idx + 1),
+          name: String(r.NAME || r['NAME '] || r.Name || r.Candidate_Name || 'N/A').trim(),
+          address: String(r.ADDRESS || r.Address || r.Village || 'Dantewada').trim(),
+          mobile: String(r['MOBILE NO.'] || r['MOBILE N0.'] || r.Mobile || '-').trim(),
+          institute: String(r.INSTITUTE || r.Institute || 'LIVELIHOOD').trim(),
+          training: String(r.TRAINING || r.Training || r.Trade || 'Computer Operator').trim(),
+          block: (r.ADDRESS || r.Address || '').includes('Geedam') ? 'Geedam' : ((r.ADDRESS || r.Address || '').includes('Kuakonda') ? 'Kuakonda' : ((r.ADDRESS || r.Address || '').includes('Katekalyan') ? 'Katekalyan' : 'Dantewada'))
+        }));
       }
 
       // 9. Entrepreneur_Identified (Startup Hunt)
